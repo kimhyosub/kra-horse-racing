@@ -1,0 +1,66 @@
+spring:
+  main:
+    banner-mode: off
+
+logging:
+  level:
+    root: WARN
+    com.sub.kra: INFO
+  pattern:
+    console: "%d{HH:mm:ss} %-5level %msg%n"
+
+kra:
+  # 공공데이터포털 마이페이지의 일반 인증키 (실행 시 --kra.service-key=... 로 넘겨도 됨)
+  service-key: ${KRA_SERVICE_KEY:}
+  mode: all                 # probe | collect | export | all
+  meets: [1]                # 1=서울 2=제주 3=부경 4=영천
+  from: 2026-04-01
+  to: 2026-10-25
+  weekdays: []              # 비우면 매일 조회. 호출 절약: [FRIDAY, SATURDAY, SUNDAY]
+  output-dir: ./kra-data
+  daily-limit: 2800
+  request-delay-ms: 250
+  num-of-rows: 1000
+
+  # --kra.mode=probe 로 실행하면 아래 후보를 차례로 시험해서 데이터가 나오는 URL을 알려줌
+  probe-date: "20260830"
+  probe-urls:
+    - https://apis.data.go.kr/B551015/API214_1/RaceDetailResult_1
+    - https://apis.data.go.kr/B551015/API5/quinellaOddsInfo
+    - https://apis.data.go.kr/B551015/API7/raceRefereeDetails
+    - https://apis.data.go.kr/B551015/API26_2/entrySheet_2
+    - https://apis.data.go.kr/B551015/API160_1/integratedInfo_1
+
+  # 엔드포인트·파라미터는 공공데이터포털 상세 페이지 기준으로 확인 완료 (2026-10)
+  apis:
+    race-result:            # 한국마사회_경주성적정보 (data.go.kr/data/15063979)
+      url: https://apis.data.go.kr/B551015/API214_1/RaceDetailResult_1
+      date-param: rc_date
+      meet-param: meet
+      extra-params:
+        _type: json
+    quinella-odds:          # 한국마사회 복승식 확정배당율 (data.go.kr/data/15057090, XML 전용)
+      enabled: true
+      url: https://apis.data.go.kr/B551015/API5/quinellaOddsInfo
+      date-param: rc_date
+      meet-param: meet
+    all-odds:               # 한국마사회 확정배당율 통합정보 (data.go.kr/data/15058559) - 단승·연승·복승·쌍승·삼복·삼쌍
+      enabled: true
+      url: https://apis.data.go.kr/B551015/API160_1/integratedInfo_1
+      date-param: rc_date
+      meet-param: meet
+      extra-params:
+        _type: json
+    referee:                # 한국마사회 경주심판 상세정보 (data.go.kr/data/15036402, XML 전용)
+      enabled: true
+      url: https://apis.data.go.kr/B551015/API7/raceRefereeDetails
+      date-param: rc_date
+      meet-param: meet
+    entry-sheet:            # 한국마사회 출전표 상세정보 (data.go.kr/data/15058677) - 실전(경주 전) 분석용
+      enabled: false        # 과거 검증엔 불필요. 실전 단계에서 true
+      skip-existing: false  # 출전표는 취소마 반영을 위해 매번 새로 받음
+      url: https://apis.data.go.kr/B551015/API26_2/entrySheet_2
+      date-param: rc_date
+      meet-param: meet
+      extra-params:
+        _type: json

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  한글 사용자 폴더 문제 회피용 Maven 설정.
+  사용법 (프로젝트 폴더에서):  mvn -s settings.xml clean package
+  또는 Maven 설치폴더\conf\settings.xml 을 이 파일로 교체하면 -s 없이 사용 가능.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+    <!-- 라이브러리 저장 위치: 영문 경로 (폴더는 자동 생성) -->
+    <localRepository>C:/m2repo</localRepository>
+
+    <!-- 회사망 프록시가 필요하면 주석 해제 후 값 수정
+    <proxies>
+        <proxy>
+            <id>company</id>
+            <active>true</active>
+            <protocol>http</protocol>
+            <host>proxy.example.com</host>
+            <port>8080</port>
+            <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+        </proxy>
+    </proxies>
+    -->
+</settings>

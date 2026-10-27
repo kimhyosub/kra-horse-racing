@@ -1,0 +1,13 @@
+**/target/
+**/kra-data/
+*.iml
+.idea/
+.vscode/
+*.log
+# 인증키는 환경변수(KRA_SERVICE_KEY)로만. 로컬 설정 파일은 커밋 금지
+application-local.yml
+__pycache__/
+*.pyc
+paper_log.csv
+input_*.csv
+*.pkl
