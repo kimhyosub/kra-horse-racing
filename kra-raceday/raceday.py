@@ -29,7 +29,17 @@ RULE = dict(ev=1.1, max_odds=20.0)   # 사전 등록 규칙: 모델확률×배�
 
 
 # ---------- 출전표 정규화 ----------
-def load_entries(path, date):
+def today_from_results(hist_path, date):
+    """경주성적 API는 경주 당일 아침에도 출전마 행(착순 0, 배당 0)을 준다. 장구(hrTool)·기수 변경을 여기서 가져온다."""
+    if not hist_path or not os.path.exists(hist_path): return None
+    r = pd.read_csv(hist_path, encoding='utf-8-sig', dtype=str, usecols=lambda c: c in ('src_meet', 'rcDate', 'rcNo', 'chulNo', 'hrNo', 'jkNo', 'hrTool'))
+    r = r[(r['rcDate'] == date) & (r.get('src_meet', pd.Series('1', index=r.index)).astype(str) == str(MEET))]
+    if r.empty: return None
+    r['rcNo'] = K.num(r['rcNo']); r['chulNo'] = K.num(r['chulNo'])
+    return r.drop_duplicates(['rcNo', 'chulNo']).set_index(['rcNo', 'chulNo'])
+
+
+def load_entries(path, date, hist_path=None):
     e = pd.read_csv(path, encoding='utf-8-sig', dtype=str)
     dcol = 'rcDate' if 'rcDate' in e.columns else ('src_date' if 'src_date' in e.columns else None)
     if dcol: e = e[e[dcol].astype(str) == date]
@@ -42,6 +52,19 @@ def load_entries(path, date):
     out['hrTool'] = e['hrTool'] if 'hrTool' in e.columns else np.nan
     out['cls'] = K.num(e['rank'].str.extract(r'(\d)등급')[0]) if 'rank' in e.columns else np.nan
     for c in ['rcNo', 'chulNo', 'rcDist', 'wgBudam', 'rating', 'age']: out[c] = K.num(out[c])
+    out['rating'] = out['rating'].fillna(0)   # 출전표는 레이팅 없음을 '-'로, 학습 데이터(경주성적)는 0으로 표기
+    T = today_from_results(hist_path, date)
+    if out['hrTool'].isna().all():
+        if T is None:
+            print('[주의] 출전표에 장구 정보가 없고, 경주성적 CSV에도 오늘 출전마가 없습니다 → 장구 변경 요인은 0으로 처리됩니다.')
+        else:
+            key = list(zip(out['rcNo'], out['chulNo']))
+            same = [T['hrNo'].get(k) == h for k, h in zip(key, out['hrNo'])]
+            out['hrTool'] = [T['hrTool'].get(k) if ok else np.nan for k, ok in zip(key, same)]
+            jk = [T['jkNo'].get(k) for k in key]
+            chg = sum(1 for a, b in zip(jk, out['jkNo']) if isinstance(a, str) and a != b)
+            if chg: out['jkNo'] = [a if isinstance(a, str) else b for a, b in zip(jk, out['jkNo'])]
+            print(f'장구 정보: 경주성적 CSV의 오늘 출전마 {sum(same)}/{len(out)}두에서 가져옴' + (f', 기수 변경 {chg}건 반영' if chg else ''))
     return out.sort_values(['rcNo', 'chulNo']).reset_index(drop=True)
 
 
@@ -152,7 +175,7 @@ def load_common(a):
 
 def cmd_predict(a):
     H, ref, w = load_common(a)
-    E = load_entries(a.entries, a.date) if a.entries else entries_from_history(H, a.date)
+    E = load_entries(a.entries, a.date, a.history) if a.entries else entries_from_history(H, a.date)
     inp = read_input(a.input or f'input_{a.date}.csv')
     P = predict_day(E, H, ref, a.date, inp, w, races=a.race)
     if len(P):
@@ -185,7 +208,7 @@ def _parse_list(txt, n, kind):
 def cmd_quick(a):
     """한 경주를 빠르게 입력: 배당과 마체중 증감을 마번 순서대로 한 줄씩"""
     H, ref, w = load_common(a)
-    E = load_entries(a.entries, a.date) if a.entries else entries_from_history(H, a.date)
+    E = load_entries(a.entries, a.date, a.history) if a.entries else entries_from_history(H, a.date)
     path = a.input or f'input_{a.date}.csv'
     if os.path.exists(path):
         t = pd.read_csv(path, encoding='utf-8-sig', dtype=str).fillna('')

@@ -34,6 +34,15 @@ public class RawStore {
 
     public boolean exists(String api, int meet, LocalDate date) { return file(api, meet, date).isFile(); }
 
+    /** 확정된 파일인가: 경주일 다음 날 이후에 저장된 파일만 확정으로 본다.
+     *  경주 당일(또는 그 전)에 받은 파일은 경주 전 데이터(착순·배당 없음)일 수 있으므로 다시 받는다. */
+    public boolean isFinal(String api, int meet, LocalDate date) {
+        File f = file(api, meet, date);
+        if (!f.isFile()) return false;
+        LocalDate saved = java.time.Instant.ofEpochMilli(f.lastModified()).atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return saved.isAfter(date);
+    }
+
     public void save(String api, int meet, LocalDate date, List<JsonNode> items) throws IOException {
         File f = file(api, meet, date);
         File dir = f.getParentFile();

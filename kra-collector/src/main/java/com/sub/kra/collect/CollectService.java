@@ -57,7 +57,7 @@ public class CollectService {
                 for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
                     if (!props.getWeekdays().isEmpty() && !props.getWeekdays().contains(d.getDayOfWeek())) continue;
                     boolean skip = def.getSkipExisting() != null ? def.getSkipExisting() : props.isSkipExisting();
-                    if (skip && store.exists(api, meet, d)) { s.skipped++; continue; }
+                    if (skip && store.isFinal(api, meet, d)) { s.skipped++; continue; }
                     Map<String, String> p = new LinkedHashMap<String, String>(def.getExtraParams());
                     p.put(def.getMeetParam(), String.valueOf(meet));
                     p.put(def.getDateParam(), d.format(fmt));
