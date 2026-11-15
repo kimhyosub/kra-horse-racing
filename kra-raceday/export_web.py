@@ -31,6 +31,14 @@ def clean(v):
     return None if math.isnan(v) else round(v, 6)
 
 
+def text(v):
+    """출전표의 빈 칸(NaN)은 JSON에 null로"""
+    if v is None or (isinstance(v, float) and math.isnan(v)):
+        return None
+    v = str(v).strip()
+    return v or None
+
+
 def standardize(F, feats, binary):
     X = np.zeros((len(F), len(feats)))
     for j, f in enumerate(feats):
@@ -88,8 +96,9 @@ def export(a):
                 nm = names.loc[key] if key in names.index else None
                 fin = res.get(key)
                 horses.append({
-                    'no': int(h['chulNo']), 'hrNo': str(h['hrNo']), 'name': h['hrName'],
-                    'jkName': jk_today.get(key) or (None if nm is None else nm.get('jkName')), 'trName': None if nm is None else nm.get('trName'),
+                    'no': int(h['chulNo']), 'hrNo': str(h['hrNo']), 'name': text(h['hrName']),
+                    'jkName': text(jk_today.get(key)) or (None if nm is None else text(nm.get('jkName'))),
+                    'trName': None if nm is None else text(nm.get('trName')),
                     'days': clean(h['days']), 'first': int(h['first']),
                     'f': [None if f in DAY_ONLY else clean(h[f]) for f in K.FEATS],
                     'preP': round(float(p[i]), 5), 'preRank': int(rank[i]),
@@ -100,7 +109,7 @@ def export(a):
         print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두')
     os.makedirs(a.out, exist_ok=True)
     path = os.path.join(a.out, f'day-{a.date}.json')
-    json.dump(doc, open(path, 'w', encoding='utf-8'), ensure_ascii=False)
+    json.dump(doc, open(path, 'w', encoding='utf-8'), ensure_ascii=False, allow_nan=False)   # NaN이 섞이면 여기서 바로 오류
     print('저장', path)
 
 

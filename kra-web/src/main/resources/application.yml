@@ -11,6 +11,9 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+    properties:
+      # H2 2.x 예약어와 겹치는 이름이 있어도 테이블이 만들어지도록 이름을 따옴표로 감싼다
+      hibernate.globally_quoted_identifiers: true
   thymeleaf:
     cache: false
 

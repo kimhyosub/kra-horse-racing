@@ -11,11 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
 import java.util.*;
 
 @Controller
 public class RaceController {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RaceController.class);
 
     private final RaceService raceService;
     private final ImportService importService;
@@ -70,9 +71,32 @@ public class RaceController {
     }
 
     @PostMapping("/admin/import")
-    public String importAll(RedirectAttributes ra) throws IOException {
-        List<String> files = importService.importAll();
-        ra.addFlashAttribute("msg", files.isEmpty() ? "불러올 파일이 없습니다." : "불러옴: " + String.join(", ", files));
+    public String importAll(RedirectAttributes ra) {
+        java.io.File dir = importService.getDir();
+        java.io.File[] files = dir.listFiles((d, n) -> n.startsWith("day-") && n.endsWith(".json"));
+        if (files == null || files.length == 0) {
+            ra.addFlashAttribute("msg", dir.isDirectory()
+                    ? "폴더에 day-YYYYMMDD.json 파일이 없습니다: " + dir.getAbsolutePath()
+                    : "폴더가 없습니다: " + dir.getAbsolutePath() + " (폴더를 만들거나 GACHIMA_IMPORT_DIR 을 바꾸세요)");
+            return "redirect:/admin";
+        }
+        Arrays.sort(files);
+        List<String> ok = new ArrayList<>(), fail = new ArrayList<>();
+        for (java.io.File f : files) {
+            try {
+                importService.importFile(f);
+                ok.add(f.getName());
+            } catch (Exception e) {
+                log.error("불러오기 실패 {}", f.getName(), e);
+                Throwable root = e;
+                while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+                fail.add(f.getName() + " → " + root.getClass().getSimpleName() + ": " + root.getMessage());
+            }
+        }
+        StringBuilder msg = new StringBuilder();
+        if (!ok.isEmpty()) msg.append("불러옴: ").append(String.join(", ", ok)).append(". ");
+        if (!fail.isEmpty()) msg.append("실패: ").append(String.join(" / ", fail));
+        ra.addFlashAttribute("msg", msg.toString().trim());
         return "redirect:/admin";
     }
 }
