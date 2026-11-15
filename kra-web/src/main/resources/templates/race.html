@@ -36,16 +36,16 @@
     </div>
     <div class="tote">
       <div><h2>전날 예상 5두</h2>
-        <div class="seq"><th:block th:each="h : ${v.preTop5}" th:insert="~{fragments :: cloth(${h.no})}"></th:block></div></div>
+        <div class="seq"><th:block th:each="h : ${v.preTop5}"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block></th:block></div></div>
       <div class="val"><h2>당일 분석 · 가치마</h2>
         <div class="seq" th:if="${v.scored}">
-          <th:block th:each="h : ${v.dayTop3}" th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+          <th:block th:each="h : ${v.dayTop3}"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block></th:block>
           <span th:if="${#lists.isEmpty(v.values)}">가치마 없음</span>
           <span th:each="h : ${v.values}" style="color:var(--value)" th:text="|★ ${h.no}번 ${h.odds}배|"></span>
         </div>
         <div class="seq" th:unless="${v.scored}"><span>당일 배당 입력 전</span></div></div>
       <div><h2>확정 착순</h2>
-        <div class="seq"><th:block th:each="n : ${v.result}" th:insert="~{fragments :: cloth(${n})}"></th:block>
+        <div class="seq"><th:block th:each="n : ${v.result}"><th:block th:insert="~{fragments :: cloth(${n})}"></th:block></th:block>
           <span th:if="${#lists.isEmpty(v.result)}">경주 전</span></div></div>
     </div>
   </section>
@@ -112,9 +112,9 @@
                 <span class="mv up" th:if="${h.move > 0}" th:text="|▲${h.move}|"></span>
                 <span class="mv dn" th:if="${h.move < 0}" th:text="|▼${-h.move}|"></span>
                 <span class="mv dn" th:if="${h.move == 0}">–</span></b>
-              <small th:text="|${h.jk} · ${h.odds}배${h.inputBwd != null ? ' · ' + (h.inputBwd > 0 ? '+' : '') + #numbers.formatDecimal(h.inputBwd,1,0) + 'kg' : ''}|"></small></div></span>
+              <small th:text="${h.daySub}"></small></div></span>
           <span class="gauge"><span class="track"></span>
-            <span class="gap" th:style="|left:${h.gapLeft}%;width:${h.gapWidth}%;background:var(${h.up ? '--value' : '--line'});opacity:${h.up ? 0.55 : 1}|"></span>
+            <span class="gap" th:style="|left:${h.gapLeft}%;width:${h.gapWidth}%;${h.gapStyle}|"></span>
             <span class="t m" th:style="|left:${h.xm}%|"></span><span class="t p" th:style="|left:${h.xp}%|"></span>
             <span class="lab" th:style="|left:${h.xp}%|" th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></span></span>
           <span class="ev"><b th:text="${#numbers.formatDecimal(h.ev,1,2)}"></b><small>기대값</small></span>
@@ -122,8 +122,8 @@
         </summary>
         <div class="why"><p th:text="${h.why}"></p>
           <div class="fac" th:each="g : ${h.groups}"><span th:text="${g.name}"></span>
-            <span class="axis"><em th:style="|left:${g.left}%;width:${g.width}%;background:var(${g.positive ? '--model' : '--mkt'})|"></em></span>
-            <span class="v" th:text="${(g.positive ? '+' : '') + #numbers.formatDecimal(g.value,1,2)}"></span></div>
+            <span class="axis"><em th:style="|left:${g.left}%;width:${g.width}%;background:var(${g.color})|"></em></span>
+            <span class="v" th:text="${g.label}"></span></div>
         </div>
       </details>
     </div>

@@ -226,6 +226,13 @@ public class RaceService {
         public double getGapLeft() { return Math.min(xm, xp); }
         public double getGapWidth() { return Math.abs(xp - xm); }
         public boolean isUp() { return xp > xm; }
+        public String getGapStyle() { return isUp() ? "background:var(--value);opacity:.55" : "background:var(--line);opacity:1"; }
+        public String getDaySub() {
+            StringBuilder b = new StringBuilder();
+            b.append(jk == null ? "-" : jk).append(" · ").append(odds).append("배");
+            if (inputBwd != null) b.append(" · ").append(inputBwd > 0 ? "+" : "").append(Math.round(inputBwd)).append("kg");
+            return b.toString();
+        }
     }
 
     public static class GroupBar {
@@ -236,5 +243,7 @@ public class RaceService {
             this.left = value >= 0 ? 50 : 50 - width;
         }
         public boolean isPositive() { return value >= 0; }
+        public String getColor() { return value >= 0 ? "--model" : "--mkt"; }
+        public String getLabel() { return (value >= 0 ? "+" : "") + String.format("%.2f", value); }
     }
 }
