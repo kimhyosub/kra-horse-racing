@@ -67,3 +67,10 @@ python raceday.py replay --date 20261025 --race 4 5 6
 - 규칙과 가중치는 바꾸지 않고 **300회 이상** 기록
 - 누적 회수율이 100%를 안정적으로 넘을 때만 소액 실전 검토
 - 기본 경로를 바꾸려면 `--history`, `--referee`, `--log` 옵션 사용
+
+## 웹(가치마)용 내보내기
+전날 저녁 출전표를 받은 뒤, 그리고 경주가 끝나고 결과를 받은 뒤 한 번씩:
+```
+python export_web.py --date 20261120 --meets 2,3 --out C:/kra-data/web
+```
+→ `C:/kra-data/web/day-20261120.json` (전날 예상 1~5위 + 당일 계산용 요인값 + 확정 착순). 웹 사용법은 `kra-web/README.md`.

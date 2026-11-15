@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>가치마 · 관리</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap">
+  <header class="brand"><div class="logo"><div><b>가치마</b><small>데이터 불러오기</small></div></div></header>
+  <div class="flash" th:if="${msg}" th:text="${msg}"></div>
+  <section class="input">
+    <p class="hint">export_web.py 가 만든 <code>day-YYYYMMDD.json</code> 파일을 이 폴더에서 불러옵니다: <code th:text="${dir}"></code></p>
+    <p class="hint">전날 저녁에 한 번(전날 예상), 경주가 끝난 뒤 한 번 더(확정 착순) 불러오면 됩니다. 당일 입력한 배당은 지워지지 않습니다.</p>
+    <form method="post" th:action="@{/admin/import}"><button class="btn" type="submit">폴더에서 불러오기</button></form>
+  </section>
+  <table class="days">
+    <thead><tr><th>날짜</th><th>경마장</th><th></th></tr></thead>
+    <tbody>
+      <tr th:each="d : ${days}"><td th:text="${d.raceDate}"></td><td th:text="${d.meetName}"></td>
+        <td><a th:href="@{|/r/${d.raceDate}/${d.meet}/1|}">경주 보기</a></td></tr>
+      <tr th:if="${#lists.isEmpty(days)}"><td colspan="3">아직 불러온 경주일이 없습니다.</td></tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

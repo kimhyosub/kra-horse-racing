@@ -11,3 +11,7 @@ __pycache__/
 paper_log.csv
 input_*.csv
 *.pkl
+
+# 가치마 웹: 설정 파일은 커밋, 로컬 DB는 제외
+!kra-web/src/main/resources/application.yml
+kra-web/data/

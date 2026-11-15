@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title th:text="|가치마 · ${v.meetName} ${v.rcNo}R|">가치마</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap" th:with="base=|/r/${v.date}/${v.meet}/${v.rcNo}|">
+
+  <header class="brand">
+    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none">
+      <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" fill="var(--ink)"/><path d="M8 22 L14 22" stroke="var(--mkt)" stroke-width="3" stroke-linecap="round"/><path d="M14 22 L26 10" stroke="var(--value)" stroke-width="3.4" stroke-linecap="round"/><circle cx="26" cy="10" r="3" fill="var(--value)"/></svg>
+      <div><b>가치마</b><small>전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div>
+    </a>
+    <nav class="meets">
+      <span class="date" th:text="${v.dateLabel}">2026.11.15</span>
+      <a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
+         th:attr="aria-current=${m.meet == v.meet}">서울</a>
+    </nav>
+  </header>
+
+  <section class="board">
+    <nav class="tabs" aria-label="경주 선택">
+      <a th:each="t : ${v.tabs}" class="tab" th:href="@{|/r/${v.date}/${v.meet}/${t.rcNo}|(mode=${mode})}"
+         th:attr="aria-selected=${t.rcNo == v.rcNo}">[[${t.rcNo}]]R<i class="lit" th:if="${t.value}"></i></a>
+    </nav>
+    <div class="race">
+      <div class="no" th:text="|${v.rcNo}R|">7R</div>
+      <h1 th:text="|${v.meetName} ${v.rcNo}경주|">서울 7경주</h1>
+      <div class="meta"><span th:text="|${v.stTime} 출발|"></span><span th:text="|${v.dist}m|"></span>
+        <span th:text="${v.track}"></span><span th:text="|${#lists.size(v.entries)}두|"></span>
+        <span th:if="${!#lists.isEmpty(v.result)}">결과 확정</span></div>
+    </div>
+    <div class="tote">
+      <div><h2>전날 예상 5두</h2>
+        <div class="seq"><th:block th:each="h : ${v.preTop5}" th:insert="~{fragments :: cloth(${h.no})}"></th:block></div></div>
+      <div class="val"><h2>당일 분석 · 가치마</h2>
+        <div class="seq" th:if="${v.scored}">
+          <th:block th:each="h : ${v.dayTop3}" th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+          <span th:if="${#lists.isEmpty(v.values)}">가치마 없음</span>
+          <span th:each="h : ${v.values}" style="color:var(--value)" th:text="|★ ${h.no}번 ${h.odds}배|"></span>
+        </div>
+        <div class="seq" th:unless="${v.scored}"><span>당일 배당 입력 전</span></div></div>
+      <div><h2>확정 착순</h2>
+        <div class="seq"><th:block th:each="n : ${v.result}" th:insert="~{fragments :: cloth(${n})}"></th:block>
+          <span th:if="${#lists.isEmpty(v.result)}">경주 전</span></div></div>
+    </div>
+  </section>
+
+  <div class="mode">
+    <div class="seg" role="group" aria-label="분석 단계">
+      <a th:href="@{${base}(mode='pre')}" th:attr="aria-current=${mode == 'pre'}">전날 예상</a>
+      <a th:href="@{${base}(mode='day')}" th:attr="aria-current=${mode == 'day'}">당일 분석</a>
+    </div>
+    <div class="seg" role="group" aria-label="정렬" th:if="${mode == 'day' and v.scored}">
+      <a th:href="@{${base}(mode='day',sort='p')}" th:attr="aria-current=${sort == 'p'}">우승 확률순</a>
+      <a th:href="@{${base}(mode='day',sort='v')}" th:attr="aria-current=${sort == 'v'}">가치순</a>
+    </div>
+  </div>
+
+  <!-- 전날 예상 -->
+  <th:block th:if="${mode == 'pre'}">
+    <p class="hint">출전표가 나온 전날 저녁에 계산합니다. 배당과 마체중은 아직 없습니다. 위 다섯 마리가 전날 고른 1~5위입니다.</p>
+    <div class="list">
+      <div th:each="h : ${v.preOrder}" class="row" th:classappend="${h.preRank <= 5} ? 'pick'">
+        <div class="line" style="cursor:default">
+          <span class="who"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+            <div><b>[[${h.name}]] <span class="pk" th:if="${h.preRank <= 5}" th:text="|${h.preRank}위|"></span></b>
+              <small th:text="|${h.jk} · ${h.tr}|"></small></div></span>
+          <span class="gauge"><span class="track"></span>
+            <span class="gap" th:style="|left:0;width:${h.preBar}%;background:var(--model);opacity:.75|"></span>
+            <span class="lab" th:style="|left:${h.preBar}%|" th:text="${#numbers.formatDecimal(h.preP*100,1,1)} + '%'"></span></span>
+          <span class="ev"><b th:text="${h.preRank}"></b><small>전날 순위</small></span>
+          <th:block th:insert="~{fragments :: fin(${h.ord})}"></th:block>
+        </div>
+      </div>
+    </div>
+  </th:block>
+
+  <!-- 당일 분석 -->
+  <th:block th:if="${mode == 'day'}">
+    <form class="input" method="post" th:action="@{|${base}/input|}">
+      <div class="bar">
+        <span th:if="${v.inputAt != null}" th:text="|마지막 입력 ${#temporals.format(v.inputAt, 'HH:mm')}|"></span>
+        <span th:if="${v.inputAt == null}">경주 직전 배당과 마체중 증감을 넣으면 당일 모델로 다시 계산합니다.</span>
+        <a class="btn ghost" th:unless="${edit}" th:href="@{${base}(mode='day',edit=true)}">배당·마체중 입력</a>
+      </div>
+      <th:block th:if="${edit}">
+        <div class="bar"><label for="track">주로 상태</label>
+          <select id="track" name="track"><option th:each="t : ${tracks}" th:value="${t}" th:text="${t}" th:selected="${t == v.track}"></option></select>
+          <span class="hint">칸마다 단승 배당, 마체중 증감(kg). 출전 취소는 배당을 비우세요.</span></div>
+        <div class="grid">
+          <label th:each="h : ${v.entries}" th:for="|odds_${h.no}|">
+            <th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+            <input th:id="|odds_${h.no}|" th:name="|odds_${h.no}|" inputmode="decimal" placeholder="배당" th:value="${h.inputOdds}">
+            <input th:id="|bwd_${h.no}|" th:name="|bwd_${h.no}|" inputmode="numeric" placeholder="±kg" th:value="${h.inputBwd != null} ? ${#numbers.formatDecimal(h.inputBwd,1,0)} : ''">
+          </label>
+        </div>
+        <div class="bar"><button class="btn" type="submit">다시 계산</button></div>
+      </th:block>
+    </form>
+
+    <div class="legend" th:if="${v.scored}"><span><i style="background:var(--mkt)"></i>시장 확률(배당)</span><span><i style="background:var(--model)"></i>모델 확률</span><span><i style="background:var(--value)"></i>모델이 더 높게 본 차이</span><span>▲▼ 전날 순위 대비</span></div>
+    <div class="list" th:if="${v.scored}">
+      <details th:each="h : ${sort == 'v' ? v.valueOrder : v.dayOrder}" class="row" th:classappend="${h.value} ? 'value'">
+        <summary>
+          <span class="who"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+            <div><b>[[${h.name}]]
+                <span class="mv up" th:if="${h.move > 0}" th:text="|▲${h.move}|"></span>
+                <span class="mv dn" th:if="${h.move < 0}" th:text="|▼${-h.move}|"></span>
+                <span class="mv dn" th:if="${h.move == 0}">–</span></b>
+              <small th:text="|${h.jk} · ${h.odds}배${h.inputBwd != null ? ' · ' + (h.inputBwd > 0 ? '+' : '') + #numbers.formatDecimal(h.inputBwd,1,0) + 'kg' : ''}|"></small></div></span>
+          <span class="gauge"><span class="track"></span>
+            <span class="gap" th:style="|left:${h.gapLeft}%;width:${h.gapWidth}%;background:var(${h.up ? '--value' : '--line'});opacity:${h.up ? 0.55 : 1}|"></span>
+            <span class="t m" th:style="|left:${h.xm}%|"></span><span class="t p" th:style="|left:${h.xp}%|"></span>
+            <span class="lab" th:style="|left:${h.xp}%|" th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></span></span>
+          <span class="ev"><b th:text="${#numbers.formatDecimal(h.ev,1,2)}"></b><small>기대값</small></span>
+          <th:block th:insert="~{fragments :: fin(${h.ord})}"></th:block>
+        </summary>
+        <div class="why"><p th:text="${h.why}"></p>
+          <div class="fac" th:each="g : ${h.groups}"><span th:text="${g.name}"></span>
+            <span class="axis"><em th:style="|left:${g.left}%;width:${g.width}%;background:var(${g.positive ? '--model' : '--mkt'})|"></em></span>
+            <span class="v" th:text="${(g.positive ? '+' : '') + #numbers.formatDecimal(g.value,1,2)}"></span></div>
+        </div>
+      </details>
+    </div>
+  </th:block>
+
+  <footer>
+    <span>전날 예상: 배당 없이 과거 기록, 전개, 폼, 거리, 기수·조교사 등 21개 요인만으로 계산한 우승 확률입니다. 2025년 7월 이후 3,201경주 검증에서 1위 적중 29.9%, 상위 5두 안에 우승마 80.1%였습니다.</span>
+    <span>당일 분석: 당일 배당을 출발점으로 마체중, 주로 상태까지 더해 다시 계산합니다. 기대값 = 모델 확률 × 배당. 1.10 이상이고 배당 20배 이하이면 가치마입니다.</span>
+    <span>정보 제공용이며 마권 구매 기능은 없습니다.</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,240 @@
+package com.sub.gachima.service;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sub.gachima.domain.*;
+import com.sub.gachima.domain.Repositories.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/** 경주 화면에 필요한 값을 모으고, 당일 입력을 저장한다. */
+@Service
+public class RaceService {
+
+    public static final List<String> TRACKS = Arrays.asList("건조", "양호", "다습", "포화", "불량");
+
+    private final MeetDayRepository meetDays;
+    private final RaceRepository races;
+    private final DayInputRepository inputs;
+    private final ObjectMapper om;
+
+    public RaceService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, ObjectMapper om) {
+        this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.om = om;
+    }
+
+    public Optional<MeetDay> latest() {
+        return meetDays.findAllByOrderByRaceDateDescMeetAsc().stream().findFirst();
+    }
+
+    public List<MeetDay> meetsOn(String date) { return meetDays.findByRaceDateOrderByMeet(date); }
+
+    public List<MeetDay> allMeetDays() { return meetDays.findAllByOrderByRaceDateDescMeetAsc(); }
+
+    // ---------------- 화면 ----------------
+
+    @Transactional(readOnly = true)
+    public Optional<RaceView> view(String date, int meet, int rcNo) {
+        Optional<MeetDay> md = meetDays.findByRaceDateAndMeet(date, meet);
+        if (!md.isPresent()) return Optional.empty();
+        List<Race> all = races.findByMeetDayOrderByRcNo(md.get());
+        Optional<Race> race = all.stream().filter(r -> r.getRcNo() == rcNo).findFirst();
+        if (!race.isPresent()) return Optional.empty();
+
+        DayModel model = model(md.get());
+        RaceView v = new RaceView();
+        v.date = date; v.meet = meet; v.meetName = md.get().getMeetName();
+        v.meets = meetsOn(date).stream().map(m -> new MeetTab(m.getMeet(), m.getMeetName())).collect(Collectors.toList());
+        for (Race r : all) v.tabs.add(new RaceTab(r.getRcNo(), r.getStTime(), hasValue(model, r)));
+        fill(v, race.get(), model);
+        return Optional.of(v);
+    }
+
+    private boolean hasValue(DayModel model, Race r) {
+        Optional<DayInput> in = inputs.findFirstByRaceOrderByCreatedAtDescIdDesc(r);
+        if (!in.isPresent()) return false;
+        return model.score(horses(r, in.get()), in.get().getTrack()).stream().anyMatch(x -> x.value);
+    }
+
+    private void fill(RaceView v, Race race, DayModel model) {
+        v.rcNo = race.getRcNo(); v.stTime = race.getStTime(); v.dist = race.getDist();
+        Optional<DayInput> in = inputs.findFirstByRaceOrderByCreatedAtDescIdDesc(race);
+        v.track = in.map(DayInput::getTrack).orElse("건조");
+        v.inputAt = in.map(DayInput::getCreatedAt).orElse(null);
+        Map<Integer, Double> odds = in.map(i -> readMap(i.getOddsJson())).orElse(Collections.emptyMap());
+        Map<Integer, Double> bwd = in.map(i -> readMap(i.getBwdJson())).orElse(Collections.emptyMap());
+
+        Map<Integer, DayModel.Result> day = new HashMap<>();
+        if (in.isPresent()) for (DayModel.Result r : model.score(horses(race, in.get()), v.track)) day.put(r.no, r);
+        List<DayModel.Result> byP = new ArrayList<>(day.values());
+        byP.sort((a, b) -> Double.compare(b.pModel, a.pModel));
+        Map<Integer, Integer> dayRank = new HashMap<>();
+        for (int i = 0; i < byP.size(); i++) dayRank.put(byP.get(i).no, i + 1);
+        double maxAbs = 0.15;
+        for (DayModel.Result r : byP) for (double g : r.groups.values()) maxAbs = Math.max(maxAbs, Math.abs(g));
+        double scale = 0;
+        for (DayModel.Result r : byP) scale = Math.max(scale, Math.max(r.pModel, r.pMarket));
+        scale *= 1.08;
+        double preMax = race.getEntries().stream().mapToDouble(Entry::getPreP).max().orElse(1) * 1.08;
+
+        for (Entry e : race.getEntries()) {
+            EntryView x = new EntryView();
+            x.no = e.getChulNo(); x.name = e.getHrName(); x.jk = e.getJkName(); x.tr = e.getTrName();
+            x.preP = e.getPreP(); x.preRank = e.getPreRank(); x.preBar = e.getPreP() / preMax * 100;
+            x.ord = e.getFinishOrd(); x.finalOdds = e.getFinalOdds();
+            x.inputOdds = odds.get(e.getChulNo()); x.inputBwd = bwd.get(e.getChulNo());
+            x.firstStart = e.isFirstStart();
+            DayModel.Result r = day.get(e.getChulNo());
+            if (r != null) {
+                x.scored = true; x.odds = r.odds; x.pm = r.pMarket; x.p = r.pModel; x.ev = r.ev; x.value = r.value;
+                x.dayRank = dayRank.get(x.no); x.move = x.preRank - x.dayRank;
+                x.xm = r.pMarket / scale * 100; x.xp = r.pModel / scale * 100;
+                for (Map.Entry<String, Double> g : r.groups.entrySet()) x.groups.add(new GroupBar(g.getKey(), g.getValue(), maxAbs));
+                x.why = why(x, r);
+            }
+            v.entries.add(x);
+        }
+        v.preOrder = v.entries.stream().sorted(Comparator.comparingInt(a -> a.preRank)).collect(Collectors.toList());
+        v.dayOrder = v.entries.stream().filter(a -> a.scored).sorted((a, b) -> Double.compare(b.p, a.p)).collect(Collectors.toList());
+        v.valueOrder = v.entries.stream().filter(a -> a.scored).sorted((a, b) -> Double.compare(b.ev, a.ev)).collect(Collectors.toList());
+        v.result = v.entries.stream().filter(a -> a.ord != null && a.ord <= 3).sorted(Comparator.comparingInt(a -> a.ord))
+                .map(a -> a.no).collect(Collectors.toList());
+        v.values = v.dayOrder.stream().filter(a -> a.value).collect(Collectors.toList());
+    }
+
+    private static String why(EntryView x, DayModel.Result r) {
+        List<Map.Entry<String, Double>> g = new ArrayList<>(r.groups.entrySet());
+        g.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+        List<String> up = g.stream().filter(e -> e.getValue() > 0.02).limit(2).map(Map.Entry::getKey).collect(Collectors.toList());
+        List<String> dn = new ArrayList<>();
+        for (int i = g.size() - 1; i >= 0 && dn.size() < 2; i--) if (g.get(i).getValue() < -0.02) dn.add(g.get(i).getKey());
+        StringBuilder s = new StringBuilder(String.format("시장 %.1f%% → 모델 %.1f%%.", r.pMarket * 100, r.pModel * 100));
+        if (!up.isEmpty()) s.append(" 더한 요인: ").append(String.join(", ", up)).append('.');
+        if (!dn.isEmpty()) s.append(" 뺀 요인: ").append(String.join(", ", dn)).append('.');
+        s.append(String.format(" (전날 예상 %d위, %.1f%%)", x.preRank, x.preP * 100));
+        return s.toString();
+    }
+
+    // ---------------- 당일 입력 ----------------
+
+    @Transactional
+    public void saveInput(String date, int meet, int rcNo, String track, Map<Integer, String> odds, Map<Integer, String> bwd) {
+        MeetDay md = meetDays.findByRaceDateAndMeet(date, meet).orElseThrow(() -> new NoSuchElementException("경주일 없음"));
+        Race race = races.findByMeetDayAndRcNo(md, rcNo).orElseThrow(() -> new NoSuchElementException("경주 없음"));
+        DayInput in = new DayInput();
+        in.setRace(race);
+        in.setTrack(TRACKS.contains(track) ? track : "건조");
+        in.setOddsJson(write(parse(odds, true)));
+        in.setBwdJson(write(parse(bwd, false)));
+        in.setSource("manual");
+        in.setCreatedAt(LocalDateTime.now());
+        inputs.save(in);
+    }
+
+    /** "12.5", "+3", "-4" 같은 입력을 숫자로. 배당은 1.0 이상만 받는다. */
+    static Map<Integer, Double> parse(Map<Integer, String> raw, boolean odds) {
+        Map<Integer, Double> out = new TreeMap<>();
+        for (Map.Entry<Integer, String> e : raw.entrySet()) {
+            String s = e.getValue() == null ? "" : e.getValue().trim().replace("+", "").replace("배", "");
+            if (s.isEmpty() || s.equals("-")) continue;
+            try {
+                double d = Double.parseDouble(s);
+                if (odds && d < 1.0) continue;
+                out.put(e.getKey(), d);
+            } catch (NumberFormatException ignore) { /* 숫자가 아닌 칸은 비운 것으로 본다 */ }
+        }
+        return out;
+    }
+
+    // ---------------- 내부 ----------------
+
+    DayModel model(MeetDay md) {
+        try {
+            List<String> feats = om.readValue(md.getFeatsJson(), new TypeReference<List<String>>() {});
+            List<String> bin = om.readValue(md.getBinJson(), new TypeReference<List<String>>() {});
+            double[] w = om.readValue(md.getDayWeightsJson(), double[].class);
+            return new DayModel(feats, bin, w);
+        } catch (IOException e) { throw new UncheckedIOException(e); }
+    }
+
+    private List<DayModel.Horse> horses(Race race, DayInput in) {
+        Map<Integer, Double> odds = readMap(in.getOddsJson()), bwd = readMap(in.getBwdJson());
+        List<DayModel.Horse> out = new ArrayList<>();
+        for (Entry e : race.getEntries()) {
+            Double o = odds.get(e.getChulNo());
+            if (o == null) continue;   // 배당 없음 = 출전 취소
+            out.add(new DayModel.Horse(e.getChulNo(), readArray(e.getFeaturesJson()), e.getDays(), o, bwd.get(e.getChulNo())));
+        }
+        return out;
+    }
+
+    private Map<Integer, Double> readMap(String json) {
+        if (json == null || json.isEmpty()) return Collections.emptyMap();
+        try { return om.readValue(json, new TypeReference<Map<Integer, Double>>() {}); }
+        catch (IOException e) { throw new UncheckedIOException(e); }
+    }
+
+    private Double[] readArray(String json) {
+        try { return om.readValue(json, Double[].class); }
+        catch (IOException e) { throw new UncheckedIOException(e); }
+    }
+
+    private String write(Object o) {
+        try { return om.writeValueAsString(o); }
+        catch (IOException e) { throw new UncheckedIOException(e); }
+    }
+
+    // ---------------- 화면용 값 ----------------
+
+    public static class RaceView {
+        public String date, meetName, stTime, track;
+        public int meet, rcNo, dist;
+        public LocalDateTime inputAt;
+        public List<MeetTab> meets = new ArrayList<>();
+        public List<RaceTab> tabs = new ArrayList<>();
+        public List<EntryView> entries = new ArrayList<>(), preOrder, dayOrder, valueOrder, values;
+        public List<Integer> result;
+        public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
+        public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }
+        public List<EntryView> getDayTop3() { return dayOrder.subList(0, Math.min(3, dayOrder.size())); }
+        public boolean isScored() { return !dayOrder.isEmpty(); }
+    }
+
+    public static class MeetTab {
+        public final int meet; public final String name;
+        MeetTab(int meet, String name) { this.meet = meet; this.name = name; }
+    }
+
+    public static class RaceTab {
+        public final int rcNo; public final String stTime; public final boolean value;
+        RaceTab(int rcNo, String stTime, boolean value) { this.rcNo = rcNo; this.stTime = stTime; this.value = value; }
+    }
+
+    public static class EntryView {
+        public int no, preRank;
+        public Integer ord, dayRank, move;
+        public String name, jk, tr, why;
+        public double preP, preBar, odds, pm, p, ev, xm, xp;
+        public Double finalOdds, inputOdds, inputBwd;
+        public boolean scored, value, firstStart;
+        public List<GroupBar> groups = new ArrayList<>();
+        public double getGapLeft() { return Math.min(xm, xp); }
+        public double getGapWidth() { return Math.abs(xp - xm); }
+        public boolean isUp() { return xp > xm; }
+    }
+
+    public static class GroupBar {
+        public final String name; public final double value, left, width;
+        GroupBar(String name, double value, double maxAbs) {
+            this.name = name; this.value = value;
+            this.width = Math.abs(value) / maxAbs * 50;
+            this.left = value >= 0 ? 50 : 50 - width;
+        }
+        public boolean isPositive() { return value >= 0; }
+    }
+}

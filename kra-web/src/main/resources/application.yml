@@ -1,0 +1,19 @@
+server:
+  port: 8090
+
+spring:
+  datasource:
+    # 개발용 파일 DB (kra-web/data/gachima.mv.db). 운영은 MySQL/PostgreSQL 주소로 교체
+    url: jdbc:h2:file:./data/gachima;AUTO_SERVER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  thymeleaf:
+    cache: false
+
+gachima:
+  # export_web.py 가 day-YYYYMMDD.json 을 쓰는 폴더
+  import-dir: ${GACHIMA_IMPORT_DIR:C:/kra-data/web}

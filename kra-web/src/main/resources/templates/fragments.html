@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 마번 번호판: 한국 경마 마번 색 -->
+<span th:fragment="cloth(no)" class="cloth"
+      th:with="c=${ {'#ffffff','#f2c230','#d8352a','#1d1d1d','#3b5fc4','#2f8a4a','#7a3b22','#f1a6c2','#7b4bb3','#7fc4e8','#e8e4d8','#9fb83a','#e07b2a','#5a5a5a'} },
+               t=${ {'#111','#111','#fff','#fff','#fff','#fff','#fff','#111','#fff','#111','#111','#111','#111','#fff'} },
+               i=${(no - 1) % 14}"
+      th:style="|background:${c[i]};color:${t[i]}|" th:text="${no}">1</span>
+
+<span th:fragment="fin(ord)" class="fin" th:classappend="${ord != null and ord == 1} ? 'w' : (${ord != null and ord <= 3} ? 'p' : '')"
+      th:text="${ord != null} ? |${ord}착| : '-'">-</span>
+</body>
+</html>
