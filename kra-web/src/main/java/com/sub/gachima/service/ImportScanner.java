@@ -1,5 +1,7 @@
 package com.sub.gachima.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sub.gachima.domain.ImportLog;
 import com.sub.gachima.domain.Repositories.ImportLogRepository;
 import org.slf4j.Logger;
@@ -23,10 +25,11 @@ public class ImportScanner {
     private final ImportService importService;
     private final ImportLogRepository logs;
     private final boolean auto;
+    private final ObjectMapper om;
 
-    public ImportScanner(ImportService importService, ImportLogRepository logs,
+    public ImportScanner(ImportService importService, ImportLogRepository logs, ObjectMapper om,
                          @Value("${gachima.auto-import:true}") boolean auto) {
-        this.importService = importService; this.logs = logs; this.auto = auto;
+        this.importService = importService; this.logs = logs; this.om = om; this.auto = auto;
     }
 
     public boolean isAuto() { return auto; }
@@ -71,6 +74,14 @@ public class ImportScanner {
     }
 
     public List<ImportLog> history() { return logs.findAllByOrderByFileNameDesc(); }
+
+    /** automation/kra-daily.ps1 이 남기는 마지막 자동 수집 결과 (없으면 null) */
+    public Map<String, Object> collectStatus() {
+        File f = new File(importService.getDir(), "collect-status.json");
+        if (!f.isFile()) return null;
+        try { return om.readValue(f, new TypeReference<Map<String, Object>>() {}); }
+        catch (Exception e) { log.warn("collect-status.json 읽기 실패: {}", e.getMessage()); return null; }
+    }
 
     static String rootMessage(Throwable e) {
         Throwable root = e;

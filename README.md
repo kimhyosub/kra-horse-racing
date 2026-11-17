@@ -6,7 +6,9 @@
 |---|---|---|
 | `kra-collector/` | 공공데이터포털 API 수집기 (경주성적, 복승/통합 확정배당, 심판, 출전표) → 원본 JSON + CSV | Java 8 / Spring Boot 2.7 |
 | `kra-analysis/` | 경주 시점 특징값 생성, 가설·규칙 검증, 시장+요인 모델 학습/검증 | Python (pandas, numpy, scipy) |
-| `kra-raceday/` | 경주 당일 분석: 출전표 + 배당·마체중 입력 → 모델확률/기대값, 모의베팅 기록·정산 | Python (pandas, numpy) |
+| `kra-raceday/` | 경주 당일 분석: 출전표 + 배당·마체중 입력 → 모델확률/기대값, 모의베팅 기록·정산, 웹용 내보내기 | Python (pandas, numpy) |
+| `kra-web/` | 가치마 웹: 전날 예상 · 당일 배당 재계산 · 성적 | Java 8 / Spring Boot 2.7 / Thymeleaf |
+| `automation/` | 매일 밤 자동 수집 → 웹용 파일 (윈도우 작업 스케줄러) | PowerShell |
 
 - 인증키는 코드에 넣지 않고 환경변수 `KRA_SERVICE_KEY`로만 사용합니다.
 - 수집 데이터(`kra-data/`), 모의베팅 기록, 입력 양식은 커밋하지 않습니다.

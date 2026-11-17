@@ -35,6 +35,8 @@ public class KraProperties {
     private String probeDate = "20260830";
     /** 수집 대상 API 정의 (이름 → 정의) */
     private Map<String, ApiDef> apis = new LinkedHashMap<String, ApiDef>();
+    /** CSV로 내보낼 API (비우면 원본이 있는 API 전부). 예: race-result,entry-sheet,referee */
+    private List<String> exportApis = new ArrayList<String>();
 
     public static class ApiDef {
         private boolean enabled = true;
@@ -96,4 +98,6 @@ public class KraProperties {
     public void setProbeDate(String probeDate) { this.probeDate = probeDate; }
     public Map<String, ApiDef> getApis() { return apis; }
     public void setApis(Map<String, ApiDef> apis) { this.apis = apis; }
+    public List<String> getExportApis() { return exportApis; }
+    public void setExportApis(List<String> exportApis) { this.exportApis = exportApis; }
 }

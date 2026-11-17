@@ -65,8 +65,8 @@ public class KraApiClient {
                 log.warn("API 오류 {} → 재시도 {}/{}", e.getMessage(), attempt, props.getMaxRetries());
                 sleep(2000L * attempt); // 23(초당 한도) 등은 잠시 후 재시도
             } catch (RestClientException e) {
-                if (attempt >= props.getMaxRetries()) throw new KraApiException("HTTP", e.getMessage());
-                log.warn("HTTP 오류 {} → 재시도 {}/{}", e.getMessage(), attempt, props.getMaxRetries());
+                if (attempt >= props.getMaxRetries()) throw new KraApiException("HTTP", mask(e.getMessage()));
+                log.warn("HTTP 오류 {} → 재시도 {}/{}", mask(e.getMessage()), attempt, props.getMaxRetries());
                 sleep(3000L * attempt);
             }
         }
@@ -81,6 +81,11 @@ public class KraApiClient {
         for (Map.Entry<String, String> e : params.entrySet())
             sb.append('&').append(enc(e.getKey())).append('=').append(enc(e.getValue()));
         return URI.create(sb.toString());
+    }
+
+    /** 오류 메시지에 요청 URL이 들어가면 인증키가 로그에 남으므로 가린다 */
+    static String mask(String s) {
+        return s == null ? null : s.replaceAll("(?i)(serviceKey=)[^&\"\\s]+", "$1***");
     }
 
     private static String enc(String s) {

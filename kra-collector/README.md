@@ -57,6 +57,12 @@ java -jar target/kra-collector-1.0.0.jar --kra.from=2026-08-30 --kra.to=2026-08-
 `kra-data/raw/race-result/meet1/2026/20260830.json`에 10경주 약 100두가 들어오면 정상입니다.
 비어 있으면 URL이나 날짜 파라미터 이름(`date-param`)을 확인하세요. 비어 있는 날도 `[]`로 저장되므로, 설정을 고친 뒤에는 해당 파일을 지우고 다시 실행하세요.
 
+### 자동 실행용 옵션
+
+- `--kra.export-apis=race-result,entry-sheet,referee` : 이 API들만 CSV로 다시 만듦 (비우면 전부)
+- 종료 코드: 0 정상, 2 호출 한도·인증키 문제로 중단, 3 일부 날짜 실패
+- 매일 자동으로 돌리는 방법은 `../automation/README.md`
+
 ## 4. 결과물
 
 ```

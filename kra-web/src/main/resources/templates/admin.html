@@ -24,6 +24,16 @@
       <form method="post" th:action="@{/admin/import(force=true)}"><button class="btn ghost" type="submit">전부 다시 불러오기</button></form>
     </div>
   </section>
+  <h2 class="sec">자동 수집</h2>
+  <section class="input">
+    <p class="hint" th:if="${collect == null}">아직 기록이 없습니다. automation/register-task.ps1 로 작업을 등록하거나 kra-daily.bat 을 한 번 실행하세요.</p>
+    <th:block th:if="${collect != null}">
+      <p><b th:class="${collect.ok} ? '' : 'bad'" th:text="${collect.ok} ? '정상' : '실패'"></b>
+        <span th:text="|${collect.finishedAt} 끝 · 범위 ${collect.from} ~ ${collect.to}|"></span></p>
+      <p class="hint" th:text="${collect.message}"></p>
+      <p class="hint">로그: <code th:text="${collect.log}"></code></p>
+    </th:block>
+  </section>
   <h2 class="sec">불러온 파일</h2>
   <table class="days">
     <thead><tr><th>파일</th><th>상태</th><th>불러온 시각</th></tr></thead>

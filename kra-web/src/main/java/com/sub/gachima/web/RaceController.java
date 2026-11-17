@@ -77,6 +77,7 @@ public class RaceController {
         model.addAttribute("dir", importService.getDir().getAbsolutePath());
         model.addAttribute("logs", scanner.history());
         model.addAttribute("auto", scanner.isAuto());
+        model.addAttribute("collect", scanner.collectStatus());
         return "admin";
     }
 

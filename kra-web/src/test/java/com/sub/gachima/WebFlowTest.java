@@ -85,5 +85,14 @@ class WebFlowTest {
         org.junit.jupiter.api.Assertions.assertEquals(0, second.ok.size());
         org.junit.jupiter.api.Assertions.assertEquals(1, second.skipped);
         org.junit.jupiter.api.Assertions.assertEquals(1, scanner.scan(true).ok.size());
+
+        // 자동 수집 스크립트가 남긴 상태가 관리 화면에 보인다
+        java.nio.file.Files.write(new java.io.File(dir, "collect-status.json").toPath(),
+                ("{\"startedAt\":\"2026-11-19 21:40:00\",\"finishedAt\":\"2026-11-19 21:52:10\",\"ok\":true,"
+                 + "\"from\":\"2026-11-18\",\"to\":\"2026-11-20\",\"message\":\"완료\",\"log\":\"C:\\\\kra-data\\\\logs\\\\x.log\"}")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        mvc.perform(get("/admin"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("2026-11-19 21:52:10 끝")));
     }
 }

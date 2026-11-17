@@ -100,7 +100,8 @@ def export(a):
         ds = raw_all['rcDate'].astype(str)
         dates = sorted(d for d in ds.unique() if (not a.date_from or d >= a.date_from) and (not a.date_to or d <= a.date_to))
         if not dates:
-            raise SystemExit(f'출전표에 {a.date_from}~{a.date_to} 경주일이 없습니다: {a.entries}')
+            print(f'출전표에 {a.date_from}~{a.date_to} 경주일이 없습니다: {a.entries}')
+            return
     for d in dates:
         export_day(a, d, pre, H, ref, raw_all, R)
 
@@ -148,10 +149,14 @@ def export_day(a, date, pre, H, ref, raw_all, R):
         doc['meets'].append({'meet': m, 'name': NAME[m], 'dayWeights': load_w(DAY_W[m]), 'races': races})
         print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두')
     if not doc['meets']:
+        print(f'{date}: 출전표 없음, 파일을 만들지 않음')
         return
     os.makedirs(a.out, exist_ok=True)
     path = os.path.join(a.out, f'day-{date}.json')
-    json.dump(doc, open(path, 'w', encoding='utf-8'), ensure_ascii=False, allow_nan=False)   # NaN이 섞이면 여기서 바로 오류
+    tmp = path + '.tmp'   # 웹이 쓰는 도중의 파일을 읽지 않도록 다 쓴 뒤 바꿔치기
+    with open(tmp, 'w', encoding='utf-8') as fp:
+        json.dump(doc, fp, ensure_ascii=False, allow_nan=False)   # NaN이 섞이면 여기서 바로 오류
+    os.replace(tmp, path)
     print('저장', path)
 
 
