@@ -115,3 +115,15 @@ a.tab,.seg a{text-decoration:none;display:inline-block}
 .flash{background:var(--value-soft);border-radius:10px;padding:10px 14px;font-size:13px}
 table.days{border-collapse:collapse;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 table.days td,table.days th{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}
+.meets{flex-wrap:wrap;align-items:center}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+table.days.stats{min-width:760px}
+table.days.stats th,table.days.stats td{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.days.stats th:first-child,table.days.stats td:first-child{text-align:left}
+table.days.stats thead th{font-size:12px;color:var(--muted);font-weight:500}
+table.days.stats tr.total td{font-weight:700;background:var(--value-soft)}
+table.days.stats .grp{border-left:1px solid var(--line)}
+.up{color:var(--value);font-weight:700}
+.sec{margin:22px 0 8px;font:400 18px var(--display, inherit)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.bad{color:#c0392b}

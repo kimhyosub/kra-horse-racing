@@ -20,3 +20,6 @@ spring:
 gachima:
   # export_web.py 가 day-YYYYMMDD.json 을 쓰는 폴더
   import-dir: ${GACHIMA_IMPORT_DIR:C:/kra-data/web}
+  # 폴더를 1분마다 보고 새로 생기거나 바뀐 파일만 불러온다
+  auto-import: ${GACHIMA_AUTO_IMPORT:true}
+  scan-ms: 60000

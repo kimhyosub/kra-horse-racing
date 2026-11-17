@@ -19,6 +19,7 @@
       <span class="date" th:text="${v.dateLabel}">2026.11.15</span>
       <a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
          th:attr="aria-current=${m.meet == v.meet}">서울</a>
+      <a th:href="@{/stats}">성적</a>
     </nav>
   </header>
 
@@ -84,7 +85,8 @@
   <th:block th:if="${mode == 'day'}">
     <form class="input" method="post" th:action="@{|${base}/input|}">
       <div class="bar">
-        <span th:if="${v.inputAt != null}" th:text="|마지막 입력 ${#temporals.format(v.inputAt, 'HH:mm')}|"></span>
+        <span th:if="${v.inputAt != null and v.finalInput}">경주 후 확정 최종 배당·마체중·주로로 계산했습니다. 직접 입력하면 그 값이 우선합니다.</span>
+        <span th:if="${v.inputAt != null and !v.finalInput}" th:text="|마지막 입력 ${#temporals.format(v.inputAt, 'MM.dd HH:mm')}|"></span>
         <span th:if="${v.inputAt == null}">경주 직전 배당과 마체중 증감을 넣으면 당일 모델로 다시 계산합니다.</span>
         <a class="btn ghost" th:unless="${edit}" th:href="@{${base}(mode='day',edit=true)}">배당·마체중 입력</a>
       </div>

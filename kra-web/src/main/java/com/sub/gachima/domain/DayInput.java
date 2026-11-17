@@ -26,7 +26,7 @@ public class DayInput {
     @Lob
     private String bwdJson;
 
-    /** manual / screenshot */
+    /** manual(직접 입력) / final(확정 최종 배당) / screenshot */
     @Column(length = 20)
     private String source;
 

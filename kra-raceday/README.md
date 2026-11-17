@@ -72,5 +72,6 @@ python raceday.py replay --date 20261025 --race 4 5 6
 전날 저녁 출전표를 받은 뒤, 그리고 경주가 끝나고 결과를 받은 뒤 한 번씩:
 ```
 python export_web.py --date 20261120 --meets 2,3 --out C:/kra-data/web
+python export_web.py --from 20261106 --to 20261115 --out C:/kra-data/web   # 여러 날, 경마장 자동
 ```
 → `C:/kra-data/web/day-20261120.json` (전날 예상 1~5위 + 당일 계산용 요인값 + 확정 착순). 웹 사용법은 `kra-web/README.md`.

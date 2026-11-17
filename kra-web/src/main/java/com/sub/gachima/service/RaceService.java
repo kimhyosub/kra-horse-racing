@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class RaceService {
 
     public static final List<String> TRACKS = Arrays.asList("건조", "양호", "다습", "포화", "불량");
+    public static final String SRC_MANUAL = "manual", SRC_FINAL = "final";
 
     private final MeetDayRepository meetDays;
     private final RaceRepository races;
@@ -55,15 +56,26 @@ public class RaceService {
         return Optional.of(v);
     }
 
+    /** 직접 입력이 있으면 그것, 없으면 경주 후 들어온 최종 배당 */
+    Optional<DayInput> currentInput(Race r) {
+        Optional<DayInput> m = input(r, SRC_MANUAL);
+        return m.isPresent() ? m : input(r, SRC_FINAL);
+    }
+
+    Optional<DayInput> input(Race r, String source) {
+        return inputs.findFirstByRaceAndSourceOrderByCreatedAtDescIdDesc(r, source);
+    }
+
     private boolean hasValue(DayModel model, Race r) {
-        Optional<DayInput> in = inputs.findFirstByRaceOrderByCreatedAtDescIdDesc(r);
+        Optional<DayInput> in = currentInput(r);
         if (!in.isPresent()) return false;
         return model.score(horses(r, in.get()), in.get().getTrack()).stream().anyMatch(x -> x.value);
     }
 
     private void fill(RaceView v, Race race, DayModel model) {
         v.rcNo = race.getRcNo(); v.stTime = race.getStTime(); v.dist = race.getDist();
-        Optional<DayInput> in = inputs.findFirstByRaceOrderByCreatedAtDescIdDesc(race);
+        Optional<DayInput> in = currentInput(race);
+        v.inputSource = in.map(DayInput::getSource).orElse(null);
         v.track = in.map(DayInput::getTrack).orElse("건조");
         v.inputAt = in.map(DayInput::getCreatedAt).orElse(null);
         Map<Integer, Double> odds = in.map(i -> readMap(i.getOddsJson())).orElse(Collections.emptyMap());
@@ -131,7 +143,7 @@ public class RaceService {
         in.setTrack(TRACKS.contains(track) ? track : "건조");
         in.setOddsJson(write(parse(odds, true)));
         in.setBwdJson(write(parse(bwd, false)));
-        in.setSource("manual");
+        in.setSource(SRC_MANUAL);
         in.setCreatedAt(LocalDateTime.now());
         inputs.save(in);
     }
@@ -162,7 +174,7 @@ public class RaceService {
         } catch (IOException e) { throw new UncheckedIOException(e); }
     }
 
-    private List<DayModel.Horse> horses(Race race, DayInput in) {
+    List<DayModel.Horse> horses(Race race, DayInput in) {
         Map<Integer, Double> odds = readMap(in.getOddsJson()), bwd = readMap(in.getBwdJson());
         List<DayModel.Horse> out = new ArrayList<>();
         for (Entry e : race.getEntries()) {
@@ -192,7 +204,7 @@ public class RaceService {
     // ---------------- 화면용 값 ----------------
 
     public static class RaceView {
-        public String date, meetName, stTime, track;
+        public String date, meetName, stTime, track, inputSource;
         public int meet, rcNo, dist;
         public LocalDateTime inputAt;
         public List<MeetTab> meets = new ArrayList<>();
@@ -203,6 +215,7 @@ public class RaceService {
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }
         public List<EntryView> getDayTop3() { return dayOrder.subList(0, Math.min(3, dayOrder.size())); }
         public boolean isScored() { return !dayOrder.isEmpty(); }
+        public boolean isFinalInput() { return SRC_FINAL.equals(inputSource); }
     }
 
     public static class MeetTab {

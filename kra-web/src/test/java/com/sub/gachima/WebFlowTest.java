@@ -1,5 +1,6 @@
 package com.sub.gachima;
 
+import com.sub.gachima.service.ImportScanner;
 import com.sub.gachima.service.ImportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +17,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** 불러오기 → 전날 예상 화면 → 당일 입력 → 당일 분석 화면 */
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:gachima;DB_CLOSE_DELAY=-1",
-        "gachima.import-dir=target/test-import"})
+        "gachima.import-dir=target/test-import",
+        "gachima.auto-import=false"})
 @AutoConfigureMockMvc
 class WebFlowTest {
 
     @Autowired MockMvc mvc;
     @Autowired ImportService importService;
+    @Autowired ImportScanner scanner;
 
     @Test
     void preThenDay() throws Exception {
@@ -56,5 +59,31 @@ class WebFlowTest {
 
         mvc.perform(get("/r/20261115/4/3")).andExpect(status().isOk());
         mvc.perform(get("/r/20261115/1/99")).andExpect(status().isNotFound());
+
+        // 직접 입력이 없는 경주는 확정 최종 배당으로 계산된다
+        mvc.perform(get("/r/20261115/1/1").param("mode", "day"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("확정 최종 배당")));
+
+        // 성적: 서울 11경주 중 전날 1위 적중 4 (export 기준 Python 계산값)
+        mvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("36.4% (4)")))
+                .andExpect(content().string(containsString("공식 합계")));
+        mvc.perform(get("/admin")).andExpect(status().isOk());
+    }
+
+    @Test
+    void scannerSkipsUnchangedFiles() throws Exception {
+        java.io.File dir = importService.getDir();
+        dir.mkdirs();
+        java.nio.file.Files.copy(new ClassPathResource("day-20261115.json").getFile().toPath(),
+                new java.io.File(dir, "day-20261115.json").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        ImportScanner.Result first = scanner.scan(false);
+        org.junit.jupiter.api.Assertions.assertEquals(1, first.ok.size(), first.message());
+        ImportScanner.Result second = scanner.scan(false);
+        org.junit.jupiter.api.Assertions.assertEquals(0, second.ok.size());
+        org.junit.jupiter.api.Assertions.assertEquals(1, second.skipped);
+        org.junit.jupiter.api.Assertions.assertEquals(1, scanner.scan(true).ok.size());
     }
 }

@@ -1,8 +1,10 @@
 package com.sub.gachima.web;
 
 import com.sub.gachima.domain.MeetDay;
+import com.sub.gachima.service.ImportScanner;
 import com.sub.gachima.service.ImportService;
 import com.sub.gachima.service.RaceService;
+import com.sub.gachima.service.StatsService;
 import com.sub.gachima.service.RaceService.RaceView;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -16,13 +18,13 @@ import java.util.*;
 @Controller
 public class RaceController {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RaceController.class);
-
     private final RaceService raceService;
     private final ImportService importService;
+    private final ImportScanner scanner;
+    private final StatsService statsService;
 
-    public RaceController(RaceService raceService, ImportService importService) {
-        this.raceService = raceService; this.importService = importService;
+    public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService) {
+        this.raceService = raceService; this.importService = importService; this.scanner = scanner; this.statsService = statsService;
     }
 
     /** 가장 최근 경주일의 첫 경주로 */
@@ -63,40 +65,25 @@ public class RaceController {
         return "redirect:/r/" + date + "/" + meet + "/" + rc + "?mode=day";
     }
 
+    @GetMapping("/stats")
+    public String stats(Model model) {
+        model.addAttribute("s", statsService.compute());
+        return "stats";
+    }
+
     @GetMapping("/admin")
     public String admin(Model model) {
         model.addAttribute("days", raceService.allMeetDays());
         model.addAttribute("dir", importService.getDir().getAbsolutePath());
+        model.addAttribute("logs", scanner.history());
+        model.addAttribute("auto", scanner.isAuto());
         return "admin";
     }
 
+    /** 바뀐 파일만 불러오기. force=true 면 전부 다시 */
     @PostMapping("/admin/import")
-    public String importAll(RedirectAttributes ra) {
-        java.io.File dir = importService.getDir();
-        java.io.File[] files = dir.listFiles((d, n) -> n.startsWith("day-") && n.endsWith(".json"));
-        if (files == null || files.length == 0) {
-            ra.addFlashAttribute("msg", dir.isDirectory()
-                    ? "폴더에 day-YYYYMMDD.json 파일이 없습니다: " + dir.getAbsolutePath()
-                    : "폴더가 없습니다: " + dir.getAbsolutePath() + " (폴더를 만들거나 GACHIMA_IMPORT_DIR 을 바꾸세요)");
-            return "redirect:/admin";
-        }
-        Arrays.sort(files);
-        List<String> ok = new ArrayList<>(), fail = new ArrayList<>();
-        for (java.io.File f : files) {
-            try {
-                importService.importFile(f);
-                ok.add(f.getName());
-            } catch (Exception e) {
-                log.error("불러오기 실패 {}", f.getName(), e);
-                Throwable root = e;
-                while (root.getCause() != null && root.getCause() != root) root = root.getCause();
-                fail.add(f.getName() + " → " + root.getClass().getSimpleName() + ": " + root.getMessage());
-            }
-        }
-        StringBuilder msg = new StringBuilder();
-        if (!ok.isEmpty()) msg.append("불러옴: ").append(String.join(", ", ok)).append(". ");
-        if (!fail.isEmpty()) msg.append("실패: ").append(String.join(" / ", fail));
-        ra.addFlashAttribute("msg", msg.toString().trim());
+    public String importAll(@RequestParam(defaultValue = "false") boolean force, RedirectAttributes ra) {
+        ra.addFlashAttribute("msg", scanner.scan(force).message());
         return "redirect:/admin";
     }
 }

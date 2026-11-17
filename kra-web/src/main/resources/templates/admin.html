@@ -9,13 +9,32 @@
 </head>
 <body>
 <div class="wrap">
-  <header class="brand"><div class="logo"><div><b>가치마</b><small>데이터 불러오기</small></div></div></header>
+  <header class="brand">
+    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><div><b>가치마</b><small>데이터 불러오기</small></div></a>
+    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}">성적</a><a th:href="@{/admin}" aria-current="true">관리</a></nav>
+  </header>
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
   <section class="input">
     <p class="hint">export_web.py 가 만든 <code>day-YYYYMMDD.json</code> 파일을 이 폴더에서 불러옵니다: <code th:text="${dir}"></code></p>
-    <p class="hint">전날 저녁에 한 번(전날 예상), 경주가 끝난 뒤 한 번 더(확정 착순) 불러오면 됩니다. 당일 입력한 배당은 지워지지 않습니다.</p>
-    <form method="post" th:action="@{/admin/import}"><button class="btn" type="submit">폴더에서 불러오기</button></form>
+    <p class="hint" th:if="${auto}">자동 불러오기 켜짐: 1분마다 폴더를 보고 새로 생기거나 바뀐 파일만 불러옵니다. export_web.py 로 파일만 쓰면 됩니다.</p>
+    <p class="hint" th:unless="${auto}">자동 불러오기 꺼짐 (gachima.auto-import=false). 아래 버튼으로 불러오세요.</p>
+    <p class="hint">전날 저녁(전날 예상)과 경주 후(확정 착순·최종 배당) 두 번 파일이 바뀝니다. 직접 입력한 당일 배당은 지워지지 않습니다.</p>
+    <div class="btns">
+      <form method="post" th:action="@{/admin/import}"><button class="btn" type="submit">바뀐 파일 불러오기</button></form>
+      <form method="post" th:action="@{/admin/import(force=true)}"><button class="btn ghost" type="submit">전부 다시 불러오기</button></form>
+    </div>
   </section>
+  <h2 class="sec">불러온 파일</h2>
+  <table class="days">
+    <thead><tr><th>파일</th><th>상태</th><th>불러온 시각</th></tr></thead>
+    <tbody>
+      <tr th:each="l : ${logs}"><td th:text="${l.fileName}"></td>
+        <td th:if="${l.ok}">완료</td><td th:unless="${l.ok}" class="bad" th:text="|실패: ${l.message}|"></td>
+        <td th:text="${#temporals.format(l.importedAt, 'MM.dd HH:mm')}"></td></tr>
+      <tr th:if="${#lists.isEmpty(logs)}"><td colspan="3">기록 없음</td></tr>
+    </tbody>
+  </table>
+  <h2 class="sec">경주일</h2>
   <table class="days">
     <thead><tr><th>날짜</th><th>경마장</th><th></th></tr></thead>
     <tbody>

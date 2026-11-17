@@ -6,6 +6,10 @@
   python export_web.py --date 20261115 --meets 1,4 \
       --entries C:/kra-data/entry-sheet.csv --history C:/kra-data/race-result.csv \
       --referee C:/kra-data/referee.csv --out C:/kra-data/web
+
+  여러 날 한 번에(지난 경주일 채우기): --from 20261106 --to 20261115
+  --meets 를 빼면 출전표에 있는 경마장을 전부 내보낸다.
+  확정 결과가 있으면 최종 배당·마체중·주로를 'final' 로 넣는다 → 웹 성적 화면이 이 값으로 가치마를 다시 계산한다.
 """
 import argparse, json, math, os
 import numpy as np, pandas as pd
@@ -50,40 +54,73 @@ def standardize(F, feats, binary):
     return X
 
 
-def results_for(hist_path, date, meet):
-    r = pd.read_csv(hist_path, encoding='utf-8-sig', dtype=str,
-                    usecols=lambda c: c in ('src_meet', 'rcDate', 'rcNo', 'chulNo', 'ord', 'winOdds', 'jkName'))
-    r = r[(r['rcDate'] == date) & (r['src_meet'].astype(str) == str(meet))]
-    out, jk = {}, {}
+def track_state(s):
+    """경주성적의 '양호 (6%)' → 함수율 기준 5단계"""
+    s = text(s)
+    if not s:
+        return None
+    m = pd.Series([s]).str.extract(r'\((\d+)%\)')[0].iloc[0]
+    if pd.isna(m):
+        w = s.split()[0]
+        return w if w in ('건조', '양호', '다습', '포화', '불량') else None
+    v = int(m)
+    return '건조' if v <= 5 else '양호' if v <= 9 else '다습' if v <= 14 else '포화' if v <= 19 else '불량'
+
+
+def results_for(R, date, meet):
+    r = R[(R['rcDate'] == date) & (R['src_meet'].astype(str) == str(meet))]
+    out, jk, final = {}, {}, {}
     for x in r.itertuples():
-        key = (int(x.rcNo), int(x.chulNo))
-        jk[key] = x.jkName   # 당일 기수 변경이 반영된 이름
+        rc, no = int(x.rcNo), int(x.chulNo)
+        jk[(rc, no)] = x.jkName   # 당일 기수 변경이 반영된 이름
         o = pd.to_numeric(x.ord, errors='coerce')
         if pd.isna(o) or o <= 0:
             continue
-        out[key] = (int(o), clean(x.winOdds))
-    return out, jk
+        out[(rc, no)] = (int(o), clean(x.winOdds))
+        f = final.setdefault(rc, {'track': track_state(x.track), 'odds': {}, 'bwd': {}})
+        od = clean(x.winOdds)
+        if od is not None and od >= 1:
+            f['odds'][str(no)] = od
+        m = pd.Series([str(x.wgHr)]).str.extract(r'\(([+-]?\d+)\)')[0].iloc[0]
+        if not pd.isna(m):
+            f['bwd'][str(no)] = float(m)
+    return out, jk, final
 
 
 def export(a):
     pre = json.load(open(os.path.join(HERE, 'model_weights_pre.json'), encoding='utf-8'))
     H = K.prepare_history(a.history)
     ref = K.load_referee(a.referee)
-    raw = pd.read_csv(a.entries, encoding='utf-8-sig', dtype=str)
-    raw = raw[raw['rcDate'].astype(str) == a.date]
-    doc = {'date': a.date, 'feats': K.FEATS, 'bin': sorted(K.BIN), 'dayOnly': list(DAY_ONLY), 'meets': []}
-    for m in [int(x) for x in a.meets.split(',')]:
+    raw_all = pd.read_csv(a.entries, encoding='utf-8-sig', dtype=str)
+    R = pd.read_csv(a.history, encoding='utf-8-sig', dtype=str,
+                    usecols=lambda c: c in ('src_meet', 'rcDate', 'rcNo', 'chulNo', 'ord', 'winOdds', 'jkName', 'wgHr', 'track'))
+    if a.date:
+        dates = [a.date]
+    else:
+        ds = raw_all['rcDate'].astype(str)
+        dates = sorted(d for d in ds.unique() if (not a.date_from or d >= a.date_from) and (not a.date_to or d <= a.date_to))
+        if not dates:
+            raise SystemExit(f'출전표에 {a.date_from}~{a.date_to} 경주일이 없습니다: {a.entries}')
+    for d in dates:
+        export_day(a, d, pre, H, ref, raw_all, R)
+
+
+def export_day(a, date, pre, H, ref, raw_all, R):
+    raw = raw_all[raw_all['rcDate'].astype(str) == date]
+    meets = [int(x) for x in a.meets.split(',')] if a.meets else sorted({int(x) for x in raw['src_meet'].astype(str)})
+    doc = {'date': date, 'feats': K.FEATS, 'bin': sorted(K.BIN), 'dayOnly': list(DAY_ONLY), 'meets': []}
+    for m in meets:
         RD.MEET = m
         sub = raw[raw['src_meet'].astype(str) == str(m)]
         if sub.empty:
-            print(f'{NAME[m]}: {a.date} 출전표 없음, 건너뜀')
+            print(f'{NAME[m]}: {date} 출전표 없음, 건너뜀')
             continue
-        E = RD.load_entries(a.entries, a.date, a.history)
+        E = RD.load_entries(a.entries, date, a.history)
         E['bw'] = np.nan; E['bwd'] = np.nan; E['wet'] = False; E['odds'] = 1.0
-        F = K.features_for(E, H, ref, pd.to_datetime(a.date), meet=m)
+        F = K.features_for(E, H, ref, pd.to_datetime(date), meet=m)
         names = sub.set_index([K.num(sub['rcNo']), K.num(sub['chulNo'])])
         st = sub.groupby(K.num(sub['rcNo']))['stTime'].first()
-        res, jk_today = results_for(a.history, a.date, m)
+        res, jk_today, final = results_for(R, date, m)
         races = []
         for rn, d in F.groupby('rcNo'):
             d = d.sort_values('chulNo').reset_index(drop=True)
@@ -104,19 +141,26 @@ def export(a):
                     'preP': round(float(p[i]), 5), 'preRank': int(rank[i]),
                     'ord': None if fin is None else fin[0], 'finalOdds': None if fin is None else fin[1]})
             t = str(st.get(rn, '')).replace('출발', '').strip().lstrip(':').strip()
-            races.append({'rcNo': int(rn), 'stTime': t, 'dist': int(d['rcDist'].iloc[0]), 'horses': horses})
+            race = {'rcNo': int(rn), 'stTime': t, 'dist': int(d['rcDist'].iloc[0]), 'horses': horses}
+            if int(rn) in final and len(final[int(rn)]['odds']) >= 2:
+                race['final'] = final[int(rn)]
+            races.append(race)
         doc['meets'].append({'meet': m, 'name': NAME[m], 'dayWeights': load_w(DAY_W[m]), 'races': races})
         print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두')
+    if not doc['meets']:
+        return
     os.makedirs(a.out, exist_ok=True)
-    path = os.path.join(a.out, f'day-{a.date}.json')
+    path = os.path.join(a.out, f'day-{date}.json')
     json.dump(doc, open(path, 'w', encoding='utf-8'), ensure_ascii=False, allow_nan=False)   # NaN이 섞이면 여기서 바로 오류
     print('저장', path)
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--date', required=True)
-    ap.add_argument('--meets', default='1')
+    ap.add_argument('--date', help='하루만: 20261115')
+    ap.add_argument('--from', dest='date_from', help='여러 날: 시작일 20261106')
+    ap.add_argument('--to', dest='date_to', help='여러 날: 종료일 20261115')
+    ap.add_argument('--meets', default=None, help='예: 1,4 (빼면 출전표에 있는 경마장 전부)')
     ap.add_argument('--entries', default='C:/kra-data/entry-sheet.csv')
     ap.add_argument('--history', default='C:/kra-data/race-result.csv')
     ap.add_argument('--referee', default='C:/kra-data/referee.csv')

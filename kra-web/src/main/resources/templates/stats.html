@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>가치마 · 성적</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap">
+  <header class="brand">
+    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><div><b>가치마</b><small>성적 · 결과가 들어온 경주만 셉니다</small></div></a>
+    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}" aria-current="true">성적</a><a th:href="@{/admin}">관리</a></nav>
+  </header>
+
+  <p class="hint" th:if="${s.empty}">아직 결과가 들어온 경주가 없습니다. 경주가 끝난 뒤 export_web.py 를 다시 돌려 확정 착순을 넣어 주세요.</p>
+
+  <th:block th:unless="${s.empty}">
+    <h2 class="sec">경마장별</h2>
+    <div class="scroll"><table class="days stats">
+      <thead>
+        <tr><th></th><th>경주</th>
+          <th class="grp">전날 1위 적중</th><th>우승마 상위5</th><th>상위5 중 3착내</th>
+          <th class="grp">인기1위 우승</th>
+          <th class="grp">★ 최종배당</th><th>적중</th><th>회수율</th>
+          <th class="grp">★ 직접입력</th><th>적중</th><th>회수율</th></tr>
+      </thead>
+      <tbody th:replace="~{fragments :: tallyRows(${s.meets}, false)}"></tbody>
+    </table></div>
+
+    <h2 class="sec">경주일별</h2>
+    <div class="scroll"><table class="days stats">
+      <thead>
+        <tr><th>날짜</th><th>경주</th>
+          <th class="grp">전날 1위 적중</th><th>우승마 상위5</th><th>상위5 중 3착내</th>
+          <th class="grp">인기1위 우승</th>
+          <th class="grp">★ 최종배당</th><th>적중</th><th>회수율</th>
+          <th class="grp">★ 직접입력</th><th>적중</th><th>회수율</th></tr>
+      </thead>
+      <tbody th:replace="~{fragments :: tallyRows(${s.days}, true)}"></tbody>
+    </table></div>
+  </th:block>
+
+  <footer>
+    <span>전날 예상: 배당 없이 계산한 순위. "상위5 중 3착내"는 전날 고른 5두 가운데 3착 안에 든 평균 마릿수(최대 3)입니다.</span>
+    <span>인기1위 우승: 최종 단승 배당이 가장 낮은 말이 이긴 비율. 전날 예상과 비교하는 기준입니다.</span>
+    <span>★ 최종배당: 경주 후 확정 배당·마체중·주로로 당일 모델을 다시 돌린 사후 검증입니다. 실제로는 마감 직전 배당이 달라 결과가 다를 수 있습니다.</span>
+    <span>★ 직접입력: 경주 전에 입력한 배당으로 고른 가치마를 확정 배당으로 정산한 모의 기록입니다. 회수율 = 적중 배당 합 ÷ 건수.</span>
+    <span>영천은 참고 기록이라 공식 합계에서 뺍니다.</span>
+  </footer>
+</div>
+
+</body>
+</html>

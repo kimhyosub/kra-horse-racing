@@ -22,5 +22,11 @@ public final class Repositories {
 
     public interface DayInputRepository extends JpaRepository<DayInput, Long> {
         Optional<DayInput> findFirstByRaceOrderByCreatedAtDescIdDesc(Race race);
+        /** source: manual(직접 입력) / final(확정 최종 배당, 불러오기 때 자동) */
+        Optional<DayInput> findFirstByRaceAndSourceOrderByCreatedAtDescIdDesc(Race race, String source);
+    }
+
+    public interface ImportLogRepository extends JpaRepository<ImportLog, String> {
+        List<ImportLog> findAllByOrderByFileNameDesc();
     }
 }

@@ -10,5 +10,25 @@
 
 <span th:fragment="fin(ord)" class="fin" th:classappend="${ord != null and ord == 1} ? 'w' : (${ord != null and ord <= 3} ? 'p' : '')"
       th:text="${ord != null} ? |${ord}착| : '-'">-</span>
+<!-- 성적 표 한 줄씩 -->
+<th:block th:fragment="tallyRows(rows, byDay)">
+<tbody>
+  <tr th:each="t : ${rows}" th:classappend="${!byDay and t.total} ? 'total'">
+    <td th:if="${byDay}"><a th:href="@{|/r/${t.date}/${t.meet}/1|}" th:text="|${t.dateLabel} ${t.name}|"></a></td>
+    <td th:unless="${byDay}" th:text="${t.name}"></td>
+    <td th:text="${t.races}"></td>
+    <td class="grp" th:text="|${t.pre1Rate} (${t.pre1})|"></td>
+    <td th:text="${t.preTop5Rate}"></td>
+    <td th:text="${t.top3In5Avg}"></td>
+    <td class="grp" th:text="${t.favRate}"></td>
+    <td class="grp" th:text="${t.finN}"></td>
+    <td th:text="${t.finWin}"></td>
+    <td th:classappend="${t.finUp} ? 'up'" th:text="${t.finRoi}"></td>
+    <td class="grp" th:text="${t.manN}"></td>
+    <td th:text="${t.manWin}"></td>
+    <td th:classappend="${t.manUp} ? 'up'" th:text="${t.manRoi}"></td>
+  </tr>
+</tbody>
+</th:block>
 </body>
 </html>

@@ -12,11 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
  * kra-raceday/export_web.py 가 만든 day-YYYYMMDD.json 을 DB로 불러온다.
- * 같은 날짜를 다시 불러오면 전날 예상·착순만 갱신하고, 당일 입력은 그대로 둔다.
+ * 같은 날짜를 다시 불러오면 전날 예상·착순·최종 배당만 갱신하고, 직접 입력한 당일 배당은 그대로 둔다.
+ * 폴더 훑기는 ImportScanner 가 한다.
  */
 @Service
 public class ImportService {
@@ -24,26 +26,16 @@ public class ImportService {
 
     private final MeetDayRepository meetDays;
     private final RaceRepository races;
+    private final DayInputRepository inputs;
     private final ObjectMapper om;
     private final File dir;
 
-    public ImportService(MeetDayRepository meetDays, RaceRepository races, ObjectMapper om,
+    public ImportService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, ObjectMapper om,
                          @Value("${gachima.import-dir}") String dir) {
-        this.meetDays = meetDays; this.races = races; this.om = om; this.dir = new File(dir);
+        this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.om = om; this.dir = new File(dir);
     }
 
     public File getDir() { return dir; }
-
-    /** 폴더의 day-*.json 전부 불러오기. 반환: 불러온 파일 이름 */
-    @Transactional
-    public List<String> importAll() throws IOException {
-        List<String> done = new ArrayList<>();
-        File[] files = dir.listFiles((d, n) -> n.startsWith("day-") && n.endsWith(".json"));
-        if (files == null) return done;
-        Arrays.sort(files);
-        for (File f : files) { importFile(f); done.add(f.getName()); }
-        return done;
-    }
 
     @Transactional
     public void importFile(File file) throws IOException {
@@ -79,11 +71,26 @@ public class ImportService {
                     e.setFinalOdds(h.path("finalOdds").isNumber() ? h.path("finalOdds").asDouble() : null);
                     nHorse++;
                 }
-                races.save(race);
+                race = races.save(race);
+                saveFinal(race, r.path("final"));
                 nRace++;
             }
         }
         log.info("불러옴 {}: {}경주 {}두", file.getName(), nRace, nHorse);
+    }
+
+    /** 경주가 끝난 뒤의 최종 배당·마체중·주로를 'final' 입력 하나로 보관 (다시 불러오면 덮어쓴다) */
+    private void saveFinal(Race race, JsonNode fin) {
+        if (!fin.isObject() || fin.path("odds").size() < 2) return;
+        DayInput in = inputs.findFirstByRaceAndSourceOrderByCreatedAtDescIdDesc(race, RaceService.SRC_FINAL).orElseGet(DayInput::new);
+        String track = text(fin, "track");
+        in.setRace(race);
+        in.setTrack(track != null && RaceService.TRACKS.contains(track) ? track : "건조");
+        in.setOddsJson(fin.path("odds").toString());
+        in.setBwdJson(fin.path("bwd").isObject() ? fin.path("bwd").toString() : "{}");
+        in.setSource(RaceService.SRC_FINAL);
+        in.setCreatedAt(LocalDateTime.now());
+        inputs.save(in);
     }
 
     private static String text(JsonNode n, String key) {
