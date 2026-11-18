@@ -11,7 +11,8 @@
 <div class="wrap">
   <header class="brand">
     <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><div><b>가치마</b><small>데이터 불러오기</small></div></a>
-    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}">성적</a><a th:href="@{/admin}" aria-current="true">관리</a></nav>
+    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}">성적</a><a th:href="@{/admin}" aria-current="true">관리</a>
+      <form class="inline" method="post" th:action="@{/logout}"><button class="linkbtn" type="submit">로그아웃</button></form></nav>
   </header>
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
   <section class="input">
@@ -23,6 +24,11 @@
       <form method="post" th:action="@{/admin/import}"><button class="btn" type="submit">바뀐 파일 불러오기</button></form>
       <form method="post" th:action="@{/admin/import(force=true)}"><button class="btn ghost" type="submit">전부 다시 불러오기</button></form>
     </div>
+  </section>
+  <h2 class="sec">스크린샷 읽기</h2>
+  <section class="input">
+    <p class="hint" th:if="${shotEnabled}">켜짐: 경주 화면(당일 분석)에서 스크린샷을 올리면 배당·마체중을 읽어 칸을 채웁니다.</p>
+    <p class="hint" th:unless="${shotEnabled}">꺼짐: PC 사용자 환경변수 ANTHROPIC_API_KEY 를 넣고 웹을 다시 실행하세요.</p>
   </section>
   <h2 class="sec">자동 수집</h2>
   <section class="input">

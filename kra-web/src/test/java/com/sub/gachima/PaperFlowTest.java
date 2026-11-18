@@ -8,6 +8,7 @@ import com.sub.gachima.domain.Repositories.PaperBetRepository;
 import com.sub.gachima.service.ImportService;
 import com.sub.gachima.service.PaperService;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.import-dir=target/test-import-paper",
         "gachima.auto-import=false"})
 @AutoConfigureMockMvc
+@WithMockUser
 class PaperFlowTest {
 
     @Autowired MockMvc mvc;
@@ -56,7 +59,7 @@ class PaperFlowTest {
     }
 
     private MockHttpServletRequestBuilder input7(String odds8) {
-        return post("/r/" + FUTURE + "/1/7/input")
+        return post("/r/" + FUTURE + "/1/7/input").with(csrf())
                 .param("track", "다습")
                 .param("odds_1", "8.7").param("bwd_1", "0")
                 .param("odds_2", "13.8").param("bwd_2", "-1")

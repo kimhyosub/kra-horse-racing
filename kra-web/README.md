@@ -34,6 +34,15 @@ python export_web.py --from 20261106 --to 20261115 --out C:/kra-data/web
 ```
 `--meets`를 빼면 그날 출전표에 있는 경마장을 전부 내보냅니다.
 
+## 로그인 · 밖에서 접속 · 스크린샷
+
+- 모든 화면이 로그인 필요 (`GACHIMA_LOGIN_USER` / `GACHIMA_LOGIN_PASSWORD`, 로그인 유지 30일).
+  `GACHIMA_PUBLIC_READ=true` 면 경주·성적 화면은 로그인 없이 보이고 입력·관리만 막습니다.
+- 당일 분석 화면에서 스크린샷을 올리면 Claude API(`ANTHROPIC_API_KEY`)로 단승 배당·마체중 증감·주로를 읽어
+  입력칸을 채웁니다. 저장은 확인 후 [다시 계산]. 못 읽은 마번, 화면의 경주 번호가 다르면 경고합니다.
+- 밖에서 휴대폰으로 쓰는 설정(Cloudflare Tunnel, 웹 자동 실행): `../automation/REMOTE.md`
+- DB 파일: `C:/kra-data/db/gachima` (`GACHIMA_DB`로 변경)
+
 ## 모의 장부
 
 - 경주 화면에서 **출발 전에** 당일 배당을 입력할 때마다 그 경주의 ★ 를 새로 적습니다 → 출발 전 마지막 입력이 공식 기록 (단승 1단위).

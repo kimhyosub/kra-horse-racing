@@ -62,3 +62,7 @@ kra-daily.bat -From 20261120 -To 20261122 -SkipOdds
 - `C:\kra-data\web\collect-status.json`에 마지막 실행 결과를 남기고, 웹 관리 화면이 이 파일을 보여줍니다.
 - 호출 수: 하루 실행에 많아야 수십 건 (한도 2,800). 이미 확정된 날은 다시 받지 않습니다.
 - 수집기 오류 메시지에 요청 주소가 섞여도 인증키는 `serviceKey=***`로 가려서 로그에 남깁니다.
+
+## 웹 자동 실행 · 밖에서 접속
+
+`register-task.ps1 -Web` 으로 로그인할 때 가치마 웹을 띄웁니다. 휴대폰으로 밖에서 쓰는 설정은 [REMOTE.md](REMOTE.md).

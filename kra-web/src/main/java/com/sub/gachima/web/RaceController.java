@@ -23,12 +23,16 @@ public class RaceController {
     private final ImportScanner scanner;
     private final StatsService statsService;
     private final com.sub.gachima.service.PaperService paperService;
+    private final com.sub.gachima.service.ScreenshotReader screenshotReader;
 
     public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService,
-                          com.sub.gachima.service.PaperService paperService) {
+                          com.sub.gachima.service.PaperService paperService, com.sub.gachima.service.ScreenshotReader screenshotReader) {
         this.raceService = raceService; this.importService = importService; this.scanner = scanner; this.statsService = statsService;
-        this.paperService = paperService;
+        this.paperService = paperService; this.screenshotReader = screenshotReader;
     }
+
+    @GetMapping("/login")
+    public String login() { return "login"; }
 
     /** 가장 최근 경주일의 첫 경주로 */
     @GetMapping("/")
@@ -44,10 +48,15 @@ public class RaceController {
                        @RequestParam(defaultValue = "false") boolean edit, Model model) {
         RaceView v = raceService.view(date, meet, rc)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "경주가 없습니다"));
+        Object shot = model.asMap().get(ScreenshotController.FLASH);
+        boolean prefilled = shot instanceof ScreenshotController.Prefill && ((ScreenshotController.Prefill) shot).matches(date, meet, rc);
+        if (prefilled) ((ScreenshotController.Prefill) shot).applyTo(v);
+        else model.asMap().remove(ScreenshotController.FLASH);
         model.addAttribute("v", v);
-        model.addAttribute("mode", "day".equals(mode) ? "day" : "pre");
+        model.addAttribute("shotEnabled", screenshotReader.isEnabled());
+        model.addAttribute("mode", "day".equals(mode) || prefilled ? "day" : "pre");
         model.addAttribute("sort", "v".equals(sort) ? "v" : "p");
-        model.addAttribute("edit", edit || ("day".equals(mode) && !v.isScored()));
+        model.addAttribute("edit", edit || prefilled || ("day".equals(mode) && !v.isScored()));
         model.addAttribute("tracks", RaceService.TRACKS);
         return "race";
     }
@@ -87,6 +96,7 @@ public class RaceController {
         model.addAttribute("logs", scanner.history());
         model.addAttribute("auto", scanner.isAuto());
         model.addAttribute("collect", scanner.collectStatus());
+        model.addAttribute("shotEnabled", screenshotReader.isEnabled());
         return "admin";
     }
 

@@ -131,3 +131,12 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .drift{font-size:11px;color:#c0392b;margin-left:4px}
 .paper{margin:10px 0;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;font-size:14px}
 .paper b{font-family:var(--mono, inherit)}
+.login{max-width:380px}
+.field{display:flex;flex-direction:column;gap:6px;margin:10px 0;font-size:13px;color:var(--muted)}
+.field input{font:16px inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card, #fff);color:inherit}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:8px 0}
+.shot{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.shot input[type=file]{font-size:13px;max-width:100%}
+.warn{background:#fdecea;color:#8a1c12;border-radius:10px;padding:10px 14px;font-size:13px;margin:8px 0}
+.inline{display:inline}
+.linkbtn{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:0}

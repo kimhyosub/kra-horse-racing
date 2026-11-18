@@ -3,6 +3,7 @@ package com.sub.gachima;
 import com.sub.gachima.service.ImportScanner;
 import com.sub.gachima.service.ImportService;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,6 +11,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.import-dir=target/test-import",
         "gachima.auto-import=false"})
 @AutoConfigureMockMvc
+@WithMockUser
 class WebFlowTest {
 
     @Autowired MockMvc mvc;
@@ -37,7 +40,7 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("전날 예상 5두")))
                 .andExpect(content().string(containsString("마스터플랜")));
 
-        mvc.perform(post("/r/20261115/1/7/input")
+        mvc.perform(post("/r/20261115/1/7/input").with(csrf())
                         .param("track", "다습")
                         .param("odds_1", "8.7").param("bwd_1", "0")
                         .param("odds_2", "13.8").param("bwd_2", "-1")
