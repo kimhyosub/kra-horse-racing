@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>가치마 · 로그인</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
   <link rel="stylesheet" th:href="@{/css/gachima.css}">
 </head>
 <body>
 <div class="wrap login">
-  <header class="brand"><div class="logo"><div><b>가치마</b><small>로그인</small></div></div></header>
+  <header class="brand"><div class="logo"><svg th:replace="~{fragments :: logo}"></svg>
+      <div><b>가치마</b><small>로그인</small></div></div></header>
   <div class="flash" th:if="${param.error}">아이디 또는 비밀번호가 맞지 않습니다.</div>
   <div class="flash" th:if="${param.logout}">로그아웃했습니다.</div>
   <form class="input" method="post" th:action="@{/login}">

@@ -53,7 +53,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain chain(HttpSecurity http, UserDetailsService users) throws Exception {
         http.authorizeRequests(a -> {
-                    a.antMatchers("/css/**", "/login", "/favicon.ico", "/error").permitAll();
+                    a.antMatchers("/css/**", "/login", "/favicon.ico", "/favicon.svg", "/error").permitAll();
                     if (publicRead) a.antMatchers(HttpMethod.GET, "/", "/r/**", "/stats").permitAll();
                     a.anyRequest().authenticated();
                 })

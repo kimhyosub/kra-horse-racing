@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title th:text="|가치마 · ${v.meetName} ${v.rcNo}R|">가치마</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
   <link rel="stylesheet" th:href="@{/css/gachima.css}">
 </head>
 <body>
@@ -12,7 +13,7 @@
 
   <header class="brand">
     <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none">
-      <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" fill="var(--ink)"/><path d="M8 22 L14 22" stroke="var(--mkt)" stroke-width="3" stroke-linecap="round"/><path d="M14 22 L26 10" stroke="var(--value)" stroke-width="3.4" stroke-linecap="round"/><circle cx="26" cy="10" r="3" fill="var(--value)"/></svg>
+      <svg th:replace="~{fragments :: logo}"></svg>
       <div><b>가치마</b><small>전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div>
     </a>
     <nav class="meets">
