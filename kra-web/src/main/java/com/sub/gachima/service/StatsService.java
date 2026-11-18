@@ -12,7 +12,7 @@ import java.util.*;
  *  - 전날 예상: 1위 적중, 우승마가 상위 5두 안, 상위 5두 중 3착 안에 든 수
  *  - 시장 1번 인기(최종 배당 최저) 우승률: 비교 기준
  *  - 가치마(최종 배당): 확정 최종 배당·마체중·주로로 당일 모델을 다시 돌린 결과 (사후 검증)
- *  - 가치마(직접 입력): 경주 전에 넣은 배당 기준 ★, 정산은 확정 배당 (모의 기록)
+ *  - 모의 기록(경주 전 입력 ★)은 PaperService 장부에서 따로 센다
  * 영천은 참고 기록이라 공식 합계에서 뺀다.
  */
 @Service
@@ -72,13 +72,6 @@ public class StatsService {
                 if (x.no == w.getChulNo()) { t.finWin++; t.finRet += w.getFinalOdds() != null ? w.getFinalOdds() : x.odds; }
             }
         });
-        raceService.input(r, RaceService.SRC_MANUAL).ifPresent(in -> {
-            for (DayModel.Result x : model.score(raceService.horses(r, in), in.getTrack())) {
-                if (!x.value) continue;
-                t.manN++;
-                if (x.no == w.getChulNo()) { t.manWin++; t.manRet += w.getFinalOdds() != null ? w.getFinalOdds() : x.odds; }
-            }
-        });
     }
 
     public static class Stats {
@@ -91,8 +84,8 @@ public class StatsService {
         public String date;
         public int meet;
         public boolean total;
-        public int races, pre1, preTop5, top3In5, favRaces, favWin, finN, finWin, manN, manWin;
-        public double finRet, manRet;
+        public int races, pre1, preTop5, top3In5, favRaces, favWin, finN, finWin;
+        public double finRet;
 
         Tally(String name) { this.name = name; }
 
@@ -100,7 +93,6 @@ public class StatsService {
             races += o.races; pre1 += o.pre1; preTop5 += o.preTop5; top3In5 += o.top3In5;
             favRaces += o.favRaces; favWin += o.favWin;
             finN += o.finN; finWin += o.finWin; finRet += o.finRet;
-            manN += o.manN; manWin += o.manWin; manRet += o.manRet;
         }
 
         public String getDateLabel() { return date == null ? "" : date.substring(4, 6) + "." + date.substring(6); }
@@ -109,9 +101,7 @@ public class StatsService {
         public String getTop3In5Avg() { return races == 0 ? "-" : String.format("%.2f", (double) top3In5 / races); }
         public String getFavRate() { return pct(favWin, favRaces); }
         public String getFinRoi() { return finN == 0 ? "-" : String.format("%.0f%%", finRet / finN * 100); }
-        public String getManRoi() { return manN == 0 ? "-" : String.format("%.0f%%", manRet / manN * 100); }
         public boolean isFinUp() { return finN > 0 && finRet >= finN; }
-        public boolean isManUp() { return manN > 0 && manRet >= manN; }
 
         private static String pct(int a, int b) { return b == 0 ? "-" : String.format("%.1f%%", 100.0 * a / b); }
     }

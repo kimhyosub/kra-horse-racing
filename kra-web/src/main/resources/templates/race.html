@@ -83,6 +83,18 @@
 
   <!-- 당일 분석 -->
   <th:block th:if="${mode == 'day'}">
+    <p class="flash" th:if="${paperMsg}" th:text="${paperMsg}"></p>
+    <div class="paper">
+      <span>모의 기록</span>
+      <span th:if="${#lists.isEmpty(v.paperBets)}"> · 없음</span>
+      <span th:each="b : ${v.paperBets}">
+        · <b th:text="|★ ${b.chulNo}번 ${b.hrName} ${b.betOdds}배|"></b>
+        <span th:if="${b.placedAt != null}" th:text="|(${#temporals.format(b.placedAt, 'HH:mm')})|"></span>
+        <span th:if="${b.settled}" th:classappend="${b.win} ? 'up'" th:text="|→ ${b.resultLabel}|"></span>
+      </span>
+      <span class="hint" th:if="${v.paperLocked}"> · 잠김 (출발 후 또는 결과 확정)</span>
+      <span class="hint" th:unless="${v.paperLocked}"> · 출발 전 마지막 입력이 공식 기록</span>
+    </div>
     <form class="input" method="post" th:action="@{|${base}/input|}">
       <div class="bar">
         <span th:if="${v.inputAt != null and v.finalInput}">경주 후 확정 최종 배당·마체중·주로로 계산했습니다. 직접 입력하면 그 값이 우선합니다.</span>

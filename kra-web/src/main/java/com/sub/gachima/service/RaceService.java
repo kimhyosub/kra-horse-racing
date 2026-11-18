@@ -24,9 +24,10 @@ public class RaceService {
     private final RaceRepository races;
     private final DayInputRepository inputs;
     private final ObjectMapper om;
+    private final PaperService paper;
 
-    public RaceService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, ObjectMapper om) {
-        this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.om = om;
+    public RaceService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, ObjectMapper om, PaperService paper) {
+        this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.om = om; this.paper = paper;
     }
 
     public Optional<MeetDay> latest() {
@@ -117,6 +118,8 @@ public class RaceService {
         v.result = v.entries.stream().filter(a -> a.ord != null && a.ord <= 3).sorted(Comparator.comparingInt(a -> a.ord))
                 .map(a -> a.no).collect(Collectors.toList());
         v.values = v.dayOrder.stream().filter(a -> a.value).collect(Collectors.toList());
+        v.paperBets = paper.forRace(race);
+        v.paperLock = paper.lockState(race);
     }
 
     private static String why(EntryView x, DayModel.Result r) {
@@ -134,8 +137,9 @@ public class RaceService {
 
     // ---------------- 당일 입력 ----------------
 
+    /** 입력 저장 + 출발 전이면 모의 기록(★)을 이번 입력으로 바꿔 쓴다 */
     @Transactional
-    public void saveInput(String date, int meet, int rcNo, String track, Map<Integer, String> odds, Map<Integer, String> bwd) {
+    public PaperService.Outcome saveInput(String date, int meet, int rcNo, String track, Map<Integer, String> odds, Map<Integer, String> bwd) {
         MeetDay md = meetDays.findByRaceDateAndMeet(date, meet).orElseThrow(() -> new NoSuchElementException("경주일 없음"));
         Race race = races.findByMeetDayAndRcNo(md, rcNo).orElseThrow(() -> new NoSuchElementException("경주 없음"));
         DayInput in = new DayInput();
@@ -146,6 +150,8 @@ public class RaceService {
         in.setSource(SRC_MANUAL);
         in.setCreatedAt(LocalDateTime.now());
         inputs.save(in);
+        List<DayModel.Result> scored = model(md).score(horses(race, in), in.getTrack());
+        return paper.record(race, scored, in.getTrack(), readMap(in.getBwdJson()));
     }
 
     /** "12.5", "+3", "-4" 같은 입력을 숫자로. 배당은 1.0 이상만 받는다. */
@@ -211,6 +217,9 @@ public class RaceService {
         public List<RaceTab> tabs = new ArrayList<>();
         public List<EntryView> entries = new ArrayList<>(), preOrder, dayOrder, valueOrder, values;
         public List<Integer> result;
+        public List<com.sub.gachima.domain.PaperBet> paperBets = new ArrayList<>();
+        public PaperService.Outcome paperLock;
+        public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }
         public List<EntryView> getDayTop3() { return dayOrder.subList(0, Math.min(3, dayOrder.size())); }

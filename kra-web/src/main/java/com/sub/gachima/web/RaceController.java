@@ -22,9 +22,12 @@ public class RaceController {
     private final ImportService importService;
     private final ImportScanner scanner;
     private final StatsService statsService;
+    private final com.sub.gachima.service.PaperService paperService;
 
-    public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService) {
+    public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService,
+                          com.sub.gachima.service.PaperService paperService) {
         this.raceService = raceService; this.importService = importService; this.scanner = scanner; this.statsService = statsService;
+        this.paperService = paperService;
     }
 
     /** 가장 최근 경주일의 첫 경주로 */
@@ -52,7 +55,7 @@ public class RaceController {
     /** 당일 배당·마체중·주로 입력. 폼 이름: odds_{마번}, bwd_{마번}, track */
     @PostMapping("/r/{date}/{meet}/{rc}/input")
     public String input(@PathVariable String date, @PathVariable int meet, @PathVariable int rc,
-                        @RequestParam Map<String, String> form) {
+                        @RequestParam Map<String, String> form, RedirectAttributes ra) {
         Map<Integer, String> odds = new HashMap<>(), bwd = new HashMap<>();
         for (Map.Entry<String, String> e : form.entrySet()) {
             String k = e.getKey();
@@ -61,13 +64,19 @@ public class RaceController {
                 else if (k.startsWith("bwd_")) bwd.put(Integer.parseInt(k.substring(4)), e.getValue());
             } catch (NumberFormatException ignore) { /* 다른 칸 */ }
         }
-        raceService.saveInput(date, meet, rc, form.get("track"), odds, bwd);
+        com.sub.gachima.service.PaperService.Outcome o = raceService.saveInput(date, meet, rc, form.get("track"), odds, bwd);
+        switch (o) {
+            case RECORDED: ra.addFlashAttribute("paperMsg", "모의 기록을 이번 입력의 ★ 로 바꿨습니다. 출발 전 마지막 입력이 공식 기록입니다."); break;
+            case LOCKED_RESULT: ra.addFlashAttribute("paperMsg", "결과가 나온 경주라 모의 기록은 바뀌지 않았습니다 (분석만 다시 계산)."); break;
+            default: ra.addFlashAttribute("paperMsg", "출발 시각이 지나 모의 기록은 바뀌지 않았습니다 (분석만 다시 계산)."); break;
+        }
         return "redirect:/r/" + date + "/" + meet + "/" + rc + "?mode=day";
     }
 
     @GetMapping("/stats")
     public String stats(Model model) {
         model.addAttribute("s", statsService.compute());
+        model.addAttribute("ledger", paperService.ledger());
         return "stats";
     }
 

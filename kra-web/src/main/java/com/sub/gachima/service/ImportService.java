@@ -27,12 +27,13 @@ public class ImportService {
     private final MeetDayRepository meetDays;
     private final RaceRepository races;
     private final DayInputRepository inputs;
+    private final PaperService paper;
     private final ObjectMapper om;
     private final File dir;
 
-    public ImportService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, ObjectMapper om,
-                         @Value("${gachima.import-dir}") String dir) {
-        this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.om = om; this.dir = new File(dir);
+    public ImportService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, PaperService paper,
+                         ObjectMapper om, @Value("${gachima.import-dir}") String dir) {
+        this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.paper = paper; this.om = om; this.dir = new File(dir);
     }
 
     public File getDir() { return dir; }
@@ -73,6 +74,7 @@ public class ImportService {
                 }
                 race = races.save(race);
                 saveFinal(race, r.path("final"));
+                paper.settle(race);
                 nRace++;
             }
         }

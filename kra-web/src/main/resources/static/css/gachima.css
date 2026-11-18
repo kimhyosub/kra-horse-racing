@@ -127,3 +127,7 @@ table.days.stats .grp{border-left:1px solid var(--line)}
 .sec{margin:22px 0 8px;font:400 18px var(--display, inherit)}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .bad{color:#c0392b}
+table.days.stats.ledger tr.ref td{color:var(--muted)}
+.drift{font-size:11px;color:#c0392b;margin-left:4px}
+.paper{margin:10px 0;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;font-size:14px}
+.paper b{font-family:var(--mono, inherit)}

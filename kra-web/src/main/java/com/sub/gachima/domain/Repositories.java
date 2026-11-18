@@ -26,6 +26,12 @@ public final class Repositories {
         Optional<DayInput> findFirstByRaceAndSourceOrderByCreatedAtDescIdDesc(Race race, String source);
     }
 
+    public interface PaperBetRepository extends JpaRepository<PaperBet, Long> {
+        List<PaperBet> findAllByOrderByRaceDateDescMeetAscRcNoAscChulNoAsc();
+        List<PaperBet> findByRaceDateAndMeetAndRcNoOrderByChulNo(String raceDate, int meet, int rcNo);
+        Optional<PaperBet> findByRaceDateAndMeetAndRcNoAndChulNo(String raceDate, int meet, int rcNo, int chulNo);
+    }
+
     public interface ImportLogRepository extends JpaRepository<ImportLog, String> {
         List<ImportLog> findAllByOrderByFileNameDesc();
     }

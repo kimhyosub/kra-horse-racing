@@ -23,13 +23,14 @@ public class ImportScanner {
     private static final Logger log = LoggerFactory.getLogger(ImportScanner.class);
 
     private final ImportService importService;
+    private final PaperService paperService;
     private final ImportLogRepository logs;
     private final boolean auto;
     private final ObjectMapper om;
 
-    public ImportScanner(ImportService importService, ImportLogRepository logs, ObjectMapper om,
+    public ImportScanner(ImportService importService, PaperService paperService, ImportLogRepository logs, ObjectMapper om,
                          @Value("${gachima.auto-import:true}") boolean auto) {
-        this.importService = importService; this.logs = logs; this.om = om; this.auto = auto;
+        this.importService = importService; this.paperService = paperService; this.logs = logs; this.om = om; this.auto = auto;
     }
 
     public boolean isAuto() { return auto; }
@@ -45,7 +46,8 @@ public class ImportScanner {
     public synchronized Result scan(boolean force) {
         Result r = new Result();
         File dir = importService.getDir();
-        File[] files = dir.listFiles((d, n) -> n.startsWith("day-") && n.endsWith(".json"));
+        // day-*.json(경주일) 먼저, paper-*.json(옮긴 모의 기록) 나중 — 이름순이면 그렇게 된다
+        File[] files = dir.listFiles((d, n) -> (n.startsWith("day-") || n.startsWith("paper-")) && n.endsWith(".json"));
         if (files == null) { r.missingDir = true; r.dir = dir.getAbsolutePath(); return r; }
         r.dir = dir.getAbsolutePath();
         Arrays.sort(files);
@@ -58,7 +60,8 @@ public class ImportScanner {
             if (l == null) { l = new ImportLog(); l.setFileName(f.getName()); }
             l.setLastModified(f.lastModified()); l.setFileSize(f.length()); l.setImportedAt(LocalDateTime.now());
             try {
-                importService.importFile(f);
+                if (f.getName().startsWith("paper-")) paperService.importFile(f);
+                else importService.importFile(f);
                 l.setStatus("ok"); l.setMessage(null);
                 r.ok.add(f.getName());
             } catch (Exception e) {
@@ -97,7 +100,7 @@ public class ImportScanner {
 
         public String message() {
             if (missingDir) return "폴더가 없습니다: " + dir + " (폴더를 만들거나 GACHIMA_IMPORT_DIR 을 바꾸세요)";
-            if (total == 0) return "폴더에 day-YYYYMMDD.json 파일이 없습니다: " + dir;
+            if (total == 0) return "폴더에 day-YYYYMMDD.json / paper-*.json 파일이 없습니다: " + dir;
             StringBuilder b = new StringBuilder();
             if (!ok.isEmpty()) b.append("불러옴 ").append(ok.size()).append("개: ").append(String.join(", ", ok)).append(". ");
             if (skipped > 0) b.append("바뀌지 않아 건너뜀 ").append(skipped).append("개. ");

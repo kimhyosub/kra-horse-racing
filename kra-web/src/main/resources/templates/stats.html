@@ -23,8 +23,7 @@
         <tr><th></th><th>경주</th>
           <th class="grp">전날 1위 적중</th><th>우승마 상위5</th><th>상위5 중 3착내</th>
           <th class="grp">인기1위 우승</th>
-          <th class="grp">★ 최종배당</th><th>적중</th><th>회수율</th>
-          <th class="grp">★ 직접입력</th><th>적중</th><th>회수율</th></tr>
+          <th class="grp">★ 최종배당</th><th>적중</th><th>회수율</th></tr>
       </thead>
       <tbody th:replace="~{fragments :: tallyRows(${s.meets}, false)}"></tbody>
     </table></div>
@@ -35,10 +34,42 @@
         <tr><th>날짜</th><th>경주</th>
           <th class="grp">전날 1위 적중</th><th>우승마 상위5</th><th>상위5 중 3착내</th>
           <th class="grp">인기1위 우승</th>
-          <th class="grp">★ 최종배당</th><th>적중</th><th>회수율</th>
-          <th class="grp">★ 직접입력</th><th>적중</th><th>회수율</th></tr>
+          <th class="grp">★ 최종배당</th><th>적중</th><th>회수율</th></tr>
       </thead>
       <tbody th:replace="~{fragments :: tallyRows(${s.days}, true)}"></tbody>
+    </table></div>
+  </th:block>
+
+
+  <h2 class="sec">모의 장부</h2>
+  <p class="hint" th:if="${ledger.empty}">아직 기록이 없습니다. 경주 화면에서 출발 전에 당일 배당을 입력하면 ★ 가 기록됩니다.</p>
+  <th:block th:unless="${ledger.empty}">
+    <div class="scroll"><table class="days stats ledger">
+      <thead><tr><th></th><th>건수</th><th>적중</th><th>적중률</th><th>평균 배당</th><th>회수율</th><th>손익(단위)</th><th>대기</th><th>취소</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${ledger.rows}" th:classappend="${r.total} ? 'total'">
+          <td th:text="${r.name}"></td><td th:text="${r.n}"></td><td th:text="${r.wins}"></td><td th:text="${r.hitRate}"></td>
+          <td th:text="${r.avgOdds}"></td><td th:classappend="${r.up} ? 'up'" th:text="${r.roi}"></td><td th:text="${r.profit}"></td>
+          <td th:text="${r.pending}"></td><td th:text="${r.scratched}"></td>
+        </tr>
+      </tbody>
+    </table></div>
+    <div class="scroll" style="margin-top:12px"><table class="days stats ledger">
+      <thead><tr><th>날짜</th><th>경주</th><th>말</th><th>기록 배당</th><th>확정 배당</th><th>결과</th><th>배당금</th><th>기록 시각</th></tr></thead>
+      <tbody>
+        <tr th:each="b : ${ledger.bets}" th:classappend="${!b.official} ? 'ref'">
+          <td th:text="|${b.dateLabel} ${b.meetName}|"></td>
+          <td><a th:if="${b.linked}" th:href="@{|/r/${b.raceDate}/${b.meet}/${b.rcNo}|(mode='day')}" th:text="|${b.rcNo}R|"></a>
+              <span th:unless="${b.linked}" th:text="|${b.rcNo}R|"></span></td>
+          <td th:text="|${b.chulNo} ${b.hrName}|"></td>
+          <td th:text="${b.betOdds}"></td>
+          <td><span th:text="${b.finalOdds != null} ? ${b.finalOdds} : '-'"></span>
+              <span class="drift" th:if="${b.bigDrift}" th:text="${b.finalOdds > b.betOdds} ? '▲ 급변' : '▼ 급변'"></span></td>
+          <td th:classappend="${b.win} ? 'up'" th:text="${b.status}"></td>
+          <td th:text="${b.win} ? ${b.payout} : (${b.counted} ? '0' : '-')"></td>
+          <td th:text="${b.placedAt != null} ? ${#temporals.format(b.placedAt, 'HH:mm')} : '-'"></td>
+        </tr>
+      </tbody>
     </table></div>
   </th:block>
 
@@ -46,7 +77,8 @@
     <span>전날 예상: 배당 없이 계산한 순위. "상위5 중 3착내"는 전날 고른 5두 가운데 3착 안에 든 평균 마릿수(최대 3)입니다.</span>
     <span>인기1위 우승: 최종 단승 배당이 가장 낮은 말이 이긴 비율. 전날 예상과 비교하는 기준입니다.</span>
     <span>★ 최종배당: 경주 후 확정 배당·마체중·주로로 당일 모델을 다시 돌린 사후 검증입니다. 실제로는 마감 직전 배당이 달라 결과가 다를 수 있습니다.</span>
-    <span>★ 직접입력: 경주 전에 입력한 배당으로 고른 가치마를 확정 배당으로 정산한 모의 기록입니다. 회수율 = 적중 배당 합 ÷ 건수.</span>
+    <span>모의 장부: 경주마다 출발 전 마지막 입력의 ★ 를 단승 1단위로 적고 확정 배당으로 정산합니다. 회수율 = 적중 배당 합 ÷ 건수. 출전 취소는 건수에서 뺍니다.</span>
+    <span>배당 변동: 기록할 때 배당 대비 확정 배당이 1.5배 이상 오르거나 내리면 표시합니다.</span>
     <span>영천은 참고 기록이라 공식 합계에서 뺍니다.</span>
   </footer>
 </div>
