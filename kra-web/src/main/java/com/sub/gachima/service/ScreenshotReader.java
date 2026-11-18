@@ -79,7 +79,7 @@ public class ScreenshotReader {
     ObjectNode request(List<Image> images, String meetName, int rcNo, Map<Integer, String> horses) throws IOException {
         ObjectNode req = om.createObjectNode();
         req.put("model", model);
-        req.put("max_tokens", 2000);
+        req.put("max_tokens", 4000);
 
         ObjectNode tool = req.putArray("tools").addObject();
         tool.put("name", "record_race_screen");
@@ -102,9 +102,9 @@ public class ScreenshotReader {
         props.putObject("notes").put("type", "string").put("description", "읽기 어려웠던 점 (짧게, 한국어)");
         schema.putArray("required").add("horses");
 
-        ObjectNode choice = req.putObject("tool_choice");
-        choice.put("type", "tool");
-        choice.put("name", "record_race_screen");
+        // 최신 모델 중에는 tool_choice 로 도구를 강제할 수 없는 것이 있어 auto 로 두고 프롬프트로 요청한다.
+        // 도구를 안 부르고 글로 JSON 을 답해도 parse() 가 받아 준다.
+        req.putObject("tool_choice").put("type", "auto");
 
         ArrayNode content = req.putArray("messages").addObject().put("role", "user").putArray("content");
         for (Image img : images) {
@@ -129,14 +129,21 @@ public class ScreenshotReader {
         b.append("- scratched: 출전 취소·제외·주행 중지 등으로 표시된 말.\n");
         b.append("- track: 주로 상태(건조/양호/다습/포화/불량). 함수율만 보이면 5% 이하 건조, 6~9% 양호, 10~14% 다습, 15~19% 포화, 20% 이상 불량.\n");
         b.append("- race_no_seen: 화면에 보이는 경주 번호.\n");
-        b.append("화면에 없거나 흐려서 확실하지 않은 값은 넣지 마세요. 추측하지 마세요. 마명이 위 목록과 다르면 notes 에 적으세요.");
+        b.append("화면에 없거나 흐려서 확실하지 않은 값은 넣지 마세요. 추측하지 마세요. 마명이 위 목록과 다르면 notes 에 적으세요.\n");
+        b.append("반드시 record_race_screen 도구를 한 번 호출해서 답하세요. 도구를 쓸 수 없으면 같은 모양의 JSON 하나만 답하세요.");
         return b.toString();
     }
 
     Reading parse(JsonNode resp) throws IOException {
         JsonNode input = null;
-        for (JsonNode c : resp.path("content")) if ("tool_use".equals(c.path("type").asText())) { input = c.path("input"); break; }
-        if (input == null) throw new IOException("Claude 응답에 읽은 값이 없습니다");
+        StringBuilder text = new StringBuilder();
+        for (JsonNode c : resp.path("content")) {
+            String type = c.path("type").asText();
+            if ("tool_use".equals(type) && input == null) input = c.path("input");
+            else if ("text".equals(type)) text.append(c.path("text").asText()).append('\n');
+        }
+        if (input == null) input = jsonInText(text.toString());
+        if (input == null) throw new IOException("Claude 응답에 읽은 값이 없습니다: " + abbreviate(text.toString()));
         Reading r = new Reading();
         if (input.path("race_no_seen").isNumber()) r.raceNoSeen = input.path("race_no_seen").asInt();
         String t = input.path("track").asText("").trim();
@@ -150,6 +157,23 @@ public class ScreenshotReader {
             if (h.path("bwd").isNumber() && Math.abs(h.path("bwd").asDouble()) <= 40) r.bwd.put(no, h.path("bwd").asDouble());
         }
         return r;
+    }
+
+    /** 글 답변 속 { ... } JSON (코드 블록 포함) */
+    private JsonNode jsonInText(String t) {
+        int a = t.indexOf('{'), b = t.lastIndexOf('}');
+        if (a < 0 || b <= a) return null;
+        try {
+            JsonNode n = om.readTree(t.substring(a, b + 1));
+            return n.has("horses") ? n : (n.path("input").has("horses") ? n.path("input") : null);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private static String abbreviate(String s) {
+        s = s.trim().replaceAll("\\s+", " ");
+        return s.length() > 200 ? s.substring(0, 200) + "…" : s;
     }
 
     /** 5MB 를 넘으면 줄여서 JPEG 로 */
