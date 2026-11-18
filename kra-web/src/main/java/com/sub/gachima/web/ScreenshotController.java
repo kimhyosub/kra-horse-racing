@@ -95,6 +95,7 @@ public class ScreenshotController {
             for (Integer no : nos) if (!r.odds.containsKey(no)) missing.add(no);
             if (!missing.isEmpty())
                 warnings.add("배당을 못 읽은 마번: " + missing + " — 직접 넣으세요 (비워 두면 출전 취소로 계산).");
+            if (r.track == null) warnings.add("주로 상태는 화면에서 못 읽었습니다. 아래에서 직접 고르세요 (함수율 5% 이하 건조, 6~9 양호, 10~14 다습, 15~19 포화, 20 이상 불량).");
             if (r.notes != null && !r.notes.trim().isEmpty()) warnings.add("읽기 메모: " + r.notes.trim());
         }
 
