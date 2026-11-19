@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 
 import java.time.*;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -119,5 +120,25 @@ class TelegramBotTest {
         assertEquals(Integer.valueOf(5), h.rc);
         assertEquals("다습", h.track);
         assertNull(TelegramBot.parseCaption("").rc);
+
+        LocalDate today = LocalDate.of(2026, 11, 19);
+        TelegramBot.Hint d = TelegramBot.parseCaption("11/15 서울7", today);
+        assertEquals(LocalDate.of(2026, 11, 15), d.date);
+        assertEquals(Integer.valueOf(1), d.meet);
+        assertEquals(Integer.valueOf(7), d.rc);
+        TelegramBot.Hint k = TelegramBot.parseCaption("11월 15일 영천 3경주", today);
+        assertEquals(LocalDate.of(2026, 11, 15), k.date);
+        assertEquals(Integer.valueOf(3), k.rc);
+        assertEquals(LocalDate.of(2025, 12, 28), TelegramBot.parseCaption("12.28 부경 1", LocalDate.of(2026, 1, 3)).date);
+    }
+
+    @Test
+    void captionDateFindsPastRace() throws Exception {
+        ScreenshotReader.Reading r = new ScreenshotReader.Reading();
+        r.odds.put(8, 15.4); r.odds.put(3, 3.9); r.odds.put(10, 4.1);
+        when(reader.read(anyList(), isNull(), eq(0), anyMap())).thenReturn(r);
+        // 시계는 11/15 13:00 이지만, 캡션 날짜가 우선 — 없는 날짜면 안내
+        photo(111, "11/16 서울7");
+        verify(tg).sendMessage(eq(111L), contains("(11/16) 경주 데이터가 없습니다. 날짜를 확인해 주세요"), eq(9L));
     }
 }

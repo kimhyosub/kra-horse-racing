@@ -118,16 +118,21 @@ public class TelegramBot {
         if (!reader.isEnabled()) { tg.sendMessage(chat, "스크린샷 읽기가 꺼져 있습니다 (PC에 ANTHROPIC_API_KEY 필요).", msgId); return; }
 
         tg.typing(chat);
-        String today = LocalDate.now(clock.withZone(KST)).format(DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate todayDate = LocalDate.now(clock.withZone(KST));
+        Hint hint = parseCaption(caption, todayDate);
+        String today = (hint.date != null ? hint.date : todayDate).format(DateTimeFormatter.BASIC_ISO_DATE);
         List<RaceRef> cands = races.racesOn(today);
-        if (cands.isEmpty()) { tg.sendMessage(chat, "오늘(" + today + ") 경주 데이터가 없습니다. 자동 수집이 돌았는지 관리 화면을 확인해 주세요.", msgId); return; }
+        if (cands.isEmpty()) {
+            tg.sendMessage(chat, (hint.date != null ? "" : "오늘") + "(" + today.substring(4, 6) + "/" + today.substring(6) + ") 경주 데이터가 없습니다. "
+                    + (hint.date != null ? "날짜를 확인해 주세요." : "자동 수집이 돌았는지 관리 화면을 확인하거나, 다른 날이면 캡션에 \"11/15 서울 7\"처럼 날짜를 적어 주세요."), msgId);
+            return;
+        }
 
         byte[] img = tg.download(fileId);
         String mime = m.path("document").path("mime_type").asText("image/jpeg");
         ScreenshotReader.Reading r = reader.read(Collections.singletonList(new ScreenshotReader.Image(img, mime.startsWith("image/") ? mime : "image/jpeg")),
                 null, 0, Collections.<Integer, String>emptyMap());
 
-        Hint hint = parseCaption(caption);
         LocalDateTime now = LocalDateTime.now(clock.withZone(KST));
         Choice c = choose(cands, r, hint, now);
         if (c == null) { tg.sendMessage(chat, "어느 경주인지 찾지 못했습니다. 캡션에 \"서울 7\"처럼 경주를 적어 다시 보내 주세요.", msgId); return; }
@@ -180,12 +185,23 @@ public class TelegramBot {
 
     // ---------------- 어느 경주인가 ----------------
 
-    static class Hint { Integer meet, rc; String track; }
+    static class Hint { Integer meet, rc; String track; LocalDate date; }
 
-    /** 캡션: "서울 7", "부경5R", "제주 3경주 다습", "7" */
-    static Hint parseCaption(String s) {
+    static Hint parseCaption(String s) { return parseCaption(s, LocalDate.now(KST)); }
+
+    /** 캡션: "서울 7", "부경5R", "제주 3경주 다습", "7", "11/15 서울7", "11월 15일 서울 7" */
+    static Hint parseCaption(String s, LocalDate today) {
         Hint h = new Hint();
         if (s == null) return h;
+        Matcher dm = Pattern.compile("(\\d{1,2})\\s*(?:[/.\\-]|월)\\s*(\\d{1,2})\\s*일?").matcher(s);
+        if (dm.find()) {
+            try {
+                LocalDate d = LocalDate.of(today.getYear(), Integer.parseInt(dm.group(1)), Integer.parseInt(dm.group(2)));
+                if (d.isAfter(today.plusDays(7))) d = d.minusYears(1);   // 1월에 "12/28" 처럼 작년 날짜
+                h.date = d;
+                s = s.substring(0, dm.start()) + " " + s.substring(dm.end());   // 날짜 숫자를 경주 번호로 읽지 않게
+            } catch (java.time.DateTimeException ignore) { /* 날짜가 아님 */ }
+        }
         for (Map.Entry<String, Integer> e : MEETS.entrySet()) if (s.contains(e.getKey())) { h.meet = e.getValue(); break; }
         Matcher mm = Pattern.compile("(\\d{1,2})\\s*(?:R|r|경주)?").matcher(s);
         if (mm.find()) { int n = Integer.parseInt(mm.group(1)); if (n >= 1 && n <= 20) h.rc = n; }
