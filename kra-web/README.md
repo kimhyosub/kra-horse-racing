@@ -45,6 +45,11 @@ python export_web.py --from 20261106 --to 20261115 --out C:/kra-data/web
 - 밖에서 휴대폰으로 쓰는 설정(Cloudflare Tunnel, 웹 자동 실행): `../automation/REMOTE.md`
 - DB 파일: `C:/kra-data/db/gachima` (`GACHIMA_DB`로 변경)
 
+## 텔레그램 봇
+
+스크린샷을 봇에게 보내면 경주를 찾아 당일 입력으로 저장하고, 당일 분석 1·2·3위와 ★ 가치마를 답장합니다.
+웹에서 출발 전 입력을 저장해도 같은 요약이 허용 대화로 갑니다. 설정: `../automation/TELEGRAM.md`
+
 ## 모의 장부
 
 - 경주 화면에서 **출발 전에** 당일 배당을 입력할 때마다 그 경주의 ★ 를 새로 적습니다 → 출발 전 마지막 입력이 공식 기록 (단승 1단위).

@@ -41,3 +41,10 @@ gachima:
   claude:
     api-key: ${ANTHROPIC_API_KEY:}
     model: ${GACHIMA_CLAUDE_MODEL:claude-sonnet-5-5}
+  # 텔레그램 봇: 스크린샷을 보내면 경주를 찾아 저장하고 당일 분석 1·2·3위와 ★ 를 답장. 웹 저장도 알림
+  telegram:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    # 허용(=알림 받을) 대화 ID, 쉼표로. 봇에게 /id 를 보내면 알려 줌
+    chats: ${GACHIMA_TELEGRAM_CHATS:}
+  # 알림 속 링크 주소
+  public-url: ${GACHIMA_PUBLIC_URL:https://gachima.zipbabstudio.com}

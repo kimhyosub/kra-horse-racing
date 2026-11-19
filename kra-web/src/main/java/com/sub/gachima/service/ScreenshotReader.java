@@ -48,8 +48,11 @@ public class ScreenshotReader {
     /** 읽은 값. 못 읽은 칸은 맵에 없다 */
     public static class Reading {
         public Integer raceNoSeen;
+        /** 화면에 보이는 경마장 이름 (서울/제주/부경/영천), 마번별 마명 — 어느 경주인지 모를 때 찾는 데 쓴다 */
+        public String meetSeen;
         public String track, notes;
         public final Map<Integer, Double> odds = new TreeMap<>(), bwd = new TreeMap<>();
+        public final Map<Integer, String> names = new TreeMap<>();
     }
 
     public Reading read(List<Image> images, String meetName, int rcNo, Map<Integer, String> horses) throws IOException {
@@ -88,6 +91,7 @@ public class ScreenshotReader {
         schema.put("type", "object");
         ObjectNode props = schema.putObject("properties");
         props.putObject("race_no_seen").put("type", "integer").put("description", "화면에 보이는 경주 번호. 안 보이면 생략");
+        props.putObject("meet_seen").put("type", "string").put("description", "화면에 보이는 경마장: 서울/제주/부경/영천. 안 보이면 생략");
         props.putObject("track").put("type", "string").put("description", "건조/양호/다습/포화/불량 중 하나. 안 보이면 생략");
         ObjectNode hs = props.putObject("horses");
         hs.put("type", "array");
@@ -95,6 +99,7 @@ public class ScreenshotReader {
         item.put("type", "object");
         ObjectNode ip = item.putObject("properties");
         ip.putObject("no").put("type", "integer").put("description", "마번(출전번호)");
+        ip.putObject("name").put("type", "string").put("description", "화면에 보이는 마명. 안 보이면 생략");
         ip.putObject("odds").put("type", "number").put("description", "단승 배당. 안 보이거나 확실하지 않으면 생략");
         ip.putObject("bwd").put("type", "number").put("description", "마체중 증감 kg (478(+3) 이면 3). 안 보이면 생략");
         ip.putObject("scratched").put("type", "boolean").put("description", "출전 취소·제외로 표시되어 있으면 true");
@@ -121,8 +126,12 @@ public class ScreenshotReader {
     static String prompt(String meetName, int rcNo, Map<Integer, String> horses) {
         StringBuilder b = new StringBuilder();
         b.append("한국 경마 앱(더비온, KRA 등) 화면을 찍은 스크린샷입니다. 여러 장이면 같은 경주의 다른 화면입니다.\n");
-        b.append("찾는 경주: ").append(meetName).append(' ').append(rcNo).append("경주. 출전마:\n");
-        for (Map.Entry<Integer, String> e : horses.entrySet()) b.append("  ").append(e.getKey()).append("번 ").append(e.getValue()).append('\n');
+        if (horses.isEmpty()) {
+            b.append("어느 경주인지 모릅니다. 화면에 보이는 경마장(meet_seen), 경주 번호(race_no_seen), 마번별 마명(name)도 꼭 읽어 주세요.\n");
+        } else {
+            b.append("찾는 경주: ").append(meetName).append(' ').append(rcNo).append("경주. 출전마:\n");
+            for (Map.Entry<Integer, String> e : horses.entrySet()) b.append("  ").append(e.getKey()).append("번 ").append(e.getValue()).append('\n');
+        }
         b.append("\n마번마다 아래 값을 읽어 record_race_screen 도구로 기록하세요.\n");
         b.append("- odds: 단승(단승식) 배당만. 연승·복승·쌍승·삼복승 배당은 쓰지 마세요. 예: 5.3\n");
         b.append("- bwd: 마체중 옆 괄호 안의 증감. 478(+3) → 3, 501(-4) → -4, 465(0) → 0. 마체중 자체(478)는 쓰지 마세요.\n");
@@ -148,10 +157,14 @@ public class ScreenshotReader {
         if (input.path("race_no_seen").isNumber()) r.raceNoSeen = input.path("race_no_seen").asInt();
         String t = input.path("track").asText("").trim();
         if (RaceService.TRACKS.contains(t)) r.track = t;
+        String m = input.path("meet_seen").asText("").trim();
+        if (!m.isEmpty()) r.meetSeen = m;
         r.notes = input.path("notes").asText(null);
         for (JsonNode h : input.path("horses")) {
             if (!h.path("no").isNumber()) continue;
             int no = h.path("no").asInt();
+            String nm = h.path("name").asText("").trim();
+            if (!nm.isEmpty()) r.names.put(no, nm);
             if (h.path("scratched").asBoolean(false)) continue;
             if (h.path("odds").isNumber() && h.path("odds").asDouble() >= 1.0) r.odds.put(no, h.path("odds").asDouble());
             if (h.path("bwd").isNumber() && Math.abs(h.path("bwd").asDouble()) <= 40) r.bwd.put(no, h.path("bwd").asDouble());

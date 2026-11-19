@@ -24,11 +24,13 @@ public class RaceController {
     private final StatsService statsService;
     private final com.sub.gachima.service.PaperService paperService;
     private final com.sub.gachima.service.ScreenshotReader screenshotReader;
+    private final com.sub.gachima.telegram.TelegramBot telegram;
 
     public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService,
-                          com.sub.gachima.service.PaperService paperService, com.sub.gachima.service.ScreenshotReader screenshotReader) {
+                          com.sub.gachima.service.PaperService paperService, com.sub.gachima.service.ScreenshotReader screenshotReader,
+                          com.sub.gachima.telegram.TelegramBot telegram) {
         this.raceService = raceService; this.importService = importService; this.scanner = scanner; this.statsService = statsService;
-        this.paperService = paperService; this.screenshotReader = screenshotReader;
+        this.paperService = paperService; this.screenshotReader = screenshotReader; this.telegram = telegram;
     }
 
     @GetMapping("/login")
@@ -74,6 +76,8 @@ public class RaceController {
             } catch (NumberFormatException ignore) { /* 다른 칸 */ }
         }
         com.sub.gachima.service.PaperService.Outcome o = raceService.saveInput(date, meet, rc, form.get("track"), odds, bwd, who == null ? null : who.getName());
+        // 출발 전 입력이면 텔레그램 대화방에도 당일 분석 요약을 보낸다
+        if (o == com.sub.gachima.service.PaperService.Outcome.RECORDED) telegram.notifyAll(date, meet, rc, who == null ? null : who.getName());
         switch (o) {
             case RECORDED: ra.addFlashAttribute("paperMsg", "모의 기록을 이번 입력의 ★ 로 바꿨습니다. 출발 전 마지막 입력이 공식 기록입니다."); break;
             case LOCKED_RESULT: ra.addFlashAttribute("paperMsg", "결과가 나온 경주라 모의 기록은 바뀌지 않았습니다 (분석만 다시 계산)."); break;
@@ -97,6 +101,8 @@ public class RaceController {
         model.addAttribute("auto", scanner.isAuto());
         model.addAttribute("collect", scanner.collectStatus());
         model.addAttribute("shotEnabled", screenshotReader.isEnabled());
+        model.addAttribute("tgEnabled", telegram.isEnabled());
+        model.addAttribute("tgChats", telegram.getChats().size());
         return "admin";
     }
 

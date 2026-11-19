@@ -57,6 +57,40 @@ public class RaceService {
         return Optional.of(v);
     }
 
+    /** 그날의 모든 경주 (텔레그램 스크린샷이 어느 경주인지 찾을 때) */
+    @Transactional(readOnly = true)
+    public List<RaceRef> racesOn(String date) {
+        List<RaceRef> out = new ArrayList<>();
+        for (MeetDay md : meetDays.findByRaceDateOrderByMeet(date))
+            for (Race r : races.findByMeetDayOrderByRcNo(md)) {
+                RaceRef x = new RaceRef();
+                x.date = date; x.meet = md.getMeet(); x.meetName = md.getMeetName(); x.rcNo = r.getRcNo(); x.stTime = r.getStTime();
+                for (Entry e : r.getEntries()) x.names.put(e.getChulNo(), e.getHrName());
+                out.add(x);
+            }
+        return out;
+    }
+
+    /** 그날 그 경마장에서 마지막으로 직접 입력한 주로 상태 */
+    @Transactional(readOnly = true)
+    public Optional<String> lastManualTrack(String date, int meet) {
+        DayInput best = null;
+        for (MeetDay md : meetDays.findByRaceDateOrderByMeet(date)) {
+            if (md.getMeet() != meet) continue;
+            for (Race r : races.findByMeetDayOrderByRcNo(md)) {
+                Optional<DayInput> in = input(r, SRC_MANUAL);
+                if (in.isPresent() && (best == null || in.get().getCreatedAt().isAfter(best.getCreatedAt()))) best = in.get();
+            }
+        }
+        return Optional.ofNullable(best == null ? null : best.getTrack());
+    }
+
+    public static class RaceRef {
+        public String date, meetName, stTime;
+        public int meet, rcNo;
+        public final Map<Integer, String> names = new TreeMap<>();
+    }
+
     /** 직접 입력이 있으면 그것, 없으면 경주 후 들어온 최종 배당 */
     Optional<DayInput> currentInput(Race r) {
         Optional<DayInput> m = input(r, SRC_MANUAL);
