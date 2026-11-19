@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -13,7 +13,8 @@
   <header class="brand">
     <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
       <div><b>가치마</b><small>성적 · 결과가 들어온 경주만 셉니다</small></div></a>
-    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}" aria-current="true">성적</a><a th:href="@{/admin}">관리</a></nav>
+    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}" aria-current="true">성적</a><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">관리</a>
+      <form class="inline" method="post" th:action="@{/logout}"><button class="linkbtn" type="submit">로그아웃</button></form></nav>
   </header>
 
   <p class="hint" th:if="${s.empty}">아직 결과가 들어온 경주가 없습니다. 경주가 끝난 뒤 export_web.py 를 다시 돌려 확정 착순을 넣어 주세요.</p>
@@ -57,7 +58,7 @@
       </tbody>
     </table></div>
     <div class="scroll" style="margin-top:12px"><table class="days stats ledger">
-      <thead><tr><th>날짜</th><th>경주</th><th>말</th><th>기록 배당</th><th>확정 배당</th><th>결과</th><th>배당금</th><th>기록 시각</th></tr></thead>
+      <thead><tr><th>날짜</th><th>경주</th><th>말</th><th>기록 배당</th><th>확정 배당</th><th>결과</th><th>배당금</th><th>기록 시각</th><th>입력</th></tr></thead>
       <tbody>
         <tr th:each="b : ${ledger.bets}" th:classappend="${!b.official} ? 'ref'">
           <td th:text="|${b.dateLabel} ${b.meetName}|"></td>
@@ -70,6 +71,7 @@
           <td th:classappend="${b.win} ? 'up'" th:text="${b.status}"></td>
           <td th:text="${b.win} ? ${b.payout} : (${b.counted} ? '0' : '-')"></td>
           <td th:text="${b.placedAt != null} ? ${#temporals.format(b.placedAt, 'HH:mm')} : '-'"></td>
+          <td th:text="${b.placedBy != null} ? ${b.placedBy} : '-'"></td>
         </tr>
       </tbody>
     </table></div>

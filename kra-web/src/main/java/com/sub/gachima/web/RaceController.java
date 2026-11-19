@@ -64,7 +64,7 @@ public class RaceController {
     /** 당일 배당·마체중·주로 입력. 폼 이름: odds_{마번}, bwd_{마번}, track */
     @PostMapping("/r/{date}/{meet}/{rc}/input")
     public String input(@PathVariable String date, @PathVariable int meet, @PathVariable int rc,
-                        @RequestParam Map<String, String> form, RedirectAttributes ra) {
+                        @RequestParam Map<String, String> form, RedirectAttributes ra, java.security.Principal who) {
         Map<Integer, String> odds = new HashMap<>(), bwd = new HashMap<>();
         for (Map.Entry<String, String> e : form.entrySet()) {
             String k = e.getKey();
@@ -73,7 +73,7 @@ public class RaceController {
                 else if (k.startsWith("bwd_")) bwd.put(Integer.parseInt(k.substring(4)), e.getValue());
             } catch (NumberFormatException ignore) { /* 다른 칸 */ }
         }
-        com.sub.gachima.service.PaperService.Outcome o = raceService.saveInput(date, meet, rc, form.get("track"), odds, bwd);
+        com.sub.gachima.service.PaperService.Outcome o = raceService.saveInput(date, meet, rc, form.get("track"), odds, bwd, who == null ? null : who.getName());
         switch (o) {
             case RECORDED: ra.addFlashAttribute("paperMsg", "모의 기록을 이번 입력의 ★ 로 바꿨습니다. 출발 전 마지막 입력이 공식 기록입니다."); break;
             case LOCKED_RESULT: ra.addFlashAttribute("paperMsg", "결과가 나온 경주라 모의 기록은 바뀌지 않았습니다 (분석만 다시 계산)."); break;

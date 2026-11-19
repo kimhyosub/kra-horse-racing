@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.import-dir=target/test-import-paper",
         "gachima.auto-import=false"})
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(roles = "ADMIN")
 class PaperFlowTest {
 
     @Autowired MockMvc mvc;

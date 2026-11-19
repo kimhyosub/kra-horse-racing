@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.import-dir=target/test-import",
         "gachima.auto-import=false"})
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(roles = "ADMIN")
 class WebFlowTest {
 
     @Autowired MockMvc mvc;

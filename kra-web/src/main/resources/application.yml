@@ -35,6 +35,8 @@ gachima:
     user: ${GACHIMA_LOGIN_USER:admin}
     password: ${GACHIMA_LOGIN_PASSWORD:}
     public-read: ${GACHIMA_PUBLIC_READ:false}
+    # 추가 사용자(입력 가능, 관리 불가) "아이디 = 비밀번호" 파일. 예시: automation/gachima-users.example.properties
+    users-file: ${GACHIMA_USERS_FILE:C:/kra-data/gachima-users.properties}
   # 스크린샷 읽기 (Claude API). 키가 없으면 꺼진다
   claude:
     api-key: ${ANTHROPIC_API_KEY:}

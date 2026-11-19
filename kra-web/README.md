@@ -37,6 +37,8 @@ python export_web.py --from 20261106 --to 20261115 --out C:/kra-data/web
 ## 로그인 · 밖에서 접속 · 스크린샷
 
 - 모든 화면이 로그인 필요 (`GACHIMA_LOGIN_USER` / `GACHIMA_LOGIN_PASSWORD`, 로그인 유지 30일).
+- 추가 사용자: `C:/kra-data/gachima-users.properties`에 "아이디 = 비밀번호" 줄 (예시 `../automation/gachima-users.example.properties`).
+  보기·당일 입력·스크린샷 가능, 관리 화면 불가. 누가 입력했는지 경주 화면과 모의 장부에 표시. 파일을 고치면 웹 재시작.
   `GACHIMA_PUBLIC_READ=true` 면 경주·성적 화면은 로그인 없이 보이고 입력·관리만 막습니다.
 - 당일 분석 화면에서 스크린샷을 올리면 Claude API(`ANTHROPIC_API_KEY`)로 단승 배당·마체중 증감·주로를 읽어
   입력칸을 채웁니다. 저장은 확인 후 [다시 계산]. 못 읽은 마번, 화면의 경주 번호가 다르면 경고합니다.

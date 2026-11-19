@@ -60,7 +60,7 @@ public class PaperService {
 
     /** 당일 입력 한 번 → 그 경주의 기록을 이번 ★ 로 바꿔 쓴다 */
     @Transactional
-    public Outcome record(Race race, List<DayModel.Result> results, String track, Map<Integer, Double> bwd) {
+    public Outcome record(Race race, List<DayModel.Result> results, String track, Map<Integer, Double> bwd, String user) {
         Outcome o = lockState(race);
         if (o != Outcome.RECORDED) return o;
         String date = race.getMeetDay().getRaceDate();
@@ -76,7 +76,7 @@ public class PaperService {
             PaperBet b = new PaperBet();
             b.setRaceDate(date); b.setMeet(meet); b.setRcNo(race.getRcNo()); b.setChulNo(r.no);
             b.setHrName(names.get(r.no)); b.setBetOdds(r.odds); b.setPModel(r.pModel); b.setEv(r.ev);
-            b.setBwd(bwd.get(r.no)); b.setTrack(track); b.setPlacedAt(now); b.setSource(SRC_WEB);
+            b.setBwd(bwd.get(r.no)); b.setTrack(track); b.setPlacedAt(now); b.setSource(SRC_WEB); b.setPlacedBy(user);
             bets.save(b);
         }
         return o;

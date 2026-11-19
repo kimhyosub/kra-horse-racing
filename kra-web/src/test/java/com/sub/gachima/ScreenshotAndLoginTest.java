@@ -32,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.import-dir=target/test-import-shot",
         "gachima.auto-import=false",
         "gachima.login.user=sub",
-        "gachima.login.password=test-pass-123"})
+        "gachima.login.password=test-pass-123",
+        "gachima.login.users-file=src/test/resources/test-users.properties"})
 @AutoConfigureMockMvc
 class ScreenshotAndLoginTest {
 
@@ -58,7 +59,28 @@ class ScreenshotAndLoginTest {
     }
 
     @Test
-    @WithMockUser
+    void fileUsersCanInputButNotAdmin() throws Exception {
+        mvc.perform(formLogin().user("친구1").password("pass-1111")).andExpect(authenticated().withRoles("INPUT"));
+        mvc.perform(formLogin().user("friend2").password("pass-2222")).andExpect(authenticated().withRoles("INPUT"));
+        mvc.perform(formLogin().user("짧은비번").password("abc")).andExpect(unauthenticated());
+    }
+
+    @Test
+    @WithMockUser(username = "friend2", roles = "INPUT")
+    void inputRoleLimits() throws Exception {
+        mvc.perform(get("/admin")).andExpect(status().isForbidden());
+        mvc.perform(post("/admin/import").with(csrf())).andExpect(status().isForbidden());
+        mvc.perform(get("/stats")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("href=\"/admin\""))));
+        mvc.perform(post("/r/20261115/1/7/input").with(csrf()).param("track", "양호").param("odds_1", "3.0").param("odds_2", "4.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/r/20261115/1/7?mode=day"));
+        mvc.perform(get("/r/20261115/1/7").param("mode", "day"))
+                .andExpect(content().string(containsString("· friend2")));
+    }
+
+    @Test
+    @WithMockUser(roles = "INPUT")
     void screenshotFillsInputs() throws Exception {
         ScreenshotReader.Reading r = new ScreenshotReader.Reading();
         r.raceNoSeen = 7;
@@ -85,7 +107,7 @@ class ScreenshotAndLoginTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "INPUT")
     void screenshotOffWithoutKey() throws Exception {
         when(reader.isEnabled()).thenReturn(false);
         mvc.perform(get("/r/20261115/1/7").param("mode", "day"))

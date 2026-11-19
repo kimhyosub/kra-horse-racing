@@ -42,6 +42,13 @@ public class PaperBet {
     private String track;
     @Column(name = "placed_at")
     private LocalDateTime placedAt;
+    /** 기록한 입력의 아이디 */
+    @Column(name = "placed_by", length = 40)
+    private String placedBy;
+    public String getPlacedBy() { return placedBy; }
+    public void setPlacedBy(String placedBy) { this.placedBy = placedBy; }
+    public String getPlacedByLabel() { return placedBy == null ? "" : " " + placedBy; }
+
     /** web(웹 입력) / migrated(예전 모의배팅 DB에서 옮김) */
     @Column(name = "source", length = 10)
     private String source;

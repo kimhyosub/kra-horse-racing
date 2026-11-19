@@ -33,6 +33,12 @@ public class DayInput {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    /** 입력한 아이디 (자동 final 은 null) */
+    @Column(name = "created_by", length = 40)
+    private String createdBy;
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+
     public Long getId() { return id; }
     public Race getRace() { return race; }
     public void setRace(Race race) { this.race = race; }

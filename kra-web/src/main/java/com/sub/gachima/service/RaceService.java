@@ -77,6 +77,7 @@ public class RaceService {
         v.rcNo = race.getRcNo(); v.stTime = race.getStTime(); v.dist = race.getDist();
         Optional<DayInput> in = currentInput(race);
         v.inputSource = in.map(DayInput::getSource).orElse(null);
+        v.inputBy = in.map(DayInput::getCreatedBy).orElse(null);
         v.track = in.map(DayInput::getTrack).orElse("건조");
         v.inputAt = in.map(DayInput::getCreatedAt).orElse(null);
         Map<Integer, Double> odds = in.map(i -> readMap(i.getOddsJson())).orElse(Collections.emptyMap());
@@ -139,7 +140,7 @@ public class RaceService {
 
     /** 입력 저장 + 출발 전이면 모의 기록(★)을 이번 입력으로 바꿔 쓴다 */
     @Transactional
-    public PaperService.Outcome saveInput(String date, int meet, int rcNo, String track, Map<Integer, String> odds, Map<Integer, String> bwd) {
+    public PaperService.Outcome saveInput(String date, int meet, int rcNo, String track, Map<Integer, String> odds, Map<Integer, String> bwd, String user) {
         MeetDay md = meetDays.findByRaceDateAndMeet(date, meet).orElseThrow(() -> new NoSuchElementException("경주일 없음"));
         Race race = races.findByMeetDayAndRcNo(md, rcNo).orElseThrow(() -> new NoSuchElementException("경주 없음"));
         DayInput in = new DayInput();
@@ -148,10 +149,11 @@ public class RaceService {
         in.setOddsJson(write(parse(odds, true)));
         in.setBwdJson(write(parse(bwd, false)));
         in.setSource(SRC_MANUAL);
+        in.setCreatedBy(user);
         in.setCreatedAt(LocalDateTime.now());
         inputs.save(in);
         List<DayModel.Result> scored = model(md).score(horses(race, in), in.getTrack());
-        return paper.record(race, scored, in.getTrack(), readMap(in.getBwdJson()));
+        return paper.record(race, scored, in.getTrack(), readMap(in.getBwdJson()), user);
     }
 
     /** "12.5", "+3", "-4" 같은 입력을 숫자로. 배당은 1.0 이상만 받는다. */
@@ -210,7 +212,7 @@ public class RaceService {
     // ---------------- 화면용 값 ----------------
 
     public static class RaceView {
-        public String date, meetName, stTime, track, inputSource;
+        public String date, meetName, stTime, track, inputSource, inputBy;
         public int meet, rcNo, dist;
         public LocalDateTime inputAt;
         public List<MeetTab> meets = new ArrayList<>();
@@ -224,6 +226,7 @@ public class RaceService {
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }
         public List<EntryView> getDayTop3() { return dayOrder.subList(0, Math.min(3, dayOrder.size())); }
         public boolean isScored() { return !dayOrder.isEmpty(); }
+        public String getInputByLabel() { return inputBy == null ? "" : " · " + inputBy; }
         public boolean isFinalInput() { return SRC_FINAL.equals(inputSource); }
     }
 
