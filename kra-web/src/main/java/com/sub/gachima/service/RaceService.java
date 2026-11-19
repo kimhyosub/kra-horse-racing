@@ -52,6 +52,12 @@ public class RaceService {
         RaceView v = new RaceView();
         v.date = date; v.meet = meet; v.meetName = md.get().getMeetName();
         v.meets = meetsOn(date).stream().map(m -> new MeetTab(m.getMeet(), m.getMeetName())).collect(Collectors.toList());
+        v.days = dayTabs(meet);
+        for (int i = 0; i < v.days.size(); i++)
+            if (v.days.get(i).date.equals(date)) {   // 목록은 최근 날짜가 앞
+                if (i + 1 < v.days.size()) v.prevDay = v.days.get(i + 1);
+                if (i > 0) v.nextDay = v.days.get(i - 1);
+            }
         for (Race r : all) v.tabs.add(new RaceTab(r.getRcNo(), r.getStTime(), hasValue(model, r)));
         fill(v, race.get(), model);
         return Optional.of(v);
@@ -250,6 +256,8 @@ public class RaceService {
         public int meet, rcNo, dist;
         public LocalDateTime inputAt;
         public List<MeetTab> meets = new ArrayList<>();
+        public List<DayTab> days = new ArrayList<>();
+        public DayTab prevDay, nextDay;
         public List<RaceTab> tabs = new ArrayList<>();
         public List<EntryView> entries = new ArrayList<>(), preOrder, dayOrder, valueOrder, values;
         public List<Integer> result;
@@ -262,6 +270,32 @@ public class RaceService {
         public boolean isScored() { return !dayOrder.isEmpty(); }
         public String getInputByLabel() { return inputBy == null ? "" : " · " + inputBy; }
         public boolean isFinalInput() { return SRC_FINAL.equals(inputSource); }
+    }
+
+    /** 경주일 목록 (최근이 앞). 그날 같은 경마장이 있으면 그 경마장으로, 없으면 첫 경마장으로 연결 */
+    List<DayTab> dayTabs(int preferMeet) {
+        Map<String, List<MeetDay>> byDate = new LinkedHashMap<>();
+        for (MeetDay md : meetDays.findAllByOrderByRaceDateDescMeetAsc()) byDate.computeIfAbsent(md.getRaceDate(), k -> new ArrayList<>()).add(md);
+        List<DayTab> out = new ArrayList<>();
+        for (Map.Entry<String, List<MeetDay>> e : byDate.entrySet()) {
+            int meet = e.getValue().get(0).getMeet();
+            for (MeetDay md : e.getValue()) if (md.getMeet() == preferMeet) meet = preferMeet;
+            String names = e.getValue().stream().map(MeetDay::getMeetName).collect(Collectors.joining("·"));
+            out.add(new DayTab(e.getKey(), meet, names));
+        }
+        return out;
+    }
+
+    public static class DayTab {
+        public final String date, label; public final int meet;
+        DayTab(String date, int meet, String meetNames) {
+            this.date = date; this.meet = meet;
+            String dow = "";
+            try {
+                dow = " (" + "월화수목금토일".charAt(java.time.LocalDate.parse(date, java.time.format.DateTimeFormatter.BASIC_ISO_DATE).getDayOfWeek().getValue() - 1) + ")";
+            } catch (RuntimeException ignore) { }
+            this.label = date.substring(4, 6) + "." + date.substring(6) + dow + " " + meetNames;
+        }
     }
 
     public static class MeetTab {

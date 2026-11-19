@@ -17,7 +17,15 @@
       <div><b>가치마</b><small>전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div>
     </a>
     <nav class="meets">
-      <span class="date" th:text="${v.dateLabel}">2026.11.15</span>
+      <span class="daynav">
+        <a class="dayarrow" th:if="${v.prevDay != null}" th:href="@{|/r/${v.prevDay.date}/${v.prevDay.meet}/1|(mode=${mode})}" aria-label="이전 경주일">‹</a>
+        <span class="dayarrow off" th:if="${v.prevDay == null}">‹</span>
+        <select class="daysel" aria-label="경주일 고르기" onchange="location.href=this.value">
+          <option th:each="d : ${v.days}" th:value="@{|/r/${d.date}/${d.meet}/1|(mode=${mode})}" th:text="${d.label}" th:selected="${d.date == v.date}">11.20 (금) 제주·부경</option>
+        </select>
+        <a class="dayarrow" th:if="${v.nextDay != null}" th:href="@{|/r/${v.nextDay.date}/${v.nextDay.meet}/1|(mode=${mode})}" aria-label="다음 경주일">›</a>
+        <span class="dayarrow off" th:if="${v.nextDay == null}">›</span>
+      </span>
       <a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
          th:attr="aria-current=${m.meet == v.meet}">서울</a>
       <a th:href="@{/stats}">성적</a>
