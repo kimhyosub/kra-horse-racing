@@ -21,7 +21,9 @@ param(
     [string]$Meets = '1,2,3,4',
     [switch]$SkipOdds,
     [switch]$SkipCollect,
-    [switch]$SkipExport
+    [switch]$SkipExport,
+    # 낮 동안 30분마다 도는 결과 반영용: 로그를 따로(results-*.log) 남기고 오래된 것은 3일만 보관
+    [switch]$Quiet
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -45,7 +47,7 @@ $env:PYTHONIOENCODING = 'utf-8'
 $Started = Get-Date
 $LogDir = Join-Path $DataDir 'logs'
 New-Item -ItemType Directory -Force -Path $LogDir, $WebDir | Out-Null
-$Log = Join-Path $LogDir ('daily-{0}.log' -f $Started.ToString('yyyyMMdd-HHmm'))
+$Log = Join-Path $LogDir ('{0}-{1}.log' -f $(if ($Quiet) { 'results' } else { 'daily' }), $Started.ToString('yyyyMMdd-HHmm'))
 $Utf8 = New-Object Text.UTF8Encoding $false
 
 function Log([string]$m) {
@@ -69,7 +71,7 @@ function Write-Status([bool]$ok, [string]$msg) {
         ok         = $ok
         from       = $script:FromDay.ToString('yyyy-MM-dd')
         to         = $script:ToDay.ToString('yyyy-MM-dd')
-        message    = $msg
+        message    = $(if ($Quiet) { '[결과 반영] ' + $msg } else { $msg })
         log        = $Log
     }
     [IO.File]::WriteAllText((Join-Path $WebDir 'collect-status.json'), ($st | ConvertTo-Json), $Utf8)
@@ -147,6 +149,7 @@ catch {
 }
 finally {
     Get-ChildItem $LogDir -Filter 'daily-*.log' | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$KeepLogDays) } | Remove-Item -ErrorAction SilentlyContinue
+    Get-ChildItem $LogDir -Filter 'results-*.log' | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-3) } | Remove-Item -ErrorAction SilentlyContinue
     $mutex.ReleaseMutex()
 }
 exit $exitCode
