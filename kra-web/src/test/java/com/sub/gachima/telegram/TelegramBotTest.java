@@ -108,6 +108,33 @@ class TelegramBotTest {
     }
 
     @Test
+    void trackByText() throws Exception {
+        assertEquals("다습", TelegramBot.trackOf("함수율 12"));
+        assertEquals("양호", TelegramBot.trackOf("부경 8%"));
+        assertEquals("포화", TelegramBot.trackOf("제주 포화"));
+        assertNull(TelegramBot.trackOf("내일 몇 시?"));
+        TelegramBot.Hint h = TelegramBot.parseCaption("함수율 12 서울 7", LocalDate.of(2026, 11, 15));
+        assertEquals("다습", h.track);
+        assertEquals(Integer.valueOf(7), h.rc);
+
+        bot.handle(om.readTree("{\"update_id\":3,\"message\":{\"message_id\":4,\"chat\":{\"id\":111},\"text\":\"영천 함수율 17\"}}"));
+        verify(tg).sendMessage(eq(111L), contains("영천 주로를 <b>포화</b>"), eq(4L));
+
+        ScreenshotReader.Reading r = new ScreenshotReader.Reading();
+        r.odds.put(1, 3.0); r.odds.put(2, 4.5); r.odds.put(3, 6.0);
+        when(reader.read(anyList(), isNull(), eq(0), anyMap())).thenReturn(r);
+        photo(111, "영천 3");
+        ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+        verify(tg).sendMessage(eq(111L), msg.capture(), eq(9L));
+        assertTrue(msg.getValue().contains("주로 포화"), msg.getValue());
+        assertFalse(msg.getValue().contains("주로 상태를 못 읽어"), msg.getValue());
+
+        // 잡담은 무시
+        bot.handle(om.readTree("{\"update_id\":4,\"message\":{\"message_id\":5,\"chat\":{\"id\":111},\"text\":\"오늘 저녁 뭐 먹지\"}}"));
+        verify(tg, never()).sendMessage(eq(111L), anyString(), eq(5L));
+    }
+
+    @Test
     void idCommand() throws Exception {
         bot.handle(om.readTree("{\"update_id\":2,\"message\":{\"message_id\":5,\"chat\":{\"id\":333},\"text\":\"/id\"}}"));
         verify(tg).sendMessage(eq(333L), contains("<code>333</code>"), eq(5L));

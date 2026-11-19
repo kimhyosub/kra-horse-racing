@@ -45,6 +45,8 @@ public class TelegramBot {
     private final Clock clock;
     private volatile boolean running;
     private long offset;
+    /** 대화방에서 글로 정한 그날 주로 상태: "20261120-2" → 다습 (웹을 다시 켜면 사라짐) */
+    private final Map<String, String> tracks = new java.util.concurrent.ConcurrentHashMap<>();
 
     public TelegramBot(TelegramClient tg, ScreenshotReader reader, RaceService races,
                        @Value("${gachima.telegram.chats:}") String chats,
@@ -113,7 +115,11 @@ public class TelegramBot {
         String fileId = null;
         if (m.path("photo").isArray() && m.path("photo").size() > 0) fileId = m.path("photo").get(m.path("photo").size() - 1).path("file_id").asText();
         else if (m.path("document").path("mime_type").asText("").startsWith("image/")) fileId = m.path("document").path("file_id").asText();
-        if (fileId == null) return;   // 사진이 아니면 조용히 넘어감 (단톡방 잡담)
+        if (fileId == null) {
+            // 글만 온 경우: "다습", "제주 포화", "함수율 12", "부경 8%" 처럼 짧은 주로 메시지면 그날 주로로 기억
+            if (chats.contains(chat) && !text.startsWith("/")) handleTrackText(chat, msgId, text);
+            return;   // 그 밖의 글은 조용히 넘어감 (단톡방 잡담)
+        }
         if (!chats.contains(chat)) { tg.sendMessage(chat, "허용되지 않은 대화입니다. /id 로 ID를 확인해 주인에게 알려 주세요.", msgId); return; }
         if (!reader.isEnabled()) { tg.sendMessage(chat, "스크린샷 읽기가 꺼져 있습니다 (PC에 ANTHROPIC_API_KEY 필요).", msgId); return; }
 
@@ -141,9 +147,10 @@ public class TelegramBot {
         List<String> warn = new ArrayList<>();
         warn.add(c.how);
         String track = hint.track != null ? hint.track : r.track;
+        if (track == null) track = tracks.get(today + "-" + c.race.meet);   // 대화방에서 글로 정한 주로
         if (track == null) {
             track = races.lastManualTrack(today, c.race.meet).orElse("건조");
-            warn.add("주로 상태를 못 읽어 '" + track + "'(으)로 계산했습니다. 다르면 캡션에 \"다습\"처럼 적어 다시 보내 주세요.");
+            warn.add("주로 상태를 못 읽어 '" + track + "'(으)로 계산했습니다. 다르면 \"" + c.race.meetName + " 다습\"처럼 글로 보내 두면 이후 사진에 적용됩니다.");
         }
         List<Integer> missing = new ArrayList<>();
         for (Integer no : c.race.names.keySet()) if (!r.odds.containsKey(no)) missing.add(no);
@@ -160,6 +167,32 @@ public class TelegramBot {
         String msg = RaceSummary.of(v, publicUrl, by, warn);
         tg.sendMessage(chat, msg, msgId);
         for (Long other : chats) if (other != chat) safeSend(other, msg);
+    }
+
+    /** "다습" / "제주 포화" / "함수율 12" / "부경 8%" → 오늘 그 경마장(없으면 오늘 경주가 있는 경마장 전부)의 주로 */
+    void handleTrackText(long chat, long msgId, String text) throws Exception {
+        String t = text.trim();
+        if (t.isEmpty() || t.length() > 20) return;
+        String track = trackOf(t);
+        if (track == null) return;
+        LocalDate day = LocalDate.now(clock.withZone(KST));
+        String date = day.format(DateTimeFormatter.BASIC_ISO_DATE);
+        Integer meet = meetOf(t);
+        Map<Integer, String> meets = new TreeMap<>();
+        for (RaceRef r : races.racesOn(date)) if (meet == null || r.meet == meet) meets.put(r.meet, r.meetName);
+        if (meets.isEmpty()) { tg.sendMessage(chat, "오늘 " + (meet == null ? "" : "그 경마장 ") + "경주 데이터가 없어 주로를 정하지 못했습니다.", msgId); return; }
+        for (Integer m : meets.keySet()) tracks.put(date + "-" + m, track);
+        tg.sendMessage(chat, String.join("·", meets.values()) + " 주로를 <b>" + track + "</b>(으)로 정했습니다. 이후 스크린샷에 적용합니다"
+                + (meet == null && meets.size() > 1 ? " (경마장마다 다르면 \"제주 다습\"처럼 따로 보내 주세요)" : "") + ".", msgId);
+    }
+
+    /** 주로 낱말 또는 함수율(%)을 5단계로 */
+    static String trackOf(String s) {
+        for (String t : RaceService.TRACKS) if (s.contains(t)) return t;
+        Matcher m = Pattern.compile("(?:함수율\\s*(\\d{1,2})\\s*%?|(\\d{1,2})\\s*%)").matcher(s);
+        if (!m.find()) return null;
+        int v = Integer.parseInt(m.group(1) != null ? m.group(1) : m.group(2));
+        return v <= 5 ? "건조" : v <= 9 ? "양호" : v <= 14 ? "다습" : v <= 19 ? "포화" : "불량";
     }
 
     /** 웹에서 저장했을 때: 허용 대화 전부에 요약 */
@@ -203,9 +236,10 @@ public class TelegramBot {
             } catch (java.time.DateTimeException ignore) { /* 날짜가 아님 */ }
         }
         for (Map.Entry<String, Integer> e : MEETS.entrySet()) if (s.contains(e.getKey())) { h.meet = e.getValue(); break; }
+        h.track = trackOf(s);
+        if (h.track != null) s = s.replaceAll("함수율\\s*\\d{1,2}\\s*%?|\\d{1,2}\\s*%", " ");   // 함수율 숫자를 경주 번호로 읽지 않게
         Matcher mm = Pattern.compile("(\\d{1,2})\\s*(?:R|r|경주)?").matcher(s);
         if (mm.find()) { int n = Integer.parseInt(mm.group(1)); if (n >= 1 && n <= 20) h.rc = n; }
-        for (String t : RaceService.TRACKS) if (s.contains(t)) { h.track = t; break; }
         return h;
     }
 
