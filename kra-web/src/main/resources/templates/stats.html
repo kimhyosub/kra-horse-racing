@@ -13,8 +13,7 @@
   <header class="brand">
     <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
       <div><b>가치마</b><small>성적 · 결과가 들어온 경주만 셉니다</small></div></a>
-    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}" aria-current="true">성적</a><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">관리</a>
-      <form class="inline" method="post" th:action="@{/logout}"><button class="linkbtn" type="submit">로그아웃</button></form></nav>
+    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}" aria-current="true">성적</a><th:block th:replace="~{fragments :: account}"></th:block></nav>
   </header>
 
   <p class="hint" th:if="${s.empty}">아직 결과가 들어온 경주가 없습니다. 경주가 끝난 뒤 export_web.py 를 다시 돌려 확정 착순을 넣어 주세요.</p>

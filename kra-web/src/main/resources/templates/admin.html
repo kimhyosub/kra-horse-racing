@@ -14,7 +14,7 @@
     <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
       <div><b>가치마</b><small>데이터 불러오기</small></div></a>
     <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}">성적</a><a th:href="@{/admin}" aria-current="true">관리</a>
-      <form class="inline" method="post" th:action="@{/logout}"><button class="linkbtn" type="submit">로그아웃</button></form></nav>
+      <form class="inline" method="post" th:action="@{/logout}"><button class="logout" type="submit"><span th:text="${#authentication.name}">아이디</span> · 로그아웃</button></form></nav>
   </header>
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
   <section class="input">

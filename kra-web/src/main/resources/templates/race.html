@@ -21,6 +21,7 @@
       <a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
          th:attr="aria-current=${m.meet == v.meet}">서울</a>
       <a th:href="@{/stats}">성적</a>
+      <th:block th:replace="~{fragments :: account}"></th:block>
     </nav>
   </header>
 

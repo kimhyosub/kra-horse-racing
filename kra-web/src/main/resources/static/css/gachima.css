@@ -141,3 +141,5 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .warn{background:#fdecea;color:#8a1c12;border-radius:10px;padding:10px 14px;font-size:13px;margin:8px 0}
 .inline{display:inline}
 .linkbtn{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+.logout{background:none;border:1px solid var(--line);color:var(--muted);font:13px var(--body);padding:3px 10px;border-radius:999px;cursor:pointer}
+.logout:hover{color:var(--ink);border-color:var(--ink)}
