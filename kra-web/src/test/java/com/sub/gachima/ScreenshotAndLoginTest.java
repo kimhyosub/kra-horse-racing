@@ -53,6 +53,8 @@ class ScreenshotAndLoginTest {
         mvc.perform(post("/r/20261115/1/7/input").with(csrf())).andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));
         mvc.perform(get("/login")).andExpect(status().isOk()).andExpect(content().string(containsString("로그인 유지")));
         mvc.perform(get("/css/gachima.css")).andExpect(status().isOk());
+        mvc.perform(get("/manifest.json")).andExpect(status().isOk()).andExpect(content().string(containsString("standalone")));
+        mvc.perform(get("/icons/apple-touch-icon.png")).andExpect(status().isOk());
 
         mvc.perform(formLogin().user("sub").password("wrong")).andExpect(unauthenticated());
         mvc.perform(formLogin().user("sub").password("test-pass-123")).andExpect(authenticated());

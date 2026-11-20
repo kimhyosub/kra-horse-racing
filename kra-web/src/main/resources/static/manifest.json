@@ -1,0 +1,30 @@
+{
+ "name": "가치마",
+ "short_name": "가치마",
+ "description": "전날 예상하고, 당일 배당으로 다시 읽는 경마 분석",
+ "lang": "ko",
+ "start_url": "/",
+ "scope": "/",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#fbefd2",
+ "theme_color": "#fbefd2",
+ "icons": [
+  {
+   "src": "/icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "/icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "/icons/maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
