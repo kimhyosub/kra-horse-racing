@@ -465,3 +465,4 @@ a.btn{text-decoration:none;display:inline-block}
 .pf-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pf-upload .btn{cursor:pointer}
 .pf-upload label.btn{display:inline-block;font-weight:500;font-size:13px;color:var(--ink)}
+.post-meta .post-by{color:var(--ink)}
