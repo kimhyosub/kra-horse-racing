@@ -48,3 +48,6 @@ gachima:
     chats: ${GACHIMA_TELEGRAM_CHATS:}
   # 알림 속 링크 주소
   public-url: ${GACHIMA_PUBLIC_URL:https://gachima.zipbabstudio.com}
+  ui:
+    # 당일 분석 화면에서 배당·마체중 입력칸과 스크린샷 올리기를 보일지 (기본: 숨김, 텔레그램으로 입력)
+    web-input: ${GACHIMA_WEB_INPUT:false}

@@ -26,6 +26,9 @@ public class RaceController {
     private final com.sub.gachima.service.ScreenshotReader screenshotReader;
     private final com.sub.gachima.telegram.TelegramBot telegram;
     private final com.sub.gachima.service.ModelInfo modelInfo;
+    /** 당일 분석 화면의 배당·마체중 입력칸과 스크린샷 올리기 (기본 숨김, 텔레그램으로 입력) */
+    @org.springframework.beans.factory.annotation.Value("${gachima.ui.web-input:false}")
+    private boolean webInput;
 
     public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService,
                           com.sub.gachima.service.PaperService paperService, com.sub.gachima.service.ScreenshotReader screenshotReader,
@@ -60,6 +63,7 @@ public class RaceController {
         model.addAttribute("mode", "day".equals(mode) || prefilled ? "day" : "pre");
         model.addAttribute("sort", "v".equals(sort) ? "v" : "p");
         model.addAttribute("edit", edit || prefilled || ("day".equals(mode) && !v.isScored()));
+        model.addAttribute("webInput", webInput);
         model.addAttribute("tracks", RaceService.TRACKS);
         return "race";
     }

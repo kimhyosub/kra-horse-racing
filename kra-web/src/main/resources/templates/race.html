@@ -119,6 +119,7 @@
       <span class="hint" th:if="${v.paperLocked}"> · 잠김 (출발 후 또는 결과 확정)</span>
       <span class="hint" th:unless="${v.paperLocked}"> · 출발 전 마지막 입력이 공식 기록</span>
     </div>
+    <th:block th:if="${webInput}">
     <div class="warn" th:if="${shotError}" th:text="${shotError}"></div>
     <th:block th:if="${shot != null}">
       <p class="flash" th:text="|스크린샷에서 ${shot.readCount}두 배당을 읽었습니다. 칸을 확인하고 [다시 계산]을 누르면 저장됩니다.|"></p>
@@ -151,6 +152,12 @@
         <div class="bar"><button class="btn" type="submit">다시 계산</button></div>
       </th:block>
     </form>
+    </th:block>
+    <p class="inputline" th:unless="${webInput}">
+      <th:block th:if="${v.inputAt != null and v.finalInput}">경주 후 확정 최종 배당·마체중·주로로 계산했습니다.</th:block>
+      <th:block th:if="${v.inputAt != null and !v.finalInput}" th:text="|주로 ${v.track} · 마지막 입력 ${#temporals.format(v.inputAt, 'MM.dd HH:mm')}${v.inputByLabel}|"></th:block>
+      <th:block th:if="${v.inputAt == null}">아직 당일 배당이 없습니다. 텔레그램 단톡방에 출전표 스크린샷을 보내면 계산됩니다.</th:block>
+    </p>
 
     <!-- 결론 먼저 -->
     <section class="verdict" th:if="${v.scored}">

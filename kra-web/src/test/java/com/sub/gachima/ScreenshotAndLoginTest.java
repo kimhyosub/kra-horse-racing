@@ -33,7 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.auto-import=false",
         "gachima.login.user=sub",
         "gachima.login.password=test-pass-123",
-        "gachima.login.users-file=src/test/resources/test-users.properties"})
+        "gachima.login.users-file=src/test/resources/test-users.properties",
+        "gachima.ui.web-input=true"})
 @AutoConfigureMockMvc
 class ScreenshotAndLoginTest {
 
