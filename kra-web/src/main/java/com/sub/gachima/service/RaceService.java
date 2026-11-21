@@ -180,6 +180,7 @@ public class RaceService {
         v.paperBets = paper.forRace(race);
         v.paperLock = paper.lockState(race);
         v.review = Commentary.of(v.entries, v.track, true);
+        v.picks = BetPicks.of(v.dayOrder);
         v.preReview = Commentary.of(v.entries, null, false);
     }
 
@@ -313,6 +314,7 @@ public class RaceService {
         public PaperService.Outcome paperLock;
         /** 총평: 당일 분석 기준 / 전날 예상 기준 */
         public Commentary review, preReview;
+        public BetPicks picks;
         public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }

@@ -190,6 +190,30 @@
 
     <section th:replace="~{fragments :: review(${v.review}, '가치마 총평 · 당일 분석')}"></section>
 
+    <!-- 승식별 추천 -->
+    <section class="picks" th:if="${v.picks != null and !v.picks.empty}">
+      <header><b>승식별 추천</b><span class="pk-rec" th:text="|이 경주는 ${v.picks.adviceType}|">복승</span></header>
+      <p class="pk-advice" th:text="${v.picks.advice}"></p>
+      <table class="pk">
+        <thead><tr><th>승식</th><th>추천</th><th class="num">맞을 확률</th><th class="num">가치 배당</th></tr></thead>
+        <tbody>
+          <tr th:each="k : ${v.picks.picks}" th:classappend="${k.recommended} ? 'rec'">
+            <td><b th:text="${k.type}">단승</b><small th:text="${k.rule}"></small></td>
+            <td><span class="pk-combo" th:text="${k.combo}">3</span>
+              <small th:if="${k.altCombo != null}" th:text="|차선 ${k.altCombo} (${k.altPct})|"></small></td>
+            <td class="num" th:text="${k.pct}">20%</td>
+            <td class="num">
+              <th:block th:if="${k.odds != null}"><span th:text="|${k.odds}배|"></span>
+                <small th:text="|기대값 ${#numbers.formatDecimal(k.ev,1,2)}|" th:classappend="${k.ev >= 1.1} ? 'ok'"></small></th:block>
+              <th:block th:if="${k.odds == null}"><span th:text="|${k.valueOdds}배↑|"></span></th:block>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <small>맞을 확률은 모델의 우승 확률로 계산한 추정치(Harville)입니다. 단승 외에는 배당을 몰라 기대값을 못 내므로,
+        실제 배당이 <b>가치 배당 이상</b>일 때만 기대값 1.1을 넘습니다. 모의 기록(성적)은 단승 ★만 셉니다.</small>
+    </section>
+
     <div class="howto" th:if="${v.scored}">
       <b>당일 분석 읽는 법</b>
       <span><span class="sw m"></span>배당이 보는 확률 = 지금 배당을 확률로 바꾼 값. <span class="sw p"></span>모델 확률 = 그 위에 지난 기록·마체중·주로를 더해 다시 계산한 값.</span>

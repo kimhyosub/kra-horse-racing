@@ -85,6 +85,8 @@ class TelegramBotTest {
         assertTrue(m.contains("1위"), m);
         assertTrue(m.contains("8번 마스터플랜  15.4배"), m);      // ★
         assertTrue(m.contains("화면의 경주 번호로"), m);
+        assertTrue(m.contains("승식별 추천"), m);
+        assertTrue(m.contains("👉 단승 8"), m);
         assertTrue(m.contains("결과가 나온 경주라 그대로"), m);
         assertTrue(m.contains("https://gachima.example.com/r/20261115/1/7?mode=day"), m);
         verify(tg).sendMessage(eq(222L), anyString(), isNull());     // 다른 대화에도 알림

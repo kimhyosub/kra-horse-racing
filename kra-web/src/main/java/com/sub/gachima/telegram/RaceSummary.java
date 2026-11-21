@@ -46,6 +46,14 @@ public final class RaceSummary {
                  .append(pct(e.p)).append(" · 기대값 ").append(String.format("%.2f", e.ev)).append('\n');
         }
 
+        if (v.picks != null && !v.picks.isEmpty()) {
+            b.append("\n<b>승식별 추천</b> · 이 경주는 ").append(esc(v.picks.adviceType)).append('\n');
+            for (com.sub.gachima.service.BetPicks.Pick k : v.picks.picks) {
+                b.append(k.recommended ? "👉 " : "· ").append(k.type).append(' ').append(k.getCombo()).append("  ").append(k.getPct());
+                if (k.odds == null) b.append(" (").append(k.getValueOdds()).append("배↑면 가치)");
+                b.append('\n');
+            }
+        }
         b.append('\n');
         if (v.paperLock == null || v.paperLock == PaperService.Outcome.RECORDED) b.append("모의 기록: 이번 입력으로 저장");
         else if (v.paperLock == PaperService.Outcome.LOCKED_RESULT) b.append("모의 기록: 결과가 나온 경주라 그대로");
