@@ -56,6 +56,7 @@ kra-daily.bat -From 20261120 -To 20261122 -SkipOdds
 | `-BackDays`, `-AheadDays` | 기본 범위 조정 (기본 1, 1) |
 | `-Meets 1,3` | 경마장 (기본 1,2,3,4) |
 | `-SkipOdds` | 확정배당(all-odds) 생략. 400MB CSV를 다시 만들지 않아 빠름 |
+| `-OddsOnly` | 확정배당(all-odds)만 받기. 지난 날짜의 승식 배당(복승·쌍승·복연…)을 채울 때. 큰 CSV는 다시 쓰지 않음 |
 | `-SkipCollect` | 수집 없이 export_web.py만 |
 | `-SkipExport` | 수집만 |
 

@@ -20,6 +20,8 @@ param(
     [int]$AheadDays = 1,
     [string]$Meets = '1,2,3,4',
     [switch]$SkipOdds,
+    # 확정배당(all-odds)만 받기: 출전표·경주성적·심판은 건너뜀 (지난 날짜 승식 배당 채우기용)
+    [switch]$OddsOnly,
     [switch]$SkipCollect,
     [switch]$SkipExport,
     # 낮 동안 30분마다 도는 결과 반영용: 로그를 따로(results-*.log) 남기고 오래된 것은 3일만 보관
@@ -109,12 +111,16 @@ try {
         Log "  java: $Java"
         $apis = @('race-result', 'referee', 'entry-sheet')
         if (-not $SkipOdds) { $apis += 'all-odds' }
+        if ($OddsOnly) { $apis = @('all-odds') }
         $argv = @(
             '-Dsun.stdout.encoding=UTF-8', '-Dsun.stderr.encoding=UTF-8', '-jar', $Jar,
             "--kra.from=$f1", "--kra.to=$t1", "--kra.meets=$Meets", "--kra.output-dir=$DataDir",
-            '--kra.apis.entry-sheet.enabled=true', '--kra.apis.quinella-odds.enabled=false',
-            ('--kra.apis.all-odds.enabled=' + (-not $SkipOdds).ToString().ToLower()),
-            ('--kra.export-apis=' + ($apis -join ',')),
+            ('--kra.apis.entry-sheet.enabled=' + (-not $OddsOnly).ToString().ToLower()), '--kra.apis.quinella-odds.enabled=false',
+            ('--kra.apis.race-result.enabled=' + (-not $OddsOnly).ToString().ToLower()),
+            ('--kra.apis.referee.enabled=' + (-not $OddsOnly).ToString().ToLower()),
+            ('--kra.apis.all-odds.enabled=' + ($OddsOnly -or -not $SkipOdds).ToString().ToLower()),
+            # 웹용 파일은 확정배당 원본(JSON)을 직접 읽으므로, 확정배당만 받을 때는 큰 CSV 를 다시 쓰지 않는다
+            ('--kra.export-apis=' + $(if ($OddsOnly) { 'referee' } else { $apis -join ',' })),
             '--logging.charset.console=UTF-8')
         Log "[1/2] 수집기: $($apis -join ', ')"
         $rc = Run $Java $argv
