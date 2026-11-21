@@ -318,7 +318,7 @@ public class RaceService {
             try {
                 dow = " (" + "월화수목금토일".charAt(java.time.LocalDate.parse(date, java.time.format.DateTimeFormatter.BASIC_ISO_DATE).getDayOfWeek().getValue() - 1) + ")";
             } catch (RuntimeException ignore) { }
-            this.label = date.substring(4, 6) + "." + date.substring(6) + dow + " " + meetNames;
+            this.label = date.substring(4, 6) + "." + date.substring(6) + dow;   // 경마장은 옆 버튼으로 고름
         }
     }
 

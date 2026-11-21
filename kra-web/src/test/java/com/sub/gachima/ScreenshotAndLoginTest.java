@@ -79,7 +79,7 @@ class ScreenshotAndLoginTest {
                 .andExpect(redirectedUrl("/r/20261115/1/7?mode=day"));
         mvc.perform(get("/r/20261115/1/7").param("mode", "day"))
                 .andExpect(content().string(containsString("· friend2")))
-                .andExpect(content().string(containsString("11.15 (일) 서울·영천")))
+                .andExpect(content().string(containsString("11.15 (일)")))
                 .andExpect(content().string(containsString(">friend2</b>")))
                 .andExpect(content().string(containsString("로그아웃")))
                 .andExpect(content().string(not(containsString("href=\"/admin\""))));
