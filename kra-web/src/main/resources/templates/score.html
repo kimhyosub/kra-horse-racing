@@ -70,6 +70,7 @@
     </table>
   </div>
   <p class="hint" th:unless="${t.scored}">당일 배당을 넣으면 당일%, 배당, 기대값 열이 생깁니다.</p>
+  <footer th:replace="~{fragments :: foot}"></footer>
   <nav th:replace="~{fragments :: tabbar('race')}"></nav>
 </div>
 <script>

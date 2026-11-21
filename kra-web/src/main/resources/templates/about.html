@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>가치마 · 소개 · 이용안내</title>
+  <meta name="description" content="가치마: 한국 경마 전날 예상과 당일 배당 분석을 공개 기록과 함께 보여주는 무료 베타 서비스">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
+  <link rel="manifest" th:href="@{/manifest.json}">
+  <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="가치마">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#fbefd2">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap about">
+  <header th:replace="~{fragments :: topbar('소개 · 이용안내')}"></header>
+
+  <section class="ab">
+    <h1>가치마는 이런 서비스입니다</h1>
+    <p><b>가치마(價値馬)</b>는 한국마사회 공공데이터로 경주마의 최근 성적·거리 적성·기수·조교사 같은 요인을 계산해
+      <b>전날 예상 순위</b>를 내고, 경주 당일 배당·마체중·주로 상태가 들어오면 <b>당일 분석</b>으로 다시 계산하는 무료 베타 서비스입니다.</p>
+    <ul>
+      <li><b>★ 가치마</b>: 모델이 본 우승 확률 × 배당(기대값)이 1.1 이상이고 배당 20배 이하인 말. 배당에 비해 저평가된 말이라는 뜻이지, 우승할 가능성이 가장 높은 말이라는 뜻은 아닙니다.</li>
+      <li><b>모의 장부</b>: 출발 전 마지막 배당 기준 ★ 를 단승 1단위로 기록하고 확정 배당으로 정산한 공개 기록입니다. 좋은 결과만 골라 보여주지 않고 전부 남깁니다.</li>
+      <li><b>성적</b>: 전날·당일 1위 적중률과 인기 1위 우승률 비교, 승식별 회수율, 과거 2년 검증을 그대로 공개합니다.</li>
+    </ul>
+  </section>
+
+  <section class="ab warn">
+    <h2>꼭 알아 두세요</h2>
+    <ul>
+      <li>가치마는 <b>참고용 분석</b>입니다. 적중이나 수익을 보장하지 않습니다. 과거 2년 검증에서도 1·2·3위를 그대로 사면 모든 승식이 손해(회수율 68~83%)였습니다.</li>
+      <li>마권 구매의 판단과 결과에 대한 책임은 이용자 본인에게 있습니다. 감당할 수 있는 금액 안에서만 즐기세요.</li>
+      <li>마권 구매는 법정 연령 이상만 가능합니다. 미성년자는 이용하지 마세요.</li>
+      <li>가치마는 한국마사회와 관련 없는 개인 프로젝트입니다. 마권 구매 대행, 돈을 건 내기, 경주 영상 중계를 하지 않습니다.</li>
+      <li>도박 문제로 힘들다면 <b>한국도박문제예방치유원 ☎ <a href="tel:1336">1336</a></b> (24시간, 무료 상담).</li>
+    </ul>
+  </section>
+
+  <section class="ab">
+    <h2>데이터와 한계</h2>
+    <ul>
+      <li>경주·성적·확정 배당은 공공데이터포털의 한국마사회 공개 API에서 받습니다. 데이터가 늦거나 틀릴 수 있으며, 공식 결과는 한국마사회 발표를 따르세요.</li>
+      <li>당일 분석은 경주 전 배당이 반영된 경주만 계산됩니다. 배당은 마감 직전까지 바뀌므로 화면의 숫자와 실제 확정 배당이 다를 수 있습니다.</li>
+      <li>베타 기간에는 화면과 계산 방식이 예고 없이 바뀔 수 있습니다.</li>
+    </ul>
+  </section>
+
+  <section class="ab">
+    <h2>개인정보</h2>
+    <p>가치마는 회원 가입이 없고, 방문자의 이름·연락처 같은 개인정보를 받지 않습니다. 운영자 로그인용 쿠키와 서비스 운영에 필요한 접속 기록(서버 로그)만 남습니다.
+      앞으로 광고(예: Google 애드센스)를 붙이면 광고 업체가 쿠키를 쓸 수 있으며, 그때 이 안내를 고칩니다.</p>
+  </section>
+
+  <footer th:replace="~{fragments :: foot}"></footer>
+  <nav th:replace="~{fragments :: tabbar('about')}"></nav>
+</div>
+</body>
+</html>

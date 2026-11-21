@@ -27,7 +27,7 @@ import java.util.*;
  *    경주·성적 보기, 당일 배당 입력, 스크린샷 가능. 관리 화면은 못 들어감. 파일을 고치면 웹을 다시 실행.
  * 비밀번호를 정하지 않으면 실행할 때마다 임의 비밀번호를 만들어 콘솔에만 한 번 보여준다.
  * 휴대폰에서 매번 로그인하지 않도록 '로그인 유지'(30일).
- * gachima.login.public-read=true 면 경주·성적 화면은 로그인 없이 볼 수 있고, 입력·관리만 막는다.
+ * gachima.login.public-read=true(기본, 공개 베타)면 경주·점수표·성적·가중치·이용안내는 로그인 없이 볼 수 있고, 입력·관리만 막는다.
  */
 @Configuration
 public class SecurityConfig {
@@ -37,7 +37,7 @@ public class SecurityConfig {
     private String user;
     @Value("${gachima.login.password:}")
     private String password;
-    @Value("${gachima.login.public-read:false}")
+    @Value("${gachima.login.public-read:true}")
     private boolean publicRead;
     @Value("${gachima.login.users-file:C:/kra-data/gachima-users.properties}")
     private String usersFile;
@@ -87,10 +87,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain chain(HttpSecurity http, UserDetailsService users) throws Exception {
         http.authorizeRequests(a -> {
-                    a.antMatchers("/css/**", "/login", "/favicon.ico", "/favicon.svg", "/logo.svg", "/manifest.json", "/icons/**", "/error").permitAll();
+                    a.antMatchers("/css/**", "/login", "/favicon.ico", "/favicon.svg", "/logo.svg", "/manifest.json", "/icons/**", "/error", "/robots.txt").permitAll();
                     a.antMatchers("/admin/**", "/admin").hasRole(ADMIN);
                     a.antMatchers(HttpMethod.POST, "/r/**").hasAnyRole(ADMIN, INPUT);
-                    if (publicRead) a.antMatchers(HttpMethod.GET, "/", "/r/**", "/stats").permitAll();
+                    a.antMatchers(HttpMethod.GET, "/about").permitAll();
+                    if (publicRead) a.antMatchers(HttpMethod.GET, "/", "/r/**", "/stats", "/model").permitAll();
                     a.anyRequest().authenticated();
                 })
                 .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/", false).permitAll())

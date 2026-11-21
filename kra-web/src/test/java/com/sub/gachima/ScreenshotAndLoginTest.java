@@ -26,7 +26,7 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** 로그인 막기 + 스크린샷 → 입력칸 채우기 (Claude 호출은 가짜로) */
+/** (비공개 모드) 로그인 막기 + 스크린샷 → 입력칸 채우기 (Claude 호출은 가짜로) */
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:shot;DB_CLOSE_DELAY=-1",
         "gachima.import-dir=target/test-import-shot",
@@ -34,7 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.login.user=sub",
         "gachima.login.password=test-pass-123",
         "gachima.login.users-file=src/test/resources/test-users.properties",
-        "gachima.ui.web-input=true"})
+        "gachima.ui.web-input=true",
+        "gachima.login.public-read=false"})   // 비공개 모드: 모든 화면 로그인
 @AutoConfigureMockMvc
 class ScreenshotAndLoginTest {
 

@@ -73,7 +73,8 @@
       <span th:if="${#lists.isEmpty(v.paperBets) and v.scored}"> · 없음 <small>(이 경주는 ★ 가치마가 없어 걸지 않음)</small></span>
       <span th:each="b : ${v.paperBets}">
         · <b th:text="|★ ${b.chulNo}번 ${b.hrName} ${b.betOdds}배|"></b>
-        <span th:if="${b.placedAt != null}" th:text="|(${#temporals.format(b.placedAt, 'HH:mm')}${b.placedByLabel})|"></span>
+        <span th:if="${b.placedAt != null}" th:with="by=${#authorization.expression('isAuthenticated()')} ? ${b.placedByLabel} : ''"
+              th:text="|(${#temporals.format(b.placedAt, 'HH:mm')}${by})|"></span>
         <span th:if="${b.settled}" th:classappend="${b.win} ? 'up'" th:text="|→ ${b.resultLabel}|"></span>
       </span>
       <span class="hint" th:if="${v.paperLocked}"> · 잠김 (출발 후 또는 결과 확정)</span>
@@ -115,8 +116,9 @@
     </th:block>
     <p class="inputline" th:unless="${webInput}">
       <th:block th:if="${v.inputAt != null and v.finalInput}">경주 후 확정 최종 배당·마체중·주로로 계산했습니다.</th:block>
-      <th:block th:if="${v.inputAt != null and !v.finalInput}" th:text="|주로 ${v.track} · 마지막 입력 ${#temporals.format(v.inputAt, 'MM.dd HH:mm')}${v.inputByLabel}|"></th:block>
-      <th:block th:if="${v.inputAt == null}">아직 당일 배당이 없습니다. 텔레그램 단톡방에 출전표 스크린샷을 보내면 계산됩니다.</th:block>
+      <th:block th:if="${v.inputAt != null and !v.finalInput}" th:with="by=${#authorization.expression('isAuthenticated()')} ? ${v.inputByLabel} : ''"
+                th:text="|주로 ${v.track} · 마지막 입력 ${#temporals.format(v.inputAt, 'MM.dd HH:mm')}${by}|"></th:block>
+      <th:block th:if="${v.inputAt == null}">아직 당일 배당이 반영되지 않았습니다. 경주 전에 배당이 들어오면 당일 분석이 계산됩니다.</th:block>
     </p>
 
     <!-- 결론 먼저 -->
@@ -215,6 +217,7 @@
     <span>당일 분석: 당일 배당을 출발점으로 마체중, 주로 상태까지 더해 다시 계산합니다. 기대값 = 모델 확률 × 배당. 1.10 이상이고 배당 20배 이하이면 가치마입니다.</span>
     <span>정보 제공용이며 마권 구매 기능은 없습니다.</span>
   </footer>
+  <footer th:replace="~{fragments :: foot}"></footer>
   <nav th:replace="~{fragments :: tabbar('race')}"></nav>
 </div>
 </body>

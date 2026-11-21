@@ -92,9 +92,16 @@
 <!-- 위: 로고와 지금 화면 이름만 -->
 <header th:fragment="topbar(sub)" class="topbar">
   <a class="logo" th:href="@{/}"><svg th:replace="~{fragments :: logo}"></svg>
-    <div><b>가치마</b><small th:text="${sub}">전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div></a>
+    <div><b>가치마<i class="beta">베타</i></b><small th:text="${sub}">전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div></a>
 </header>
 
+<!-- 바닥글: 공개 베타 고지 -->
+<footer th:fragment="foot" class="foot">
+  <p><b>가치마 베타</b> · 공개 데이터와 통계 모델로 만든 <b>참고용 분석</b>입니다. 적중이나 수익을 보장하지 않으며, 마권 구매의 판단과 책임은 이용자에게 있습니다.
+    한국마사회와 관련 없는 개인 프로젝트이며, 마권 구매 대행·내기는 하지 않습니다.</p>
+  <p>마권 구매는 법정 연령 이상만 가능합니다. 도박 문제로 힘들다면 한국도박문제예방치유원 <a href="tel:1336">☎ 1336</a> (24시간).
+    · <a th:href="@{/about}">이용안내 · 개인정보</a></p>
+</footer>
 <!-- 아래 탭 바: 경주 · 성적 · 가중치 · 더보기(아이디, 관리, 로그아웃) -->
 <nav th:fragment="tabbar(active)" class="tabbar" aria-label="메뉴">
   <a th:href="@{/}" th:classappend="${active == 'race'} ? 'on'" th:attr="aria-current=${active == 'race'}">
@@ -106,9 +113,13 @@
   <details class="more" th:classappend="${active == 'admin'} ? 'on'">
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg><span>더보기</span></summary>
     <div class="sheet">
-      <b sec:authentication="name">아이디</b>
-      <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">관리 · 불러오기 · 자동 수집</a>
-      <form method="post" th:action="@{/logout}"><button type="submit">로그아웃</button></form>
+      <a th:href="@{/about}">소개 · 이용안내</a>
+      <th:block sec:authorize="isAuthenticated()">
+        <b sec:authentication="name">아이디</b>
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">관리 · 불러오기 · 자동 수집</a>
+        <form method="post" th:action="@{/logout}"><button type="submit">로그아웃</button></form>
+      </th:block>
+      <a sec:authorize="!isAuthenticated()" class="dim" th:href="@{/login}">관리자 로그인</a>
     </div>
   </details>
 </nav>

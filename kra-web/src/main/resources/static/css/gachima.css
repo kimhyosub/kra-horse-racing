@@ -373,3 +373,17 @@ table.pk tr.rec td:first-child{box-shadow:inset 3px 0 0 var(--value)}
 .sc.pools th small{font-weight:400;color:var(--muted)}
 .sc.pools td.lft{white-space:nowrap}
 .hint.warn{color:var(--ink);background:var(--value-soft);border-radius:10px;padding:8px 12px}
+
+/* ---------- 공개 베타 ---------- */
+.logo b .beta{font:700 10px var(--body);font-style:normal;vertical-align:4px;margin-left:5px;padding:2px 6px;border-radius:999px;background:var(--value);color:#fff;letter-spacing:0}
+.foot{margin:18px 0 0;padding:12px 14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.6;color:var(--muted)}
+.foot p{margin:0 0 4px}
+.foot a{color:inherit}
+.tabbar .sheet a.dim{color:var(--muted);font-size:12px}
+.about .ab{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.about .ab h1{font:400 21px var(--display);margin:0 0 8px}
+.about .ab h2{font:400 17px var(--display);margin:0 0 6px}
+.about .ab p,.about .ab li{font-size:14px;line-height:1.65}
+.about .ab ul{margin:6px 0 0;padding-left:18px}
+.about .ab.warn{background:var(--value-soft);color:var(--ink)}
+.about .ab.warn li{color:var(--ink)}

@@ -40,11 +40,15 @@ public class RaceController {
     @GetMapping("/login")
     public String login() { return "login"; }
 
+    /** 소개 · 이용안내 (공개 베타: 책임 있는 이용, 면책, 개인정보) */
+    @GetMapping("/about")
+    public String about() { return "about"; }
+
     /** 가장 최근 경주일의 첫 경주로 */
     @GetMapping("/")
     public String home() {
         Optional<MeetDay> md = raceService.latest();
-        return md.map(m -> "redirect:/r/" + m.getRaceDate() + "/" + m.getMeet() + "/1").orElse("redirect:/admin");
+        return md.map(m -> "redirect:/r/" + m.getRaceDate() + "/" + m.getMeet() + "/1").orElse("redirect:/about");
     }
 
     @GetMapping("/r/{date}/{meet}/{rc}")
