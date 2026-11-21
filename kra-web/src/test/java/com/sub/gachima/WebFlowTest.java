@@ -105,13 +105,15 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("36.4% (4)")))
                 .andExpect(content().string(containsString("당일 분석 1위")))
                 .andExpect(content().string(containsString("승식별 회수율")))
-                .andExpect(content().string(containsString("이날 전날 예상은 얼마나 맞았나")))
+                .andExpect(content().string(containsString("이날 당일 분석은 얼마나 맞았나")))
                 .andExpect(content().string(containsString("11월 15일 (일)")))
                 .andExpect(content().string(containsString("최근 1경주일 누적")))
                 .andExpect(content().string(containsString("<polyline")))
                 .andExpect(content().string(containsString("경주별 예상 · 결과 비교")))
                 .andExpect(content().string(containsString("href=\"/r/20261115/1/7\"")))
                 .andExpect(content().string(containsString("5두 안 3착")))
+                .andExpect(content().string(containsString("같은 경주 인기 1위 우승")))
+                .andExpect(content().string(containsString("확정 배당 기준")))
                 .andExpect(content().string(containsString("1위→2위→3위")))
                 .andExpect(content().string(containsString("10.7% / 80%")))        // 삼복승 과거 검증
                 .andExpect(content().string(containsString("1경주 · 적중")))        // 서울 7R 만 승식 배당이 있음

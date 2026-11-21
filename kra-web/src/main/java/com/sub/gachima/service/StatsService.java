@@ -98,6 +98,7 @@ public class StatsService {
         final Entry w = win;
         // 당일 분석 1위 적중: 출발 전 직접 입력이 있으면 그것, 없으면 확정 배당으로 계산한 당일 1위
         Optional<DayInput> dayIn = raceService.input(r, RaceService.SRC_MANUAL);
+        final boolean afterRace = !dayIn.isPresent();
         if (!dayIn.isPresent()) dayIn = raceService.input(r, RaceService.SRC_FINAL);
         dayIn.ifPresent(in -> {
             List<DayModel.Result> rs = new ArrayList<>(model.score(raceService.horses(r, in), in.getTrack()));
@@ -106,7 +107,14 @@ public class StatsService {
             t.dayRaces++;
             if (rs.get(0).no == w.getChulNo()) t.day1++;
             RaceRec rc = t.recs.get(t.recs.size() - 1);
-            rc.dayNo = rs.get(0).no; rc.day1 = rs.get(0).no == w.getChulNo();
+            rc.dayNo = rs.get(0).no; rc.day1 = rs.get(0).no == w.getChulNo(); rc.dayAfter = afterRace;
+            for (DayModel.Result x : rs) if (rc.dayTop5.size() < 5) rc.dayTop5.add(x.no);
+            if (rc.b != null && rs.size() >= 2) {
+                rc.dayPair = new HashSet<>(Arrays.asList(rc.a, rc.b)).equals(new HashSet<>(Arrays.asList(rs.get(0).no, rs.get(1).no)));
+                rc.dayIn12 = rc.dayTop5.contains(rc.a) && rc.dayTop5.contains(rc.b);
+                if (rc.c != null) rc.dayIn123 = rc.dayIn12 && rc.dayTop5.contains(rc.c);
+            }
+            for (Integer n : rc.getResult()) if (rc.dayTop5.contains(n)) rc.dayTop3In5++;
             for (DayModel.Result x : rs) if (x.value) { rc.stars.add(x.no); if (x.no == w.getChulNo()) rc.starHit = true; }
             pools(t, r, rs);
         });
@@ -168,7 +176,15 @@ public class StatsService {
         public int meet, rcNo, top3In5;
         public boolean official, pre1;
         public Integer a, b, c, favNo, dayNo;
-        public Boolean preQ, in512, in5123, fav1, day1;
+        public Boolean preQ, in512, in5123, fav1, day1, dayPair, dayIn12, dayIn123;
+        public int dayTop3In5;
+        /** 출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산한 당일 분석 */
+        public boolean dayAfter;
+        public final List<Integer> dayTop5 = new ArrayList<>();
+        public boolean isDay() { return day1 != null; }
+        /** 경주별 비교에 보여줄 예상 5두: 당일 분석이 있으면 당일, 없으면 전날 */
+        public List<Integer> getShownTop5() { return isDay() ? dayTop5 : preTop5; }
+        public int getShownTop3In5() { return isDay() ? dayTop3In5 : top3In5; }
         public boolean starHit;
         public final List<Integer> preTop5 = new ArrayList<>(), stars = new ArrayList<>();
         public List<Integer> getResult() {
@@ -183,6 +199,8 @@ public class StatsService {
     /** 정확도 묶음: 경주 수와 각 지표 적중 수 */
     public static class Agg {
         public int n, pre1, q, qN, in12, in12N, in123, in123N, dayN, day1, favN, fav1, starRaces, starHit, top3In5;
+        /** 당일 분석이 있던 경주만: 1·2위 동시, 5두 안 1·2착·1·2·3착, 같은 경주의 인기 1위·전날 1위 */
+        public int dq, dqN, din12, din12N, din123, din123N, dTop3In5, dFav1, dFavN, dPre1;
         void add(RaceRec r) {
             n++; if (r.pre1) pre1++;
             if (r.preQ != null) { qN++; if (r.preQ) q++; }
@@ -192,7 +210,21 @@ public class StatsService {
             if (r.fav1 != null) { favN++; if (r.fav1) fav1++; }
             if (r.isStarAny()) { starRaces++; if (r.starHit) starHit++; }
             top3In5 += r.top3In5;
+            if (r.isDay()) {
+                if (r.dayPair != null) { dqN++; if (r.dayPair) dq++; }
+                if (r.dayIn12 != null) { din12N++; if (r.dayIn12) din12++; }
+                if (r.dayIn123 != null) { din123N++; if (r.dayIn123) din123++; }
+                dTop3In5 += r.dayTop3In5;
+                if (r.fav1 != null) { dFavN++; if (r.fav1) dFav1++; }
+                if (r.pre1) dPre1++;
+            }
         }
+        public String getDayPairRate() { return pct(dq, dqN); }
+        public String getDayIn12Rate() { return pct(din12, din12N); }
+        public String getDayIn123Rate() { return pct(din123, din123N); }
+        public String getDayFav1Rate() { return pct(dFav1, dFavN); }
+        public String getDayPre1Rate() { return pct(dPre1, dayN); }
+        public String getDayTop3In5Avg() { return dayN == 0 ? "-" : String.format("%.2f", (double) dTop3In5 / dayN); }
         public String getPre1Rate() { return pct(pre1, n); }
         public String getPairRate() { return pct(q, qN); }
         public String getIn12Rate() { return pct(in12, in12N); }
@@ -239,12 +271,12 @@ public class StatsService {
                 c.xLabels.add(Integer.parseInt(d.substring(4, 6)) + "." + Integer.parseInt(d.substring(6)));
             }
             if ("win".equals(metric)) {
-                c.add("전날 1위", "s-pre", r, x -> Agg.rate(x.pre1, x.n));
-                c.add("당일 1위", "s-day", r, x -> Agg.rate(x.day1, x.dayN));
-                c.add("인기 1위", "s-fav", r, x -> Agg.rate(x.fav1, x.favN));
+                c.add("당일 1위", "s-pre", r, x -> Agg.rate(x.day1, x.dayN));
+                c.add("인기 1위", "s-fav", r, x -> Agg.rate(x.dFav1, x.dFavN));
+                c.add("전날 1위", "s-day", r, x -> Agg.rate(x.dPre1, x.dayN));
             } else {
-                c.add("5두 안 1·2착", "s-pre", r, x -> Agg.rate(x.in12, x.in12N));
-                c.add("5두 안 1·2·3착", "s-day", r, x -> Agg.rate(x.in123, x.in123N));
+                c.add("5두 안 1·2착", "s-pre", r, x -> Agg.rate(x.din12, x.din12N));
+                c.add("5두 안 1·2·3착", "s-day", r, x -> Agg.rate(x.din123, x.din123N));
             }
             return c;
         }
@@ -263,11 +295,11 @@ public class StatsService {
             if (!s.dots.isEmpty()) series.add(s);
         }
         static String countText(Agg a, String name) {
-            if (name.startsWith("전날")) return a.pre1 + "/" + a.n;
+            if (name.startsWith("전날")) return a.dPre1 + "/" + a.dayN;
             if (name.startsWith("당일")) return a.day1 + "/" + a.dayN;
-            if (name.startsWith("인기")) return a.fav1 + "/" + a.favN;
-            if (name.contains("1·2·3")) return a.in123 + "/" + a.in123N;
-            return a.in12 + "/" + a.in12N;
+            if (name.startsWith("인기")) return a.dFav1 + "/" + a.dFavN;
+            if (name.contains("1·2·3")) return a.din123 + "/" + a.din123N;
+            return a.din12 + "/" + a.din12N;
         }
         /** x 축 날짜 글자를 몇 칸마다 찍을지 (겹치지 않게) */
         public int getLabelStep() { return Math.max(1, (int) Math.ceil(xLabels.size() / 10.0)); }
