@@ -57,6 +57,29 @@
     </div>
   </section>
 
+  <!-- 승식별 회수율: 당일 분석 1·2·3위를 그대로 샀을 때 -->
+  <h2 class="sec" th:unless="${s.empty}">승식별 회수율 · 당일 분석 1·2·3위 그대로</h2>
+  <div class="sc-wrap" th:unless="${s.empty}">
+    <table class="sc st pools">
+      <thead><tr><th class="sticky">승식</th><th>산 조합</th>
+        <th th:each="t : ${s.meets}" th:text="${t.name}"></th>
+        <th>과거 2년 검증<br><small>적중률 / 회수율</small></th></tr></thead>
+      <tbody>
+        <tr th:each="i : ${#numbers.sequence(0, 4)}">
+          <td class="sticky"><b th:text="${s.meets[0].pools[i].name}"></b></td>
+          <td class="lft" th:text="${s.meets[0].pools[i].rule}"></td>
+          <td class="num" th:each="t : ${s.meets}" th:with="p=${t.pools[i]}" th:classappend="${t.total} ? 'tot'">
+            <b th:classappend="${p.up} ? 'pos' : 'neg'" th:text="${p.roi}">-</b>
+            <small th:text="|${p.n}경주 · 적중 ${p.hit} (${p.hitRate})|"></small></td>
+          <td class="num muted" th:text="${s.meets[0].pools[i].back}"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint" th:unless="${s.empty}">각 경주에서 당일 분석 1위·2위·3위를 승식마다 1단위씩 샀다고 치고 확정 배당으로 정산한 회수율입니다 (100% 이상이면 이익).
+    단승 외 배당은 밤 수집(확정배당) 뒤에 반영되고, 텔레그램으로 결과만 넣은 경주는 배당이 들어올 때까지 빠집니다.
+    <b>과거 2년 검증</b>은 학습에 쓰지 않은 2025~2026 서울·부경·제주 3,969경주에서 같은 방식으로 산 결과로, 모든 승식이 100%에 못 미쳤습니다 — 1·2·3위를 그냥 사는 것보다 ★(기대값 1.1 이상)만 고르는 이유입니다.</p>
+
   <!-- 경마장별 -->
   <h2 class="sec" th:unless="${s.empty}">경마장별</h2>
   <div class="mcards" th:unless="${s.empty}">

@@ -57,6 +57,7 @@ public class ImportService {
                 Race race = races.findByMeetDayAndRcNo(md, rc).orElseGet(Race::new);
                 race.setMeetDay(md); race.setRcNo(rc);
                 race.setStTime(r.path("stTime").asText()); race.setDist(r.path("dist").asInt());
+                if (r.path("div").isObject() && r.path("div").size() > 0) race.setDivJson(r.path("div").toString());
                 Map<Integer, Entry> byNo = new HashMap<>();
                 for (Entry e : race.getEntries()) byNo.put(e.getChulNo(), e);
                 // 파일에 착순이 아직 없으면 텔레그램으로 직접 넣은 결과를 지우지 않는다 (공식 결과가 오면 덮어씀)

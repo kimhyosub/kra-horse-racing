@@ -366,3 +366,8 @@ table.pk tr.rec td{background:var(--value-soft)}
 table.pk tr.rec td:first-child{box-shadow:inset 3px 0 0 var(--value)}
 .pk-combo{font:700 15px var(--body);letter-spacing:.02em}
 .picks>small{font-size:11.5px;color:var(--muted);line-height:1.5}
+/* 승식별 회수율 */
+.sc.pools td.tot{background:var(--value-soft)}
+.sc.pools td b{font:700 15px var(--num)}
+.sc td.muted{color:var(--muted);font-size:12.5px}
+.sc.pools th small{font-weight:400;color:var(--muted)}

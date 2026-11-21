@@ -104,6 +104,10 @@ class WebFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("36.4% (4)")))
                 .andExpect(content().string(containsString("당일 분석 1위")))
+                .andExpect(content().string(containsString("승식별 회수율")))
+                .andExpect(content().string(containsString("1위→2위→3위")))
+                .andExpect(content().string(containsString("10.7% / 80%")))        // 삼복승 과거 검증
+                .andExpect(content().string(containsString("1경주 · 적중")))        // 서울 7R 만 승식 배당이 있음
                 .andExpect(content().string(containsString("class=\"tabbar\"")))
                 .andExpect(content().string(containsString("공식 합계")));
         mvc.perform(get("/admin")).andExpect(status().isOk());

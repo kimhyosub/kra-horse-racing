@@ -144,6 +144,49 @@ def results_for(R, date, meet):
     return out, jk, final
 
 
+POOL_KEYS = {'단승식': '단승', '복승식': '복승', '쌍승식': '쌍승', '삼복승식': '삼복승', '삼쌍승식': '삼쌍승'}
+
+
+def dividends_for(raw_dir, date, meet, res):
+    """확정배당 통합정보(all-odds 원본 JSON)에서 실제 1·2·3착 조합의 확정 배당만 뽑는다 → {경주: {'복승': 12.3, ...}}
+    성적 화면의 '당일 분석 1·2·3위 그대로 샀을 때' 승식별 회수율용. 원본이 아직 없으면 빈 dict"""
+    path = os.path.join(raw_dir, 'all-odds', f'meet{meet}', date[:4], f'{date}.json')
+    if not os.path.exists(path):
+        return {}
+    try:
+        items = json.load(open(path, encoding='utf-8'))
+    except ValueError:
+        return {}
+    order = {}
+    for (rc, no), (o, _) in res.items():
+        order.setdefault(rc, []).append((o, no))
+    win = {}
+    for rc, lst in order.items():
+        lst.sort()
+        ords = [o for o, _ in lst[:3]]
+        if len(lst) < 3 or ords != [1, 2, 3]:
+            continue   # 동착·실격 등은 건너뜀
+        a, b, c = (no for _, no in lst[:3])
+        win[rc] = {'단승': (a,), '복승': tuple(sorted((a, b))), '쌍승': (a, b),
+                   '삼복승': tuple(sorted((a, b, c))), '삼쌍승': (a, b, c)}
+    out = {}
+    for x in items if isinstance(items, list) else []:
+        k = POOL_KEYS.get(str(x.get('pool', '')).strip())
+        if not k:
+            continue
+        try:
+            rc = int(float(x.get('rcNo'))); od = float(x.get('odds'))
+            key = tuple(int(float(x.get(c) or 0)) for c in ('chulNo', 'chulNo2', 'chulNo3'))
+        except (TypeError, ValueError):
+            continue
+        key = tuple(v for v in key if v > 0)
+        if k in ('복승', '삼복승'):
+            key = tuple(sorted(key))
+        if rc in win and win[rc][k] == key and od > 0:
+            out.setdefault(rc, {})[k] = od
+    return out
+
+
 def export(a):
     pre = json.load(open(os.path.join(HERE, 'model_weights_pre.json'), encoding='utf-8'))
     H = K.prepare_history(a.history)
@@ -183,6 +226,7 @@ def export_day(a, date, pre, H, ref, raw_all, R):
         names = sub.set_index([K.num(sub['rcNo']), K.num(sub['chulNo'])])
         st = sub.groupby(K.num(sub['rcNo']))['stTime'].first()
         res, jk_today, final = results_for(R, date, m)
+        divs = dividends_for(a.raw, date, m, res)
         races = []
         for rn, d in F.groupby('rcNo'):
             d = d.sort_values('chulNo').reset_index(drop=True)
@@ -212,9 +256,11 @@ def export_day(a, date, pre, H, ref, raw_all, R):
             race = {'rcNo': int(rn), 'stTime': t, 'dist': int(d['rcDist'].iloc[0]), 'horses': horses}
             if int(rn) in final and len(final[int(rn)]['odds']) >= 2:
                 race['final'] = final[int(rn)]
+            if int(rn) in divs:
+                race['div'] = divs[int(rn)]   # 실제 착순 조합의 확정 배당 (승식별)
             races.append(race)
         doc['meets'].append({'meet': m, 'name': NAME[m], 'dayWeights': load_w(DAY_W[m]), 'races': races})
-        print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두')
+        print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두, 승식 배당 {len(divs)}경주')
     if not doc['meets']:
         print(f'{date}: 출전표 없음, 파일을 만들지 않음')
         return
@@ -236,5 +282,6 @@ if __name__ == '__main__':
     ap.add_argument('--entries', default='C:/kra-data/entry-sheet.csv')
     ap.add_argument('--history', default='C:/kra-data/race-result.csv')
     ap.add_argument('--referee', default='C:/kra-data/referee.csv')
+    ap.add_argument('--raw', default='C:/kra-data/raw', help='수집기 원본 폴더 (all-odds 확정배당)')
     ap.add_argument('--out', default='C:/kra-data/web')
     export(ap.parse_args())

@@ -22,6 +22,10 @@ public class Race {
 
     private int dist;
 
+    /** 실제 1·2·3착 조합의 승식별 확정 배당 {"단승":3.4,"복승":6.9,...} (수집 후) */
+    @Column(length = 400)
+    private String divJson;
+
     @OneToMany(mappedBy = "race", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("chulNo")
     private List<Entry> entries = new ArrayList<>();
@@ -36,4 +40,6 @@ public class Race {
     public int getDist() { return dist; }
     public void setDist(int dist) { this.dist = dist; }
     public List<Entry> getEntries() { return entries; }
+    public String getDivJson() { return divJson; }
+    public void setDivJson(String divJson) { this.divJson = divJson; }
 }
