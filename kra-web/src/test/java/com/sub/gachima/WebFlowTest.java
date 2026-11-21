@@ -95,6 +95,8 @@ class WebFlowTest {
         mvc.perform(get("/stats"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("36.4% (4)")))
+                .andExpect(content().string(containsString("당일 분석 1위")))
+                .andExpect(content().string(containsString("class=\"tabbar\"")))
                 .andExpect(content().string(containsString("공식 합계")));
         mvc.perform(get("/admin")).andExpect(status().isOk());
     }

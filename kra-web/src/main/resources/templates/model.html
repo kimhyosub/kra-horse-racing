@@ -18,16 +18,7 @@
 </head>
 <body>
 <div class="wrap wide">
-  <header class="brand">
-    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
-      <div><b>가치마</b><small>모델 가중치</small></div></a>
-    <nav class="meets">
-      <a th:href="@{|/r/${md.raceDate}/${md.meet}/1|}">경주</a>
-      <a th:href="@{/stats}">성적</a>
-      <a th:href="@{/model}" aria-current="true">가중치</a>
-      <th:block th:replace="~{fragments :: account}"></th:block>
-    </nav>
-  </header>
+  <header th:replace="~{fragments :: topbar('모델 가중치')}"></header>
 
   <div class="howto">
     <b>가중치 읽는 법</b>
@@ -45,6 +36,7 @@
     <section th:replace="~{fragments :: weights(${pre})}"></section>
     <section th:replace="~{fragments :: weights(${day})}"></section>
   </div>
+  <nav th:replace="~{fragments :: tabbar('model')}"></nav>
 </div>
 </body>
 </html>

@@ -301,3 +301,37 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .res.wait{background:transparent;border:1px dashed var(--line)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pos{color:#5fd08f}:root:not([data-theme="light"]) .neg{color:#ff8a7a}}
 :root[data-theme="dark"] .pos{color:#5fd08f} :root[data-theme="dark"] .neg{color:#ff8a7a}
+
+/* ---------- 위: 로고만 / 아래: 탭 바 ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 0 2px}
+.topbar .logo{color:inherit;text-decoration:none}
+.topbar .logo svg{width:48px;height:43px}
+.topbar .logo b{font-size:24px}
+.picker{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 10px}
+.meetpills{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px}
+.meetpills a{font:700 13px var(--body);color:var(--muted);text-decoration:none;padding:5px 14px;border-radius:999px}
+.meetpills a[aria-current="true"]{background:var(--ink);color:var(--paper)}
+body{padding-bottom:84px}
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));z-index:50;
+  display:grid;grid-template-columns:repeat(4,1fr);width:min(440px,calc(100% - 24px));background:var(--paper);
+  border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(19,26,46,.16);padding:4px}
+.tabbar>a,.tabbar summary{display:grid;justify-items:center;gap:2px;padding:7px 4px;border-radius:14px;color:var(--muted);text-decoration:none;font:700 11px var(--body);cursor:pointer;list-style:none}
+.tabbar summary::-webkit-details-marker{display:none}
+.tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar svg circle{fill:currentColor;stroke:none}
+.tabbar svg path+circle,.tabbar svg circle+circle{fill:var(--paper);stroke:currentColor;stroke-width:1.8}
+.tabbar .on,.tabbar .on>summary{color:var(--ink);background:var(--bg)}
+.tabbar .more{position:relative}
+.tabbar .more .sheet{position:absolute;right:0;bottom:calc(100% + 10px);min-width:220px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:0 8px 24px rgba(19,26,46,.18);padding:12px;display:grid;gap:8px;text-align:left}
+.tabbar .more .sheet b{font-size:14px}
+.tabbar .more .sheet a{color:var(--ink);text-decoration:none;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+.tabbar .more .sheet button{font:700 14px var(--body);background:var(--bg);color:var(--ink);border:0;border-radius:10px;padding:8px;cursor:pointer;width:100%}
+.tabbar .more[open] summary{color:var(--ink)}
+/* 성적: 1위 적중 비교 */
+.kpi.wide2{grid-column:span 2}
+.cmp3{display:grid;grid-template-columns:auto 1fr 56px;gap:6px 10px;align-items:center;font-size:12.5px;margin:6px 0 2px}
+.cmp3 span:not(.cbar){color:var(--muted);white-space:nowrap}
+.cmp3 b{font:700 15px var(--num);text-align:right}
+.cbar.d i{background:var(--value)}
+@media (max-width:520px){.kpi.wide2{grid-column:auto}.topbar .logo small{display:none}}

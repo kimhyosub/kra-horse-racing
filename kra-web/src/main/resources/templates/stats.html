@@ -18,20 +18,11 @@
 </head>
 <body>
 <div class="wrap wide">
-  <header class="brand">
-    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
-      <div><b>가치마</b><small>성적 · 결과가 들어온 경주만 셉니다</small></div></a>
-    <nav class="meets">
-      <a th:href="@{/}">경주</a>
-      <a th:href="@{/stats}" aria-current="true">성적</a>
-      <a th:href="@{/model}">가중치</a>
-      <th:block th:replace="~{fragments :: account}"></th:block>
-    </nav>
-  </header>
+  <header th:replace="~{fragments :: topbar('성적 · 결과가 들어온 경주만 셉니다')}"></header>
 
   <div class="howto">
     <b>성적 읽는 법</b>
-    <span><b>전날 예상</b>: 배당 없이 고른 순위. 1위 적중률은 <b>인기 1위(최종 배당이 가장 낮은 말) 우승률</b>과 비교해 보세요.</span>
+    <span><b>전날 예상</b>: 배당 없이 고른 순위. <b>당일 분석</b>: 배당·마체중·주로를 더해 다시 계산한 순위. 1위 적중률은 <b>인기 1위(최종 배당이 가장 낮은 말) 우승률</b>과 비교해 보세요.</span>
     <span><b>모의 장부</b>: 출발 전 마지막 입력의 ★ 를 단승 1단위로 적고 확정 배당으로 정산한 공식 기록. 회수율 100% 이상이면 이익입니다.</span>
     <span><b>★ 최종배당</b>: 경주 후 확정 배당으로 당일 모델을 다시 돌린 사후 검증 (실제로는 마감 직전 배당이 달라 결과가 다를 수 있음). 영천은 참고 기록이라 합계에서 뺍니다.</span>
   </div>
@@ -40,10 +31,14 @@
 
   <!-- 한눈에 (영천 제외 공식 합계) -->
   <section class="kpis" th:with="t=${s.total}, l=${ledger.total}">
-    <div class="kpi" th:if="${t != null}">
-      <small>전날 예상 1위 적중</small>
-      <b th:text="${t.pre1Rate}">-</b>
-      <span th:text="|인기 1위 우승 ${t.favRate} · ${t.races}경주|"></span>
+    <div class="kpi wide2" th:if="${t != null}">
+      <small th:text="|1위 적중률 비교 · ${t.races}경주|">1위 적중률 비교</small>
+      <div class="cmp3">
+        <span>전날 예상 1위</span><span class="cbar p"><i th:style="|width:${t.pre1Pct}%|"></i></span><b th:text="${t.pre1Rate}"></b>
+        <span>당일 분석 1위</span><span class="cbar d"><i th:style="|width:${t.day1Pct}%|"></i></span><b th:text="${t.day1Rate}"></b>
+        <span>인기 1위 (비교)</span><span class="cbar m"><i th:style="|width:${t.favPct}%|"></i></span><b th:text="${t.favRate}"></b>
+      </div>
+      <span th:text="|당일 분석은 ${t.dayRaces}경주 기준 (출발 전 입력이 있으면 그 배당, 없으면 확정 배당)|"></span>
     </div>
     <div class="kpi" th:if="${t != null}">
       <small>우승마가 전날 상위 5두 안</small>
@@ -69,6 +64,7 @@
       <header><b th:text="${t.name}"></b><span th:text="|${t.races}경주|"></span></header>
       <dl>
         <dt>전날 1위 적중</dt><dd th:text="|${t.pre1Rate} (${t.pre1})|"></dd>
+        <dt>당일 1위 적중</dt><dd th:text="|${t.day1Rate} (${t.day1})|"></dd>
         <dt>인기 1위 우승</dt><dd th:text="${t.favRate}"></dd>
         <dt>우승마 상위5</dt><dd th:text="${t.preTop5Rate}"></dd>
         <dt>상위5 중 3착내</dt><dd th:text="|${t.top3In5Avg}두|"></dd>
@@ -84,12 +80,13 @@
   <h2 class="sec" th:unless="${s.empty}">경주일별</h2>
   <div class="sc-wrap" th:unless="${s.empty}">
     <table class="sc st">
-      <thead><tr><th class="sticky">날짜 · 경마장</th><th>경주</th><th>전날 1위 적중</th><th>우승마 상위5</th><th>상위5 중 3착내</th><th>인기1위 우승</th><th>★ 최종배당</th><th>적중</th><th>회수율</th></tr></thead>
+      <thead><tr><th class="sticky">날짜 · 경마장</th><th>경주</th><th>전날 1위 적중</th><th>당일 1위 적중</th><th>우승마 상위5</th><th>상위5 중 3착내</th><th>인기1위 우승</th><th>★ 최종배당</th><th>적중</th><th>회수율</th></tr></thead>
       <tbody>
         <tr th:each="t : ${s.days}">
           <td class="sticky"><a th:href="@{|/r/${t.date}/${t.meet}/1|}" th:text="|${t.dateLabel} ${t.name}|"></a></td>
           <td class="num" th:text="${t.races}"></td>
           <td class="num" th:text="|${t.pre1Rate} (${t.pre1})|"></td>
+          <td class="num" th:text="|${t.day1Rate} (${t.day1})|"></td>
           <td class="num" th:text="${t.preTop5Rate}"></td>
           <td class="num" th:text="${t.top3In5Avg}"></td>
           <td class="num" th:text="${t.favRate}"></td>
@@ -125,6 +122,7 @@
       </tbody>
     </table>
   </div>
+  <nav th:replace="~{fragments :: tabbar('stats')}"></nav>
 </div>
 </body>
 </html>

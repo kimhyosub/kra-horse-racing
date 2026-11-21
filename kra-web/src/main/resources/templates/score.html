@@ -18,17 +18,14 @@
 </head>
 <body>
 <div class="wrap wide" th:with="base=|/r/${v.date}/${v.meet}/${v.rcNo}|">
-  <header class="brand">
-    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
-      <div><b>가치마</b><small th:text="|${v.dateLabel} ${v.meetName} ${v.rcNo}R 점수표|">점수표</small></div></a>
-    <nav class="meets">
+  <header th:replace="~{fragments :: topbar(|${v.dateLabel} ${v.meetName} ${v.rcNo}R 점수표|)}"></header>
+  <div class="mode">
+    <div class="seg" role="group" aria-label="분석 단계">
       <a th:href="@{${base}(mode='pre')}">전날 예상</a>
       <a th:href="@{${base}(mode='day')}">당일 분석</a>
       <a th:href="@{|${base}/score|}" aria-current="true">점수표</a>
-      <a th:href="@{/model(date=${v.date},meet=${v.meet})}">가중치</a>
-      <th:block th:replace="~{fragments :: account}"></th:block>
-    </nav>
-  </header>
+    </div>
+  </div>
 
   <nav class="sc-tabs" aria-label="경주">
     <a th:each="tb : ${v.tabs}" th:href="@{|/r/${v.date}/${v.meet}/${tb.rcNo}/score|}" th:text="|${tb.rcNo}R|"
@@ -77,6 +74,7 @@
     </table>
   </div>
   <p class="hint" th:unless="${t.scored}">당일 배당을 넣으면 당일%, 배당, 기대값 열이 생깁니다.</p>
+  <nav th:replace="~{fragments :: tabbar('race')}"></nav>
 </div>
 <script>
 // 머리글을 누르면 정렬 (숫자 열은 큰 값부터, '말'은 전날 순위, 배당·결과는 작은 값부터)

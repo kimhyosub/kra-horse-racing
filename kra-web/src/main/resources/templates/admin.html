@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,12 +18,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header class="brand">
-    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none"><svg th:replace="~{fragments :: logo}"></svg>
-      <div><b>가치마</b><small>데이터 불러오기</small></div></a>
-    <nav class="meets"><a th:href="@{/}">경주</a><a th:href="@{/stats}">성적</a><a th:href="@{/admin}" aria-current="true">관리</a>
-      <form class="inline" method="post" th:action="@{/logout}"><button class="logout" type="submit"><span th:text="${#authentication.name}">아이디</span> · 로그아웃</button></form></nav>
-  </header>
+  <header th:replace="~{fragments :: topbar('관리 · 데이터 불러오기')}"></header>
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
   <section class="input">
     <p class="hint">export_web.py 가 만든 <code>day-YYYYMMDD.json</code> 파일을 이 폴더에서 불러옵니다: <code th:text="${dir}"></code></p>
@@ -74,6 +69,7 @@
       <tr th:if="${#lists.isEmpty(days)}"><td colspan="3">아직 불러온 경주일이 없습니다.</td></tr>
     </tbody>
   </table>
+  <nav th:replace="~{fragments :: tabbar('admin')}"></nav>
 </div>
 </body>
 </html>

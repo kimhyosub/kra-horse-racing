@@ -65,6 +65,15 @@ public class StatsService {
         if (fav != null) { t.favRaces++; if (fav.getChulNo() == win.getChulNo()) t.favWin++; }
 
         final Entry w = win;
+        // 당일 분석 1위 적중: 출발 전 직접 입력이 있으면 그것, 없으면 확정 배당으로 계산한 당일 1위
+        Optional<DayInput> dayIn = raceService.input(r, RaceService.SRC_MANUAL);
+        if (!dayIn.isPresent()) dayIn = raceService.input(r, RaceService.SRC_FINAL);
+        dayIn.ifPresent(in -> {
+            DayModel.Result top = null;
+            for (DayModel.Result x : model.score(raceService.horses(r, in), in.getTrack()))
+                if (top == null || x.pModel > top.pModel) top = x;
+            if (top != null) { t.dayRaces++; if (top.no == w.getChulNo()) t.day1++; }
+        });
         raceService.input(r, RaceService.SRC_FINAL).ifPresent(in -> {
             for (DayModel.Result x : model.score(raceService.horses(r, in), in.getTrack())) {
                 if (!x.value) continue;
@@ -85,7 +94,7 @@ public class StatsService {
         public String date;
         public int meet;
         public boolean total;
-        public int races, pre1, preTop5, top3In5, favRaces, favWin, finN, finWin;
+        public int races, pre1, preTop5, top3In5, favRaces, favWin, finN, finWin, dayRaces, day1;
         public double finRet;
 
         Tally(String name) { this.name = name; }
@@ -93,6 +102,7 @@ public class StatsService {
         void add(Tally o) {
             races += o.races; pre1 += o.pre1; preTop5 += o.preTop5; top3In5 += o.top3In5;
             favRaces += o.favRaces; favWin += o.favWin;
+            dayRaces += o.dayRaces; day1 += o.day1;
             finN += o.finN; finWin += o.finWin; finRet += o.finRet;
         }
 
@@ -101,6 +111,11 @@ public class StatsService {
         public String getPreTop5Rate() { return pct(preTop5, races); }
         public String getTop3In5Avg() { return races == 0 ? "-" : String.format("%.2f", (double) top3In5 / races); }
         public String getFavRate() { return pct(favWin, favRaces); }
+        public String getDay1Rate() { return pct(day1, dayRaces); }
+        /** 막대 길이용 (0~100) */
+        public double getPre1Pct() { return races == 0 ? 0 : 100.0 * pre1 / races; }
+        public double getDay1Pct() { return dayRaces == 0 ? 0 : 100.0 * day1 / dayRaces; }
+        public double getFavPct() { return favRaces == 0 ? 0 : 100.0 * favWin / favRaces; }
         public String getFinRoi() { return finN == 0 ? "-" : String.format("%.0f%%", finRet / finN * 100); }
         public boolean isFinUp() { return finN > 0 && finRet >= finN; }
 

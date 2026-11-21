@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -19,12 +19,8 @@
 <body>
 <div class="wrap" th:with="base=|/r/${v.date}/${v.meet}/${v.rcNo}|">
 
-  <header class="brand">
-    <a class="logo" th:href="@{/}" style="color:inherit;text-decoration:none">
-      <svg th:replace="~{fragments :: logo}"></svg>
-      <div><b>가치마</b><small>전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div>
-    </a>
-    <nav class="meets">
+  <header th:replace="~{fragments :: topbar('전날 예상하고, 당일 배당으로 다시 읽는 경마 분석')}"></header>
+  <div class="picker">
       <span class="daynav">
         <a class="dayarrow" th:if="${v.prevDay != null}" th:href="@{|/r/${v.prevDay.date}/${v.prevDay.meet}/1|(mode=${mode})}" aria-label="이전 경주일">‹</a>
         <span class="dayarrow off" th:if="${v.prevDay == null}">‹</span>
@@ -34,12 +30,9 @@
         <a class="dayarrow" th:if="${v.nextDay != null}" th:href="@{|/r/${v.nextDay.date}/${v.nextDay.meet}/1|(mode=${mode})}" aria-label="다음 경주일">›</a>
         <span class="dayarrow off" th:if="${v.nextDay == null}">›</span>
       </span>
-      <a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
-         th:attr="aria-current=${m.meet == v.meet}">서울</a>
-      <a th:href="@{/stats}">성적</a>
-      <th:block th:replace="~{fragments :: account}"></th:block>
-    </nav>
-  </header>
+      <div class="meetpills"><a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
+         th:attr="aria-current=${m.meet == v.meet}">서울</a></div>
+  </div>
 
   <section class="board">
     <nav class="tabs" aria-label="경주 선택">
@@ -74,7 +67,6 @@
       <a th:href="@{${base}(mode='pre')}" th:attr="aria-current=${mode == 'pre'}">전날 예상</a>
       <a th:href="@{${base}(mode='day')}" th:attr="aria-current=${mode == 'day'}">당일 분석</a>
       <a th:href="@{|${base}/score|}">점수표</a>
-      <a th:href="@{/model(date=${v.date},meet=${v.meet})}">가중치</a>
     </div>
     <div class="seg" role="group" aria-label="정렬" th:if="${mode == 'day' and v.scored}">
       <a th:href="@{${base}(mode='day',sort='p')}" th:attr="aria-current=${sort == 'p'}">우승 확률순</a>
@@ -229,6 +221,7 @@
     <span>당일 분석: 당일 배당을 출발점으로 마체중, 주로 상태까지 더해 다시 계산합니다. 기대값 = 모델 확률 × 배당. 1.10 이상이고 배당 20배 이하이면 가치마입니다.</span>
     <span>정보 제공용이며 마권 구매 기능은 없습니다.</span>
   </footer>
+  <nav th:replace="~{fragments :: tabbar('race')}"></nav>
 </div>
 </body>
 </html>
