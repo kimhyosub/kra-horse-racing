@@ -186,6 +186,15 @@ def dividends_for(raw_dir, date, meet, res):
             key = tuple(sorted(key))
         if rc in win and win[rc][k] == key and od > 0:
             out.setdefault(rc, {})[k] = od
+    # 경주 전에 받은 원본(아직 확정 전 배당)이면 버린다: 단승 배당이 경주성적의 1착 확정 단승과 15% 넘게 다르면 그 경주는 제외
+    bad = []
+    for rc in list(out):
+        w = [v[1] for (r_, no), v in res.items() if r_ == rc and v[0] == 1 and v[1]]
+        dv = out[rc].get('단승')
+        if not w or dv is None or abs(dv - w[0]) > 0.15 * w[0] + 0.2:
+            bad.append(rc); del out[rc]
+    if bad:
+        print(f'  확정배당이 아직 확정 전으로 보여 뺀 경주: {sorted(bad)} (밤 수집 뒤 다시 export 하면 들어감)')
     return out
 
 
