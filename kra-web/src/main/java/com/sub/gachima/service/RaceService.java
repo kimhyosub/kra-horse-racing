@@ -165,6 +165,7 @@ public class RaceService {
                 x.xm = r.pMarket / scale * 100; x.xp = r.pModel / scale * 100;
                 for (Map.Entry<String, Double> g : r.groups.entrySet()) x.groups.add(new GroupBar(g.getKey(), g.getValue(), maxAbs));
                 x.why = why(x, r);
+                x.dayReasons = PreReasons.day(r.groups, facts, x.inputBwd, 3);
             }
             v.entries.add(x);
         }
@@ -282,6 +283,8 @@ public class RaceService {
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }
         public List<EntryView> getDayTop3() { return dayOrder.subList(0, Math.min(3, dayOrder.size())); }
+        /** 가치마가 없을 때 기대값이 가장 높은 말 */
+        public EntryView getBestEv() { return valueOrder == null || valueOrder.isEmpty() ? null : valueOrder.get(0); }
         public boolean isScored() { return !dayOrder.isEmpty(); }
         public String getInputByLabel() { return inputBy == null ? "" : " · " + inputBy; }
         public boolean isFinalInput() { return SRC_FINAL.equals(inputSource); }
@@ -329,7 +332,7 @@ public class RaceService {
         public String name, jk, tr, why;
         /** 전날 예상 근거: 기록 한 줄, 순위를 움직인 요인 */
         public String record = "";
-        public List<PreReasons.Reason> reasons = new ArrayList<>();
+        public List<PreReasons.Reason> reasons = new ArrayList<>(), dayReasons = new ArrayList<>();
         public double preP, preBar, odds, pm, p, ev, xm, xp;
         public Double finalOdds, inputOdds, inputBwd;
         public boolean scored, value, firstStart;
@@ -338,6 +341,21 @@ public class RaceService {
         public double getGapWidth() { return Math.abs(xp - xm); }
         public boolean isUp() { return xp > xm; }
         public String getGapStyle() { return isUp() ? "background:var(--value);opacity:.55" : "background:var(--line);opacity:1"; }
+        /** 카드 아랫줄: 기수 · 배당 · 마체중 */
+        public String getCardSub() {
+            StringBuilder b = new StringBuilder(jk == null ? "-" : jk);
+            b.append(" · ").append(fmtOdds(odds)).append("배");
+            if (inputBwd != null) b.append(" · 마체중 ").append(inputBwd > 0 ? "+" : "").append(Math.round(inputBwd)).append("kg");
+            return b.toString();
+        }
+        public String getMoveLabel() {
+            if (move == null) return "";
+            return "전날 " + preRank + "위" + (move > 0 ? " ▲" + move : move < 0 ? " ▼" + (-move) : " –");
+        }
+        public String getEvFormula() {
+            return String.format("%.1f%% × %s배", p * 100, fmtOdds(odds));
+        }
+        static String fmtOdds(double o) { return o == Math.rint(o) ? String.format("%.1f", o) : String.valueOf(o); }
         public String getDaySub() {
             StringBuilder b = new StringBuilder();
             b.append(jk == null ? "-" : jk).append(" · ").append(odds).append("배");

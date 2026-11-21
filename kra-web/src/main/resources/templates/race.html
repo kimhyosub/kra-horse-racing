@@ -157,30 +157,69 @@
       </th:block>
     </form>
 
-    <div class="legend" th:if="${v.scored}"><span><i style="background:var(--mkt)"></i>시장 확률(배당)</span><span><i style="background:var(--model)"></i>모델 확률</span><span><i style="background:var(--value)"></i>모델이 더 높게 본 차이</span><span>▲▼ 전날 순위 대비</span></div>
-    <div class="list" th:if="${v.scored}">
-      <details th:each="h : ${sort == 'v' ? v.valueOrder : v.dayOrder}" class="row" th:classappend="${h.value} ? 'value'">
-        <summary>
-          <span class="who"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
-            <div><b>[[${h.name}]]
-                <span class="mv up" th:if="${h.move > 0}" th:text="|▲${h.move}|"></span>
-                <span class="mv dn" th:if="${h.move < 0}" th:text="|▼${-h.move}|"></span>
-                <span class="mv dn" th:if="${h.move == 0}">–</span></b>
-              <small th:text="${h.daySub}"></small></div></span>
-          <span class="gauge"><span class="track"></span>
-            <span class="gap" th:style="|left:${h.gapLeft}%;width:${h.gapWidth}%;${h.gapStyle}|"></span>
-            <span class="t m" th:style="|left:${h.xm}%|"></span><span class="t p" th:style="|left:${h.xp}%|"></span>
-            <span class="lab" th:style="|left:${h.xp}%|" th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></span></span>
-          <span class="ev"><b th:text="${#numbers.formatDecimal(h.ev,1,2)}"></b><small>기대값</small></span>
-          <th:block th:insert="~{fragments :: fin(${h.ord})}"></th:block>
-        </summary>
-        <div class="why"><p th:text="${h.why}"></p>
-          <div class="fac" th:each="g : ${h.groups}"><span th:text="${g.name}"></span>
-            <span class="axis"><em th:style="|left:${g.left}%;width:${g.width}%;background:var(${g.color})|"></em></span>
-            <span class="v" th:text="${g.label}"></span></div>
+    <!-- 결론 먼저 -->
+    <section class="verdict" th:if="${v.scored}">
+      <div class="vd-row" th:if="${!#lists.isEmpty(v.values)}">
+        <span class="vd-tag">★ 가치마</span>
+        <div class="vd-list">
+          <div th:each="h : ${v.values}" class="vd-item">
+            <th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+            <b th:text="${h.name}"></b>
+            <span th:text="|${h.odds}배 · 모델 ${#numbers.formatDecimal(h.p*100,1,1)}% (배당 ${#numbers.formatDecimal(h.pm*100,1,1)}%) · 기대값 ${#numbers.formatDecimal(h.ev,1,2)}|"></span>
+          </div>
         </div>
-      </details>
+      </div>
+      <div class="vd-row" th:if="${#lists.isEmpty(v.values)}">
+        <span class="vd-tag none">가치마 없음</span>
+        <span class="vd-text" th:if="${v.bestEv != null}"
+              th:text="|기대값 1.10을 넘는 말이 없습니다. 가장 가까운 말: ${v.bestEv.no}번 ${v.bestEv.name} ${#numbers.formatDecimal(v.bestEv.ev,1,2)} (${v.bestEv.odds}배)|"></span>
+      </div>
+      <div class="vd-row">
+        <span class="vd-tag top">당일 1·2·3위</span>
+        <div class="vd-list inline">
+          <span th:each="h, st : ${v.dayTop3}" class="vd-item">
+            <th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+            <b th:text="${h.name}"></b><span th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <div class="howto" th:if="${v.scored}">
+      <b>당일 분석 읽는 법</b>
+      <span><span class="sw m"></span>배당이 보는 확률 = 지금 배당을 확률로 바꾼 값. <span class="sw p"></span>모델 확률 = 그 위에 지난 기록·마체중·주로를 더해 다시 계산한 값.</span>
+      <span>모델이 배당보다 높게 보면 가치가 있습니다. 기대값 = 모델 확률 × 배당, <b>1.10 이상이고 20배 이하면 ★ 가치마</b>.</span>
+      <span><span class="r-up">▲</span> <span class="r-dn">▼</span> = 모델이 배당보다 높게/낮게 본 이유. ▼는 나쁘다는 뜻이 아니라 배당이 그 점을 이미 너무 크게 반영했다고 본 것입니다. 4위 아래는 눌러서 볼 수 있습니다.</span>
     </div>
+
+    <ol class="pcs" th:if="${v.scored}">
+      <li th:each="h : ${sort == 'v' ? v.valueOrder : v.dayOrder}">
+        <details class="pc dc" th:classappend="${h.value} ? 'value' : (${h.dayRank <= 3} ? 'top' : '')" th:open="${h.value or h.dayRank <= 3}">
+          <summary>
+            <span class="pc-rank">[[${h.dayRank}]]<small>위</small></span>
+            <th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block>
+            <span class="pc-name"><b><th:block th:text="${h.name}"></th:block> <span class="star" th:if="${h.value}">★ 가치마</span></b>
+              <small th:text="${h.cardSub}"></small></span>
+            <span class="pc-p"><b th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></b>
+              <small class="mvl" th:text="${h.moveLabel}"></small>
+              <span class="pc-res" th:if="${h.ord != null}" th:classappend="${h.ord == 1} ? 'w' : (${h.ord <= 3} ? 'p' : '')" th:text="|결과 ${h.ord}착|"></span></span>
+          </summary>
+          <div class="pc-body">
+            <div class="cmp">
+              <span class="cl">배당이 보는 확률</span><span class="cbar m"><i th:style="|width:${h.xm}%|"></i></span><b th:text="${#numbers.formatDecimal(h.pm*100,1,1)} + '%'"></b>
+              <span class="cl">가치마 모델</span><span class="cbar p"><i th:style="|width:${h.xp}%|"></i></span><b th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></b>
+            </div>
+            <p class="ev-line" th:classappend="${h.value} ? 'hit'">기대값 <b th:text="${#numbers.formatDecimal(h.ev,1,2)}"></b> = <span th:text="${h.evFormula}"></span>
+              <small th:if="${h.value}"> → 1.10 이상, ★ 가치마</small>
+              <small th:if="${!h.value and h.ev >= 1.1}"> → 20배 넘어 제외</small></p>
+            <ul class="pc-why" th:if="${!#lists.isEmpty(h.dayReasons)}">
+              <li th:each="r : ${h.dayReasons}" th:class="${r.up} ? 'r-up' : 'r-dn'"><i th:text="${r.arrow}">▲</i><b th:text="${r.title}"></b><span th:text="${r.detail}"></span></li>
+            </ul>
+            <p class="pc-rec" th:if="${#lists.isEmpty(h.dayReasons)}">배당과 거의 같게 봤습니다 (크게 더하거나 뺀 요인 없음).</p>
+          </div>
+        </details>
+      </li>
+    </ol>
   </th:block>
 
   <footer>

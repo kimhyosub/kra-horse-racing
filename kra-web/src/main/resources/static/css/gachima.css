@@ -187,3 +187,35 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
   .pc-why li{grid-template-columns:14px 1fr}
   .pc-why li span{grid-column:2;font-size:12.5px;margin-top:-2px}
 }
+
+/* ---------- 당일 분석: 결론 + 카드 ---------- */
+.verdict{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:10px;margin:12px 0}
+.vd-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
+.vd-tag{display:inline-block;font:700 12px var(--body);padding:4px 8px;border-radius:999px;background:var(--value);color:#1b1400;text-align:center;white-space:nowrap}
+.vd-tag.none{background:var(--bg);color:var(--muted)}
+.vd-tag.top{background:var(--model);color:#fff}
+.vd-list{display:grid;gap:6px}
+.vd-list.inline{display:flex;flex-wrap:wrap;gap:6px 14px}
+.vd-item{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px}
+.vd-item span{color:var(--muted);font-size:13px}
+.vd-text{font-size:13.5px;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px -1px 0}
+.sw.m{background:var(--mkt)} .sw.p{background:var(--model)}
+.pc.value{border-color:var(--value);box-shadow:0 0 0 2px var(--value) inset}
+.pc.value .pc-rank{background:var(--value);color:#1b1400}
+.star{display:inline-block;font:700 11px var(--body);color:#1b1400;background:var(--value);border-radius:999px;padding:1px 7px;margin-left:4px;vertical-align:2px}
+.mvl{display:block;font:500 11px var(--body);color:var(--muted);margin-top:2px;white-space:nowrap}
+.cmp{display:grid;grid-template-columns:auto 1fr 52px;gap:6px 10px;align-items:center;font-size:12.5px}
+.cmp .cl{color:var(--muted);white-space:nowrap}
+.cmp b{font:700 13px var(--num);text-align:right}
+.cbar{height:8px;border-radius:4px;background:var(--bg);overflow:hidden}
+.cbar i{display:block;height:100%;border-radius:4px}
+.cbar.m i{background:var(--mkt)} .cbar.p i{background:var(--model)}
+.ev-line{margin:0;font-size:13.5px}
+.ev-line b{font:700 15px var(--num)}
+.ev-line span{color:var(--muted);font-family:var(--num);font-size:12.5px}
+.ev-line small{color:var(--muted)}
+.ev-line.hit b,.ev-line.hit small{color:#9a6a00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ev-line.hit b,:root:not([data-theme="light"]) .ev-line.hit small{color:var(--value)}}
+:root[data-theme="dark"] .ev-line.hit b,:root[data-theme="dark"] .ev-line.hit small{color:var(--value)}
+@media (max-width:520px){.vd-row{grid-template-columns:1fr;gap:6px}.vd-tag{justify-self:start}}

@@ -62,7 +62,11 @@ class WebFlowTest {
         mvc.perform(get("/r/20261115/1/7").param("mode", "day"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("★ 8번 15.4배")))
-                .andExpect(content().string(containsString("1.31")));
+                .andExpect(content().string(containsString("1.31")))
+                .andExpect(content().string(containsString("당일 분석 읽는 법")))
+                .andExpect(content().string(containsString("배당이 보는 확률")))
+                .andExpect(content().string(containsString("당일 1·2·3위")))
+                .andExpect(content().string(containsString("→ 1.10 이상, ★ 가치마")));
 
         mvc.perform(get("/r/20261115/4/3")).andExpect(status().isOk());
         mvc.perform(get("/r/20261115/1/99")).andExpect(status().isNotFound());

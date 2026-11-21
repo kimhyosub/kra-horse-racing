@@ -69,6 +69,55 @@ public final class PreReasons {
         }
     }
 
+    /**
+     * 당일 분석 근거: 당일 모델이 배당(시장)보다 높게(▲)/낮게(▼) 본 요인 그룹 → 말 + 근거 숫자.
+     * groups 는 DayModel.Result.groups (그룹별 로짓 기여).
+     */
+    public static List<Reason> day(Map<String, Double> groups, Map<String, Object> f, Double bwd, int n) {
+        if (groups == null) return Collections.emptyList();
+        Map<String, Object> facts = f == null ? Collections.<String, Object>emptyMap() : f;
+        List<Map.Entry<String, Double>> list = new ArrayList<>(groups.entrySet());
+        list.sort((a, b) -> Double.compare(Math.abs(b.getValue()), Math.abs(a.getValue())));
+        List<Reason> out = new ArrayList<>();
+        for (Map.Entry<String, Double> e : list) {
+            if (out.size() >= n || Math.abs(e.getValue()) < 0.04) break;
+            double c = e.getValue(); boolean up = c > 0;
+            String t, d;
+            switch (e.getKey()) {
+                case "전개(선행력)": t = "전개"; d = early(facts); break;
+                case "속도 기록": t = "막판 속도"; d = g1f(facts); break;
+                case "최근 폼": t = "최근 성적"; d = recent(facts, 3) + top3(facts); break;
+                case "거리 적합": t = "거리"; d = join(dist(facts), distChange(facts)); break;
+                case "컨디션·마체중": t = "마체중·간격"; d = join(bwd == null ? "" : "마체중 " + (bwd > 0 ? "+" : "") + fmt(bwd) + "kg", days(facts)); break;
+                case "기수·조교사": t = "기수·조교사"; d = join(rate(facts, "jkWin", "jkStarts").isEmpty() ? "" : "기수 " + rate(facts, "jkWin", "jkStarts"),
+                        rate(facts, "trWin", "trStarts").isEmpty() ? "" : "조교사 " + rate(facts, "trWin", "trStarts")); break;
+                case "조건 변화": t = "등급·중량·나이"; d = condition(facts); break;
+                case "심판 기록": t = "심판 기록"; d = num(facts, "ref180") == null ? "" : "최근 6개월 " + fmt(num(facts, "ref180")) + "회"; break;
+                default: continue;
+            }
+            out.add(new Reason(up, t, d, c));
+        }
+        out.sort((a, b) -> Double.compare(b.size, a.size));
+        return out;
+    }
+
+    /** 등급·부담중량·나이: 바뀐 것 위주로 */
+    static String condition(Map<String, Object> f) {
+        List<String> p = new ArrayList<>();
+        Double c = num(f, "clsChange"), bc = num(f, "budamChange"), bu = num(f, "budam"), age = num(f, "age");
+        if (c != null && c != 0) p.add(cls(f));
+        if (bc != null && bc != 0) p.add("부담중량 " + budamChange(f));
+        else if (bu != null) p.add("부담중량 " + fmt(bu) + "kg");
+        if (age != null) p.add(fmt(age) + "세");
+        return String.join(" · ", p);
+    }
+
+    private static String join(String a, String b) {
+        if (a == null || a.isEmpty()) return b == null ? "" : b;
+        if (b == null || b.isEmpty()) return a;
+        return a + " · " + b;
+    }
+
     /** 늘 보여 주는 기록 한 줄 */
     public static String record(Map<String, Object> f) {
         if (f == null || f.isEmpty()) return "";
