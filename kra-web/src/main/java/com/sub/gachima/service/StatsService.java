@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * 성적: 결과가 들어온 경주만 센다.
@@ -68,6 +69,26 @@ public class StatsService {
             if (e.getFinalOdds() != null && (fav == null || e.getFinalOdds() < fav.getFinalOdds())) fav = e;
         }
         if (win == null) return;   // 결과 전
+        RaceRec rec = new RaceRec();
+        rec.date = r.getMeetDay().getRaceDate(); rec.meet = r.getMeetDay().getMeet(); rec.meetName = r.getMeetDay().getMeetName();
+        rec.rcNo = r.getRcNo(); rec.official = rec.meet != REFERENCE_MEET;
+        Map<Integer, Integer> at = new HashMap<>();
+        for (Entry e : es) if (e.getFinishOrd() != null && e.getFinishOrd() <= 3 && !at.containsKey(e.getFinishOrd())) at.put(e.getFinishOrd(), e.getChulNo());
+        rec.a = at.get(1); rec.b = at.get(2); rec.c = at.get(3);
+        List<Entry> byPre = new ArrayList<>(es);
+        byPre.sort(Comparator.comparingInt(Entry::getPreRank));
+        for (Entry e : byPre) if (rec.preTop5.size() < 5) rec.preTop5.add(e.getChulNo());
+        Map<Integer, Integer> pr = new HashMap<>();
+        for (Entry e : es) pr.put(e.getChulNo(), e.getPreRank());
+        rec.pre1 = win.getPreRank() == 1;
+        if (rec.b != null) {
+            rec.preQ = new HashSet<>(Arrays.asList(rec.a, rec.b)).equals(new HashSet<>(rec.preTop5.subList(0, Math.min(2, rec.preTop5.size()))));
+            rec.in512 = pr.getOrDefault(rec.a, 99) <= 5 && pr.getOrDefault(rec.b, 99) <= 5;
+            if (rec.c != null) rec.in5123 = rec.in512 && pr.getOrDefault(rec.c, 99) <= 5;
+        }
+        for (Entry e : es) if (e.getFinishOrd() != null && e.getFinishOrd() <= 3 && e.getPreRank() <= 5) rec.top3In5++;
+        if (fav != null) { rec.favNo = fav.getChulNo(); rec.fav1 = fav.getChulNo() == win.getChulNo(); }
+        t.recs.add(rec);
         t.races++;
         if (win.getPreRank() == 1) t.pre1++;
         if (win.getPreRank() <= 5) t.preTop5++;
@@ -84,6 +105,9 @@ public class StatsService {
             if (rs.isEmpty()) return;
             t.dayRaces++;
             if (rs.get(0).no == w.getChulNo()) t.day1++;
+            RaceRec rc = t.recs.get(t.recs.size() - 1);
+            rc.dayNo = rs.get(0).no; rc.day1 = rs.get(0).no == w.getChulNo();
+            for (DayModel.Result x : rs) if (x.value) { rc.stars.add(x.no); if (x.no == w.getChulNo()) rc.starHit = true; }
             pools(t, r, rs);
         });
         raceService.input(r, RaceService.SRC_FINAL).ifPresent(in -> {
@@ -138,6 +162,155 @@ public class StatsService {
         public String getBack() { return String.format("%.1f%% / %.0f%%", backHit, backRoi); }
     }
 
+    /** 결과가 나온 경주 하나: 전날 예상 상위 5두와 실제 1·2·3착, 당일 1위, 인기 1위, ★ */
+    public static class RaceRec {
+        public String date, meetName;
+        public int meet, rcNo, top3In5;
+        public boolean official, pre1;
+        public Integer a, b, c, favNo, dayNo;
+        public Boolean preQ, in512, in5123, fav1, day1;
+        public boolean starHit;
+        public final List<Integer> preTop5 = new ArrayList<>(), stars = new ArrayList<>();
+        public List<Integer> getResult() {
+            List<Integer> l = new ArrayList<>();
+            if (a != null) l.add(a); if (b != null) l.add(b); if (c != null) l.add(c);
+            return l;
+        }
+        public boolean isIn5(int no) { return preTop5.contains(no); }
+        public boolean isStarAny() { return !stars.isEmpty(); }
+    }
+
+    /** 정확도 묶음: 경주 수와 각 지표 적중 수 */
+    public static class Agg {
+        public int n, pre1, q, qN, in12, in12N, in123, in123N, dayN, day1, favN, fav1, starRaces, starHit, top3In5;
+        void add(RaceRec r) {
+            n++; if (r.pre1) pre1++;
+            if (r.preQ != null) { qN++; if (r.preQ) q++; }
+            if (r.in512 != null) { in12N++; if (r.in512) in12++; }
+            if (r.in5123 != null) { in123N++; if (r.in5123) in123++; }
+            if (r.day1 != null) { dayN++; if (r.day1) day1++; }
+            if (r.fav1 != null) { favN++; if (r.fav1) fav1++; }
+            if (r.isStarAny()) { starRaces++; if (r.starHit) starHit++; }
+            top3In5 += r.top3In5;
+        }
+        public String getPre1Rate() { return pct(pre1, n); }
+        public String getPairRate() { return pct(q, qN); }
+        public String getIn12Rate() { return pct(in12, in12N); }
+        public String getIn123Rate() { return pct(in123, in123N); }
+        public String getDay1Rate() { return pct(day1, dayN); }
+        public String getFav1Rate() { return pct(fav1, favN); }
+        public String getTop3In5Avg() { return n == 0 ? "-" : String.format("%.2f", (double) top3In5 / n); }
+        static Double rate(int a, int b) { return b == 0 ? null : 100.0 * a / b; }
+        private static String pct(int a, int b) { return b == 0 ? "-" : String.format("%.1f%%", 100.0 * a / b); }
+    }
+
+    /** 검증 리포트: 고른 날, 최근 20경주일 누적, 날짜별 추이, 경주별 비교 */
+    public static class Report {
+        public final List<String> dates = new ArrayList<>();
+        public String date;
+        public final Agg day = new Agg(), rolling = new Agg();
+        public int rollingDays;
+        public final List<RaceRec> races = new ArrayList<>();
+        public final List<String> trendDates = new ArrayList<>();
+        public final List<Agg> trend = new ArrayList<>();
+        public boolean isEmpty() { return dates.isEmpty(); }
+        public static String label(String d) {
+            java.time.LocalDate x = java.time.LocalDate.parse(d, java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+            return x.getMonthValue() + "월 " + x.getDayOfMonth() + "일 (" + "월화수목금토일".charAt(x.getDayOfWeek().getValue() - 1) + ")";
+        }
+        public String getDateLabel() { return date == null ? "" : label(date); }
+        public String labelOf(String d) { return label(d); }
+        public String getFirstDate() { return trendDates.isEmpty() ? "" : trendDates.get(0); }
+        public Chart chart(String metric) { return Chart.of(this, metric); }
+    }
+
+    /** 추이 선 그래프용 좌표 (SVG viewBox 0 0 640 250, 그림 영역 x 40~628, y 16~216 = 100%~0%) */
+    public static class Chart {
+        public static final int X0 = 40, X1 = 628, Y0 = 16, Y1 = 216;
+        public final List<Series> series = new ArrayList<>();
+        public final List<String> xLabels = new ArrayList<>();
+        public final List<Integer> xs = new ArrayList<>();
+        static Chart of(Report r, String metric) {
+            Chart c = new Chart();
+            int n = r.trend.size();
+            for (int i = 0; i < n; i++) {
+                c.xs.add(n == 1 ? (X0 + X1) / 2 : X0 + (X1 - X0) * i / (n - 1));
+                String d = r.trendDates.get(i);
+                c.xLabels.add(Integer.parseInt(d.substring(4, 6)) + "." + Integer.parseInt(d.substring(6)));
+            }
+            if ("win".equals(metric)) {
+                c.add("전날 1위", "s-pre", r, x -> Agg.rate(x.pre1, x.n));
+                c.add("당일 1위", "s-day", r, x -> Agg.rate(x.day1, x.dayN));
+                c.add("인기 1위", "s-fav", r, x -> Agg.rate(x.fav1, x.favN));
+            } else {
+                c.add("5두 안 1·2착", "s-pre", r, x -> Agg.rate(x.in12, x.in12N));
+                c.add("5두 안 1·2·3착", "s-day", r, x -> Agg.rate(x.in123, x.in123N));
+            }
+            return c;
+        }
+        void add(String name, String cls, Report r, java.util.function.Function<Agg, Double> f) {
+            Series s = new Series(name, cls);
+            StringBuilder pts = new StringBuilder();
+            for (int i = 0; i < r.trend.size(); i++) {
+                Double v = f.apply(r.trend.get(i));
+                if (v == null) continue;
+                int y = (int) Math.round(Y1 - (Y1 - Y0) * v / 100.0);
+                s.dots.add(new Dot(xs.get(i), y, xLabels.get(i) + " " + name + " " + String.format("%.1f%%", v) + " (" + countText(r.trend.get(i), name) + ")"));
+                if (pts.length() > 0) pts.append(' ');
+                pts.append(xs.get(i)).append(',').append(y);
+            }
+            s.points = pts.toString();
+            if (!s.dots.isEmpty()) series.add(s);
+        }
+        static String countText(Agg a, String name) {
+            if (name.startsWith("전날")) return a.pre1 + "/" + a.n;
+            if (name.startsWith("당일")) return a.day1 + "/" + a.dayN;
+            if (name.startsWith("인기")) return a.fav1 + "/" + a.favN;
+            if (name.contains("1·2·3")) return a.in123 + "/" + a.in123N;
+            return a.in12 + "/" + a.in12N;
+        }
+        /** x 축 날짜 글자를 몇 칸마다 찍을지 (겹치지 않게) */
+        public int getLabelStep() { return Math.max(1, (int) Math.ceil(xLabels.size() / 10.0)); }
+        public boolean isEmpty() { return series.isEmpty(); }
+    }
+    public static class Series {
+        public final String name, cls;
+        public String points;
+        public final List<Dot> dots = new ArrayList<>();
+        Series(String name, String cls) { this.name = name; this.cls = cls; }
+    }
+    public static class Dot {
+        public final int x, y; public final String tip;
+        Dot(int x, int y, String tip) { this.x = x; this.y = y; this.tip = tip; }
+    }
+
+    public static final int ROLLING_DAYS = 20;
+
+    /** date 가 없거나 결과가 없는 날이면 결과가 있는 가장 최근 날 */
+    public Report report(Stats s, String date) {
+        Report rp = new Report();
+        TreeMap<String, List<RaceRec>> byDate = new TreeMap<>(Comparator.reverseOrder());
+        for (Tally t : s.days) for (RaceRec r : t.recs) byDate.computeIfAbsent(r.date, k -> new ArrayList<>()).add(r);
+        if (byDate.isEmpty()) return rp;
+        rp.dates.addAll(byDate.keySet());
+        rp.date = date != null && byDate.containsKey(date) ? date : byDate.firstKey();
+        List<RaceRec> sel = byDate.get(rp.date);
+        sel.sort(Comparator.comparingInt((RaceRec r) -> r.meet == REFERENCE_MEET ? 9 : r.meet).thenComparingInt(r -> r.rcNo));
+        rp.races.addAll(sel);
+        for (RaceRec r : sel) if (r.official) rp.day.add(r);
+        List<String> window = new ArrayList<>();
+        for (String d : byDate.keySet()) if (d.compareTo(rp.date) <= 0 && window.size() < ROLLING_DAYS) window.add(d);
+        rp.rollingDays = window.size();
+        java.util.Collections.reverse(window);
+        for (String d : window) {
+            Agg a = new Agg();
+            for (RaceRec r : byDate.get(d)) if (r.official) { a.add(r); rp.rolling.add(r); }
+            if (a.n == 0) continue;
+            rp.trendDates.add(d); rp.trend.add(a);
+        }
+        return rp;
+    }
+
     public static class Stats {
         public final List<Tally> meets = new ArrayList<>(), days = new ArrayList<>();
         public boolean isEmpty() { return days.isEmpty(); }
@@ -151,6 +324,8 @@ public class StatsService {
         public boolean total;
         public int races, pre1, preTop5, top3In5, favRaces, favWin, finN, finWin, dayRaces, day1;
         public double finRet;
+        /** 경주별 기록 (검증 리포트용). 경주일 Tally 에만 채운다 */
+        public final List<RaceRec> recs = new ArrayList<>();
         public final int[] poolN = new int[POOLS.length], poolHit = new int[POOLS.length];
         public final double[] poolRet = new double[POOLS.length];
 

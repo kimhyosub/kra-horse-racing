@@ -17,36 +17,113 @@
   <link rel="stylesheet" th:href="@{/css/gachima.css}">
 </head>
 <body>
-<div class="wrap wide">
-  <header th:replace="~{fragments :: topbar('성적 · 결과가 들어온 경주만 셉니다')}"></header>
+<div class="wrap">
+  <header th:replace="~{fragments :: topbar('검증 리포트 · 예상과 실제 결과를 그대로 공개합니다')}"></header>
 
-  <div class="howto">
-    <b>성적 읽는 법</b>
-    <span><b>전날 예상</b>: 배당 없이 고른 순위. <b>당일 분석</b>: 배당·마체중·주로를 더해 다시 계산한 순위. 1위 적중률은 <b>인기 1위(최종 배당이 가장 낮은 말) 우승률</b>과 비교해 보세요.</span>
-    <span><b>모의 장부</b>: 출발 전 마지막 입력의 ★ 를 단승 1단위로 적고 확정 배당으로 정산한 공식 기록. 회수율 100% 이상이면 이익입니다.</span>
-    <span><b>★ 최종배당</b>: 경주 후 확정 배당으로 당일 모델을 다시 돌린 사후 검증 (실제로는 마감 직전 배당이 달라 결과가 다를 수 있음). 영천은 참고 기록이라 합계에서 뺍니다.</span>
-  </div>
+  <p class="hint" th:if="${rp.empty and ledger.empty}">아직 결과가 들어온 경주가 없습니다.</p>
 
-  <p class="hint" th:if="${s.empty and ledger.empty}">아직 결과가 들어온 경주가 없습니다.</p>
+  <th:block th:unless="${rp.empty}">
+  <!-- 날짜 고르기 -->
+  <form class="rp-pick" method="get" th:action="@{/stats}">
+    <label for="rpdate">경주일</label>
+    <select id="rpdate" name="date" class="daysel" onchange="this.form.submit()">
+      <option th:each="d : ${rp.dates}" th:value="${d}" th:text="${rp.labelOf(d)}" th:selected="${d == rp.date}"></option>
+    </select>
+    <noscript><button class="btn" type="submit">보기</button></noscript>
+  </form>
 
-  <!-- 한눈에 (영천 제외 공식 합계) -->
+  <!-- 고른 날 정확도 -->
+  <section class="rp-card">
+    <header class="rp-head">
+      <div><small>DAILY ACCURACY</small><h2>이날 전날 예상은 얼마나 맞았나</h2></div>
+      <b th:text="|${rp.dateLabel} · ${rp.day.n}경주|">11월 21일 (토)</b>
+    </header>
+    <div class="rp-kpis">
+      <div class="rp-kpi"><small>1위 적중</small><b th:text="${rp.day.pre1Rate}">-</b><span th:text="|${rp.day.pre1}/${rp.day.n}경주|"></span></div>
+      <div class="rp-kpi"><small>1·2위 동시 적중</small><b th:text="${rp.day.pairRate}">-</b><span th:text="|${rp.day.q}/${rp.day.qN}경주 · 순서 무관|"></span></div>
+      <div class="rp-kpi"><small>예상 5두 안에 실제 1·2착</small><b th:text="${rp.day.in12Rate}">-</b><span th:text="|${rp.day.in12}/${rp.day.in12N}경주|"></span></div>
+      <div class="rp-kpi"><small>예상 5두 안에 실제 1·2·3착</small><b th:text="${rp.day.in123Rate}">-</b><span th:text="|${rp.day.in123}/${rp.day.in123N}경주|"></span></div>
+    </div>
+    <div class="rp-sub">
+      <span>당일 분석 1위 적중 <b th:text="${rp.day.day1Rate}"></b> <small th:text="|(${rp.day.day1}/${rp.day.dayN})|"></small></span>
+      <span>인기 1위 우승 <b th:text="${rp.day.fav1Rate}"></b> <small th:text="|(${rp.day.fav1}/${rp.day.favN})|"></small></span>
+      <span>★ 있던 경주 중 ★ 우승 <b th:text="|${rp.day.starHit}/${rp.day.starRaces}|"></b></span>
+    </div>
+
+    <!-- 최근 20경주일 누적 -->
+    <header class="rp-head rp-head2">
+      <div><small>ROLLING</small><h3 th:text="|최근 ${rp.rollingDays}경주일 누적|">최근 20경주일 누적</h3></div>
+      <span th:text="|${rp.rollingDays}일 · ${rp.rolling.n}경주 기준 · 영천 제외|"></span>
+    </header>
+    <div class="rp-kpis small">
+      <div class="rp-kpi"><small>1위 적중</small><b th:text="${rp.rolling.pre1Rate}">-</b><span th:text="|${rp.rolling.pre1}/${rp.rolling.n}경주|"></span></div>
+      <div class="rp-kpi"><small>1·2위 동시 적중</small><b th:text="${rp.rolling.pairRate}">-</b><span th:text="|${rp.rolling.q}/${rp.rolling.qN}경주|"></span></div>
+      <div class="rp-kpi"><small>5두 안 1·2착</small><b th:text="${rp.rolling.in12Rate}">-</b><span th:text="|${rp.rolling.in12}/${rp.rolling.in12N}경주|"></span></div>
+      <div class="rp-kpi"><small>5두 안 1·2·3착</small><b th:text="${rp.rolling.in123Rate}">-</b><span th:text="|${rp.rolling.in123}/${rp.rolling.in123N}경주|"></span></div>
+    </div>
+    <div class="rp-sub">
+      <span>당일 분석 1위 적중 <b th:text="${rp.rolling.day1Rate}"></b> <small th:text="|(${rp.rolling.day1}/${rp.rolling.dayN})|"></small></span>
+      <span>인기 1위 우승 <b th:text="${rp.rolling.fav1Rate}"></b> <small th:text="|(${rp.rolling.fav1}/${rp.rolling.favN})|"></small></span>
+      <span>상위 5두 중 3착 안 평균 <b th:text="|${rp.rolling.top3In5Avg}두|"></b></span>
+    </div>
+
+    <!-- 추이 -->
+    <div class="rp-charts">
+      <figure class="rp-chart" th:each="m : ${ {'win','in5'} }" th:with="c=${rp.chart(m)}">
+        <figcaption th:text="${m == 'win'} ? '1위 우승률 추이' : '예상 5두 안 포함률 추이'">추이</figcaption>
+        <svg viewBox="0 0 640 250" role="img" th:attr="aria-label=(${m == 'win'} ? '경주일별 1위 우승률' : '경주일별 예상 5두 안 포함률')">
+          <g class="grid">
+            <line x1="40" x2="628" y1="16" y2="16"/><line x1="40" x2="628" y1="116" y2="116"/><line x1="40" x2="628" y1="216" y2="216"/>
+            <text x="34" y="21">100%</text><text x="34" y="121">50%</text><text x="34" y="221">0%</text>
+          </g>
+          <g class="xl"><th:block th:each="lb, st : ${c.xLabels}"><text th:if="${st.index % c.labelStep == 0 or st.last}" th:x="${c.xs[st.index]}" y="242" th:text="${lb}"></text></th:block></g>
+          <g th:each="sr : ${c.series}" th:class="${sr.cls}">
+            <polyline th:points="${sr.points}"/>
+            <circle th:each="d : ${sr.dots}" th:cx="${d.x}" th:cy="${d.y}" r="4"><title th:text="${d.tip}"></title></circle>
+            <circle class="hit" th:each="d : ${sr.dots}" th:cx="${d.x}" th:cy="${d.y}" r="11"><title th:text="${d.tip}"></title></circle>
+          </g>
+        </svg>
+        <div class="rp-legend"><span th:each="sr : ${c.series}" th:class="${sr.cls}"><i></i><th:block th:text="${sr.name}"></th:block></span></div>
+      </figure>
+    </div>
+    <p class="rp-note">점에 손가락이나 마우스를 올리면 그날의 숫자가 나옵니다. 하루 10~20경주라 날마다 크게 오르내립니다 — 누적 숫자를 함께 보세요.</p>
+  </section>
+
+  <!-- 경주별 -->
+  <section class="rp-card">
+    <header class="rp-head">
+      <div><small>RACE REVIEW</small><h2>경주별 예상 · 결과 비교</h2></div>
+      <span>전날 예상 5두와 실제 1·2·3착</span>
+    </header>
+    <div class="rp-races">
+      <a class="rp-race" th:each="r : ${rp.races}" th:href="@{|/r/${r.date}/${r.meet}/${r.rcNo}|}" th:classappend="${!r.official} ? 'ref'">
+        <b class="rp-rc" th:text="|${r.meetName} ${r.rcNo}R|">서울 1R</b>
+        <span class="rp-seq">
+          <small>결과</small>
+          <th:block th:each="n : ${r.result}"><th:block th:insert="~{fragments :: cloth(${n})}"></th:block></th:block>
+          <small class="rp-gap">예상</small>
+          <span th:each="n : ${r.preTop5}" class="rp-pre" th:classappend="${r.result.contains(n)} ? 'on'"><th:block th:insert="~{fragments :: cloth(${n})}"></th:block></span>
+        </span>
+        <span class="rp-badges">
+          <i class="bd win" th:if="${r.pre1}">1위 적중</i>
+          <i class="bd" th:if="${r.preQ == true}">1·2위 적중</i>
+          <i class="bd in" th:if="${r.in5123 == true}">5두 안 1·2·3착</i>
+          <i class="bd in" th:if="${r.in512 == true and r.in5123 != true}">5두 안 1·2착</i>
+          <i class="bd day" th:if="${r.day1 == true}">당일 1위 적중</i>
+          <i class="bd star" th:if="${r.starHit}">★ 적중</i>
+          <i class="bd ref" th:unless="${r.official}">참고</i>
+          <small th:text="|5두 안 3착 ${r.top3In5}두|"></small>
+        </span>
+      </a>
+    </div>
+  </section>
+  </th:block>
+
+  <!-- 모의 장부 · 사후 검증 한눈에 -->
+  <h2 class="sec">★ 가치마 성적</h2>
   <section class="kpis" th:with="t=${s.total}, l=${ledger.total}">
-    <div class="kpi wide2" th:if="${t != null}">
-      <small th:text="|1위 적중률 비교 · ${t.races}경주|">1위 적중률 비교</small>
-      <div class="cmp3">
-        <span>전날 예상 1위</span><span class="cbar p"><i th:style="|width:${t.pre1Pct}%|"></i></span><b th:text="${t.pre1Rate}"></b>
-        <span>당일 분석 1위</span><span class="cbar d"><i th:style="|width:${t.day1Pct}%|"></i></span><b th:text="${t.day1Rate}"></b>
-        <span>인기 1위 (비교)</span><span class="cbar m"><i th:style="|width:${t.favPct}%|"></i></span><b th:text="${t.favRate}"></b>
-      </div>
-      <span th:text="|당일 분석은 ${t.dayRaces}경주 기준 (출발 전 입력이 있으면 그 배당, 없으면 확정 배당)|"></span>
-    </div>
-    <div class="kpi" th:if="${t != null}">
-      <small>우승마가 전날 상위 5두 안</small>
-      <b th:text="${t.preTop5Rate}">-</b>
-      <span th:text="|상위 5두 중 3착 안 평균 ${t.top3In5Avg}두|"></span>
-    </div>
     <div class="kpi hl" th:if="${l != null}">
-      <small>모의 장부 회수율</small>
+      <small>모의 장부 회수율 (출발 전 기록)</small>
       <b th:classappend="${l.up} ? 'pos' : 'neg'" th:text="${l.roi}">-</b>
       <span th:text="|${l.n}건 · 적중 ${l.wins} (${l.hitRate}) · 손익 ${l.profit}단위|"></span>
     </div>
@@ -55,7 +132,13 @@
       <b th:classappend="${t.finUp} ? 'pos' : 'neg'" th:text="${t.finRoi}">-</b>
       <span th:text="|${t.finN}건 · 적중 ${t.finWin}|"></span>
     </div>
+    <div class="kpi" th:if="${t != null}">
+      <small>전체 1위 적중 (영천 제외)</small>
+      <b th:text="${t.pre1Rate}">-</b>
+      <span th:text="|${t.races}경주 · 당일 1위 ${t.day1Rate} · 인기 1위 ${t.favRate}|"></span>
+    </div>
   </section>
+  <p class="hint">모의 장부는 출발 전 마지막 배당의 ★ 를 단승 1단위로 기록하고 확정 배당으로 정산한 공식 기록입니다. 100% 이상이면 이익. 300건 전에는 결론을 내리지 않습니다 — <a th:href="@{/guide/paper-ledger}">읽는 법</a></p>
 
   <!-- 승식별 회수율: 당일 분석 1·2·3위를 그대로 샀을 때 -->
   <h2 class="sec" th:unless="${s.empty}">승식별 회수율 · 당일 분석 1·2·3위 그대로</h2>
@@ -82,6 +165,8 @@
     단승 외 배당은 밤 수집(확정배당) 뒤에 반영되고, 그 전까지 해당 경주는 빠집니다.
     <b>과거 2년 검증</b>은 학습에 쓰지 않은 2025~2026 서울·부경·제주 3,969경주에서 같은 방식으로 산 결과로, 모든 승식이 100%에 못 미쳤습니다 — 1·2·3위를 그냥 사는 것보다 ★(기대값 1.1 이상)만 고르는 이유입니다.</p>
 
+  <details class="rp-more" th:unless="${s.empty}">
+    <summary>경마장별 · 경주일별 자세한 표</summary>
   <!-- 경마장별 -->
   <h2 class="sec" th:unless="${s.empty}">경마장별</h2>
   <div class="mcards" th:unless="${s.empty}">
@@ -123,8 +208,10 @@
     </table>
   </div>
 
+  </details>
+
   <!-- 모의 장부 -->
-  <h2 class="sec">모의 장부</h2>
+  <h2 class="sec">모의 장부 기록</h2>
   <p class="hint" th:if="${ledger.empty}">아직 기록이 없습니다. 출발 전 당일 배당이 반영되면 ★ 가 자동으로 기록됩니다.</p>
   <div class="sc-wrap" th:unless="${ledger.empty}">
     <table class="sc st">

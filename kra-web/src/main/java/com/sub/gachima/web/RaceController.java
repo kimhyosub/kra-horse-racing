@@ -118,8 +118,10 @@ public class RaceController {
     }
 
     @GetMapping("/stats")
-    public String stats(Model model) {
-        model.addAttribute("s", statsService.compute());
+    public String stats(@RequestParam(required = false) String date, Model model) {
+        com.sub.gachima.service.StatsService.Stats s = statsService.compute();
+        model.addAttribute("s", s);
+        model.addAttribute("rp", statsService.report(s, date));
         model.addAttribute("ledger", paperService.ledger());
         return "stats";
     }
