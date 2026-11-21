@@ -143,10 +143,14 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .linkbtn{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:0}
 .logout{background:none;border:1px solid var(--line);color:var(--muted);font:13px var(--body);padding:3px 10px;border-radius:999px;cursor:pointer}
 .logout:hover{color:var(--ink);border-color:var(--ink)}
-.daynav{display:inline-flex;align-items:center;gap:4px;margin-right:4px}
-.daysel{font:600 14px var(--num);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
-.dayarrow{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--line);border-radius:50%;color:var(--ink);text-decoration:none;font-size:16px;line-height:1}
-.dayarrow.off{opacity:.3}
+.daynav{display:inline-flex;align-items:stretch;height:38px;background:var(--paper);border:1px solid var(--line);border-radius:999px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.daysel{appearance:none;-webkit-appearance:none;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);border-radius:0;
+  background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center/12px;
+  font:700 14.5px var(--body);font-variant-numeric:tabular-nums;color:var(--ink);padding:0 30px 0 14px;cursor:pointer;min-width:118px}
+.daysel:focus-visible{outline:2px solid var(--model);outline-offset:-2px}
+.dayarrow{display:inline-flex;align-items:center;justify-content:center;width:38px;color:var(--ink);text-decoration:none;font-size:19px;line-height:1}
+.dayarrow:hover{background:var(--line)}
+.dayarrow.off{color:var(--muted);opacity:.35}
 
 /* ---------- 전날 예상 (근거가 보이는 카드) ---------- */
 .howto{display:grid;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted);margin:12px 0}
@@ -308,8 +312,8 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .topbar .logo svg{width:48px;height:43px}
 .topbar .logo b{font-size:24px}
 .picker{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 10px}
-.meetpills{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px}
-.meetpills a{font:700 13px var(--body);color:var(--muted);text-decoration:none;padding:5px 14px;border-radius:999px}
+.meetpills{display:flex;align-items:center;gap:2px;height:38px;box-sizing:border-box;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.meetpills a{display:flex;align-items:center;height:100%;box-sizing:border-box;font:700 13.5px var(--body);color:var(--muted);text-decoration:none;padding:0 14px;border-radius:999px}
 .meetpills a[aria-current="true"]{background:var(--ink);color:var(--paper)}
 body{padding-bottom:84px}
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));z-index:50;
@@ -390,3 +394,9 @@ table.pk tr.rec td:first-child{box-shadow:inset 3px 0 0 var(--value)}
 .about .ab ul{margin:6px 0 0;padding-left:18px}
 .about .ab.warn{background:var(--value-soft);color:var(--ink)}
 .about .ab.warn li{color:var(--ink)}
+@media (max-width:420px){
+  .picker{flex-wrap:nowrap;gap:6px}
+  .dayarrow{width:32px}
+  .daysel{min-width:0;padding:0 24px 0 10px;background-position:right 7px center;font-size:14px}
+  .meetpills a{padding:0 10px;font-size:13px}
+}
