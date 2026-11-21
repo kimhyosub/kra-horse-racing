@@ -63,6 +63,16 @@ public class RaceController {
         return "race";
     }
 
+    /** 점수표: 말 × 요인 점수(0~100, 50 = 경주 평균)와 근거 숫자 */
+    @GetMapping("/r/{date}/{meet}/{rc}/score")
+    public String score(@PathVariable String date, @PathVariable int meet, @PathVariable int rc, Model model) {
+        RaceView v = raceService.view(date, meet, rc)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "경주가 없습니다"));
+        model.addAttribute("v", v);
+        model.addAttribute("t", com.sub.gachima.service.ScoreTable.of(v));
+        return "score";
+    }
+
     /** 당일 배당·마체중·주로 입력. 폼 이름: odds_{마번}, bwd_{마번}, track */
     @PostMapping("/r/{date}/{meet}/{rc}/input")
     public String input(@PathVariable String date, @PathVariable int meet, @PathVariable int rc,

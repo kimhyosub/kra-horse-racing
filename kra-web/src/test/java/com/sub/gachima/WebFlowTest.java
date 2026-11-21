@@ -68,6 +68,14 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("당일 1·2·3위")))
                 .andExpect(content().string(containsString("→ 1.10 이상, ★ 가치마")));
 
+        // 점수표
+        mvc.perform(get("/r/20261115/1/7/score"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("점수표 읽는 법")))
+                .andExpect(content().string(containsString("최근 성적")))
+                .andExpect(content().string(containsString("1·4·1착")))
+                .andExpect(content().string(containsString("기대값")));
+
         mvc.perform(get("/r/20261115/4/3")).andExpect(status().isOk());
         mvc.perform(get("/r/20261115/1/99")).andExpect(status().isNotFound());
 

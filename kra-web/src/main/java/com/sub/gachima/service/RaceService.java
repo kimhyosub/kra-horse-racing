@@ -156,8 +156,10 @@ public class RaceService {
             x.inputOdds = odds.get(e.getChulNo()); x.inputBwd = bwd.get(e.getChulNo());
             x.firstStart = e.isFirstStart();
             Map<String, Object> facts = readObj(e.getFactsJson());
+            x.facts = facts;
+            x.preWhy = readDoubles(e.getPreWhyJson());
             x.record = PreReasons.record(facts);
-            x.reasons = PreReasons.of(readDoubles(e.getPreWhyJson()), facts, 3);
+            x.reasons = PreReasons.of(x.preWhy, facts, 3);
             DayModel.Result r = day.get(e.getChulNo());
             if (r != null) {
                 x.scored = true; x.odds = r.odds; x.pm = r.pMarket; x.p = r.pModel; x.ev = r.ev; x.value = r.value;
@@ -332,6 +334,8 @@ public class RaceService {
         public String name, jk, tr, why;
         /** 전날 예상 근거: 기록 한 줄, 순위를 움직인 요인 */
         public String record = "";
+        public Map<String, Object> facts = Collections.emptyMap();
+        public Map<String, Double> preWhy = Collections.emptyMap();
         public List<PreReasons.Reason> reasons = new ArrayList<>(), dayReasons = new ArrayList<>();
         public double preP, preBar, odds, pm, p, ev, xm, xp;
         public Double finalOdds, inputOdds, inputBwd;
