@@ -453,3 +453,15 @@ a.btn{text-decoration:none;display:inline-block}
 @media (max-width:560px){.post{padding:18px 16px 22px}.post h1{font-size:22px}}
 .post,.post-body,.post-more,.guide-list{min-width:0}
 .post-table{max-width:100%}
+/* 가이드: 그림 */
+.post-cover{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);margin:0 0 18px}
+.post-body figure{margin:6px 0 20px}
+.post-body figure img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
+.post-body figcaption{margin-top:6px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.5}
+.post-body img.inline{max-width:100%;height:auto;vertical-align:middle;border-radius:6px}
+.post-body{max-width:72ch}
+.guide-card .gc-thumb{flex:0 0 112px;width:112px;height:63px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#fff}
+@media (max-width:420px){.guide-card .gc-thumb{flex-basis:84px;width:84px;height:48px}}
+.pf-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pf-upload .btn{cursor:pointer}
+.pf-upload label.btn{display:inline-block;font-weight:500;font-size:13px;color:var(--ink)}

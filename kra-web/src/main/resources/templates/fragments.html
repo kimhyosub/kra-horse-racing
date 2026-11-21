@@ -106,7 +106,7 @@
   <meta property="og:title" th:content="${title}">
   <meta property="og:description" th:content="${desc}">
   <meta property="og:url" th:content="${canonical}">
-  <meta property="og:image" th:content="|${site.url}/og.png|">
+  <meta property="og:image" th:content="${ogImage} ?: |${site.url}/og.png|">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="google-site-verification" th:if="${!#strings.isEmpty(site.gscVerify)}" th:content="${site.gscVerify}">
   <th:block th:if="${site.ads}">

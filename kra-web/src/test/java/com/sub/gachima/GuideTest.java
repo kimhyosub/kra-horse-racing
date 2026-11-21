@@ -20,7 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.import-dir=target/test-import-guide",
         "gachima.auto-import=false",
         "gachima.login.user=sub",
-        "gachima.login.password=test-pass-123"})
+        "gachima.login.password=test-pass-123",
+        "gachima.upload-dir=target/test-uploads"})
 @AutoConfigureMockMvc
 class GuideTest {
 
@@ -40,9 +41,38 @@ class GuideTest {
                 .andExpect(content().string(containsString("다른 가이드")))
                 .andExpect(content().string(not(containsString("고치기"))));
         mvc.perform(get("/guide/bet-types")).andExpect(content().string(containsString("<div class=\"post-table\"><table>")));
+        mvc.perform(get("/guide/expected-value"))
+                .andExpect(content().string(containsString("<figure><img src=\"/guide-img/ev-curve.png\"")))
+                .andExpect(content().string(containsString("<figcaption>")))
+                .andExpect(content().string(containsString("/guide-img/ev-curve.png\">")));            // 공유 미리보기 = 대표 이미지
+        mvc.perform(get("/guide")).andExpect(content().string(containsString("class=\"gc-thumb\"")))
+                .andExpect(content().string(not(containsString("가치마 개발기"))));                  // 개발기는 초안
+        mvc.perform(get("/guide/gachima-story")).andExpect(status().isNotFound());
+        mvc.perform(get("/guide/gachima-story").with(user("sub").roles("ADMIN"))).andExpect(status().isOk())
+                .andExpect(content().string(containsString("비공개 초안")));
+        mvc.perform(get("/guide-img/calibration.png")).andExpect(status().isOk());
         mvc.perform(get("/guide/none")).andExpect(status().isNotFound());
         mvc.perform(get("/sitemap.xml")).andExpect(content().string(containsString("/guide/how-to-read</loc>")));
         mvc.perform(get("/admin/posts")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    void imageUpload() throws Exception {
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 13, 10, 26, 10, 0, 0, 0, 13, 'I', 'H', 'D', 'R'};
+        String res = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/admin/posts/upload")
+                        .file(new org.springframework.mock.web.MockMultipartFile("file", "a.png", "image/png", png))
+                        .with(csrf()).with(user("sub").roles("ADMIN")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String url = res.replaceAll(".*\"url\":\"([^\"]+)\".*", "$1");
+        org.junit.jupiter.api.Assertions.assertTrue(url.startsWith("/uploads/"), res);
+        mvc.perform(get(url)).andExpect(status().isOk());                                            // 방문자도 볼 수 있음
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/admin/posts/upload")
+                        .file(new org.springframework.mock.web.MockMultipartFile("file", "a.txt", "text/plain", "hello world!".getBytes()))
+                        .with(csrf()).with(user("sub").roles("ADMIN")))
+                .andExpect(status().isBadRequest()).andExpect(content().string(containsString("이미지만")));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/admin/posts/upload")
+                        .file(new org.springframework.mock.web.MockMultipartFile("file", "a.png", "image/png", png)).with(csrf()))
+                .andExpect(status().is3xxRedirection());                                             // 로그인 필요
     }
 
     @Test

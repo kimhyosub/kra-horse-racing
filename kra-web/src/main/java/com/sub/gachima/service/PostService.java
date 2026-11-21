@@ -18,8 +18,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 가이드 글. 처음 실행할 때 classpath:guides/*.md 를 글로 넣는다 (같은 주소의 글이 이미 있으면 건너뜀 → 웹에서 고친 글은 덮어쓰지 않음).
- * 파일 형식: 맨 위 "title: …", "summary: …", "order: 10" 줄, 그 다음 "---", 그 아래 본문(마크다운).
+ * 가이드 글. 실행할 때 classpath:guides/*.md 를 글로 넣는다.
+ *  - 같은 주소의 글이 없으면 새로 넣고
+ *  - 있으면, 웹에서 고친 적이 없고 파일의 version 이 더 클 때만 새 판으로 바꾼다 (고친 글은 절대 덮어쓰지 않음)
+ * 파일 형식: 맨 위 "title: …", "summary: …", "order: 10", "version: 2", "cover: /guide-img/x.png", "published: false" 줄,
+ * 그 다음 "---", 그 아래 본문(마크다운).
  */
 @Service
 public class PostService {
@@ -37,6 +40,11 @@ public class PostService {
 
     @Transactional
     public Post save(Long id, String slug, String title, String summary, String body, boolean published, int order) {
+        return save(id, slug, title, summary, body, published, order, null);
+    }
+
+    @Transactional
+    public Post save(Long id, String slug, String title, String summary, String body, boolean published, int order, String cover) {
         slug = slug == null ? "" : slug.trim().toLowerCase();
         if (!slug.matches(SLUG_RULE)) throw new IllegalArgumentException("주소는 영문 소문자·숫자·하이픈(-)으로 2~80자: 예) how-to-read");
         if (title == null || title.trim().isEmpty()) throw new IllegalArgumentException("제목을 넣어 주세요");
@@ -48,6 +56,8 @@ public class PostService {
         p.setUpdatedAt(now);
         p.setSlug(slug); p.setTitle(title.trim()); p.setSummary(summary == null ? null : summary.trim());
         p.setBody(body == null ? "" : body); p.setPublished(published); p.setSortOrder(order);
+        p.setCover(cover == null || cover.trim().isEmpty() ? null : cover.trim());
+        p.setEdited(true);
         return posts.save(p);
     }
 
@@ -59,19 +69,26 @@ public class PostService {
     public void seed() {
         try {
             Resource[] rs = new PathMatchingResourcePatternResolver().getResources("classpath:guides/*.md");
-            int n = 0;
+            int n = 0, up = 0;
             for (Resource r : rs) {
                 String name = r.getFilename();
                 if (name == null) continue;
                 String slug = name.replaceAll("\\.md$", "");
-                if (posts.findBySlug(slug).isPresent()) continue;
                 String text;
                 try (InputStream in = r.getInputStream()) { text = new String(readAll(in), StandardCharsets.UTF_8); }
-                Post p = parse(slug, text);
+                Post f = parse(slug, text);
+                Optional<Post> old = posts.findBySlug(slug);
+                if (!old.isPresent()) { posts.save(f); n++; continue; }
+                Post p = old.get();
+                int have = p.getSeedVersion() == null ? 1 : p.getSeedVersion();
+                if (p.isEdited() || f.getSeedVersion() == null || f.getSeedVersion() <= have) continue;
+                p.setTitle(f.getTitle()); p.setSummary(f.getSummary()); p.setBody(f.getBody()); p.setCover(f.getCover());
+                p.setSortOrder(f.getSortOrder()); p.setSeedVersion(f.getSeedVersion()); p.setUpdatedAt(LocalDateTime.now());
+                if (!f.isPublished()) p.setPublished(false);
                 posts.save(p);
-                n++;
+                up++;
             }
-            if (n > 0) log.info("가이드 글 {}편을 처음 넣었습니다", n);
+            if (n + up > 0) log.info("가이드 글: 새로 {}편, 새 판으로 {}편", n, up);
         } catch (Exception e) {
             log.warn("가이드 글 넣기 실패: {}", e.toString());
         }
@@ -82,7 +99,7 @@ public class PostService {
         int sep = t.indexOf("\n---\n");
         String head = sep < 0 ? "" : t.substring(0, sep), body = sep < 0 ? t : t.substring(sep + 5);
         Post p = new Post();
-        p.setSlug(slug); p.setTitle(slug); p.setPublished(true);
+        p.setSlug(slug); p.setTitle(slug); p.setPublished(true); p.setSeedVersion(1); p.setEdited(false);
         for (String l : head.split("\n")) {
             int c = l.indexOf(':');
             if (c < 0) continue;
@@ -90,6 +107,9 @@ public class PostService {
             if (k.equals("title")) p.setTitle(v);
             else if (k.equals("summary")) p.setSummary(v);
             else if (k.equals("order")) p.setSortOrder(Integer.parseInt(v));
+            else if (k.equals("version")) p.setSeedVersion(Integer.parseInt(v));
+            else if (k.equals("cover")) p.setCover(v);
+            else if (k.equals("published")) p.setPublished(Boolean.parseBoolean(v));
         }
         p.setBody(body.trim() + "\n");
         LocalDateTime now = LocalDateTime.now();

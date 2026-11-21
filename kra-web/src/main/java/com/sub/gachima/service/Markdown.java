@@ -7,13 +7,15 @@ import java.util.regex.Pattern;
 
 /**
  * 가이드 글용 아주 작은 마크다운 → HTML. HTML 은 먼저 전부 이스케이프하므로 본문에 태그를 써도 그대로 글자로 나온다.
- * 지원: # ## ### 제목, 빈 줄로 문단, - / 1. 목록, > 인용, --- 구분선, | 표 |, **굵게**, `코드`, [글](주소)
+ * 지원: ![설명](이미지 주소) 한 줄이면 설명 달린 그림, # ## ### 제목, 빈 줄로 문단, - / 1. 목록, > 인용, --- 구분선, | 표 |, **굵게**, `코드`, [글](주소)
  */
 public final class Markdown {
     private Markdown() {}
 
     private static final Pattern BOLD = Pattern.compile("\\*\\*(.+?)\\*\\*");
     private static final Pattern CODE = Pattern.compile("`([^`]+)`");
+    private static final Pattern IMG_LINE = Pattern.compile("!\\[([^\\]]*)]\\(((?:https?://|/)[^)\\s]*)\\)");
+    private static final Pattern IMG = Pattern.compile("!\\[([^\\]]*)]\\(((?:https?://|/)[^)\\s]*)\\)");
     private static final Pattern LINK = Pattern.compile("\\[([^\\]]+)]\\(((?:https?://|/)[^)\\s]*)\\)");
 
     public static String toHtml(String md) {
@@ -25,6 +27,15 @@ public final class Markdown {
         while (i < lines.length) {
             String l = lines[i], t = l.trim();
             if (t.isEmpty()) { flush(out, para); i++; continue; }
+            Matcher im = IMG_LINE.matcher(t);
+            if (im.matches()) {
+                flush(out, para);
+                String alt = esc(im.group(1)), src = esc(im.group(2));
+                out.append("<figure><img src=\"").append(src).append("\" alt=\"").append(alt).append("\" loading=\"lazy\">");
+                if (!alt.isEmpty()) out.append("<figcaption>").append(inline(im.group(1))).append("</figcaption>");
+                out.append("</figure>\n");
+                i++; continue;
+            }
             if (t.matches("#{1,3} .+")) {
                 flush(out, para);
                 int lv = t.indexOf(' ');
@@ -102,6 +113,12 @@ public final class Markdown {
 
     static String inline(String s) {
         String x = esc(s);
+        Matcher mi = IMG.matcher(x);
+        StringBuffer bi = new StringBuffer();
+        while (mi.find())
+            mi.appendReplacement(bi, Matcher.quoteReplacement("<img class=\"inline\" src=\"" + mi.group(2) + "\" alt=\"" + mi.group(1) + "\" loading=\"lazy\">"));
+        mi.appendTail(bi);
+        x = bi.toString();
         x = CODE.matcher(x).replaceAll("<code>$1</code>");
         x = BOLD.matcher(x).replaceAll("<b>$1</b>");
         Matcher m = LINK.matcher(x);
@@ -117,7 +134,7 @@ public final class Markdown {
     /** 목록·검색 설명용: 마크다운 기호를 뺀 앞부분 */
     public static String plain(String md, int max) {
         if (md == null) return "";
-        String s = md.replaceAll("(?m)^\\s*\\|?[\\s:|-]*-{2,}[\\s:|-]*$", "").replaceAll("(?m)^#{1,3} |^[-*>] |^\\d+\\. |\\*\\*|`|\\|", "").replaceAll("\\[([^\\]]+)]\\([^)]*\\)", "$1")
+        String s = md.replaceAll("!\\[[^\\]]*]\\([^)]*\\)", "").replaceAll("(?m)^\\s*\\|?[\\s:|-]*-{2,}[\\s:|-]*$", "").replaceAll("(?m)^#{1,3} |^[-*>] |^\\d+\\. |\\*\\*|`|\\|", "").replaceAll("\\[([^\\]]+)]\\([^)]*\\)", "$1")
                 .replaceAll("\\s+", " ").trim();
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }

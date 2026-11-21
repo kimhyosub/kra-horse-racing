@@ -23,7 +23,8 @@
   <p class="hint" th:if="${#lists.isEmpty(posts)}">아직 글이 없습니다.</p>
   <section class="guide-list">
     <a class="guide-card" th:each="p, st : ${posts}" th:href="@{|/guide/${p.slug}|}">
-      <span class="gc-no" th:text="${st.count}">1</span>
+      <img class="gc-thumb" th:if="${p.cover != null}" th:src="${p.cover}" alt="" loading="lazy">
+      <span class="gc-no" th:unless="${p.cover != null}" th:text="${st.count}">1</span>
       <div><b th:text="${p.title}">제목</b><p th:text="${p.summary}">요약</p></div>
     </a>
   </section>

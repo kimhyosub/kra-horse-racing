@@ -3,6 +3,11 @@ package com.sub.gachima.web;
 import com.sub.gachima.domain.Post;
 import com.sub.gachima.service.Markdown;
 import com.sub.gachima.service.PostService;
+import com.sub.gachima.service.UploadService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.Collections;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -16,8 +21,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class GuideController {
 
     private final PostService posts;
+    private final UploadService uploads;
+    private final SiteInfo site;
 
-    public GuideController(PostService posts) { this.posts = posts; }
+    public GuideController(PostService posts, UploadService uploads, SiteInfo site) { this.posts = posts; this.uploads = uploads; this.site = site; }
 
     @GetMapping("/guide")
     public String list(Model model) {
@@ -34,6 +41,7 @@ public class GuideController {
         model.addAttribute("html", Markdown.toHtml(p.getBody()));
         model.addAttribute("desc", p.getSummary() != null && !p.getSummary().isEmpty() ? p.getSummary() : Markdown.plain(p.getBody(), 150));
         model.addAttribute("others", posts.published());
+        if (p.getCover() != null) model.addAttribute("ogImage", p.getCover().startsWith("http") ? p.getCover() : site.get().url + p.getCover());
         return "guide";
     }
 
@@ -61,17 +69,31 @@ public class GuideController {
     public String save(@RequestParam(required = false) Long id, @RequestParam String slug, @RequestParam String title,
                        @RequestParam(required = false) String summary, @RequestParam(required = false) String body,
                        @RequestParam(defaultValue = "false") boolean published, @RequestParam(defaultValue = "100") int sortOrder,
+                       @RequestParam(required = false) String cover,
                        Model model, RedirectAttributes ra) {
         try {
-            Post p = posts.save(id, slug, title, summary, body, published, sortOrder);
+            Post p = posts.save(id, slug, title, summary, body, published, sortOrder, cover);
             ra.addFlashAttribute("msg", published ? "저장했습니다 (공개)" : "저장했습니다 (비공개 초안)");
             return "redirect:/guide/" + p.getSlug();
         } catch (IllegalArgumentException e) {
             Post p = id == null ? new Post() : posts.byId(id).orElse(new Post());
-            p.setSlug(slug); p.setTitle(title); p.setSummary(summary); p.setBody(body); p.setPublished(published); p.setSortOrder(sortOrder);
+            p.setSlug(slug); p.setTitle(title); p.setSummary(summary); p.setBody(body); p.setPublished(published); p.setSortOrder(sortOrder); p.setCover(cover);
             model.addAttribute("p", p);
             model.addAttribute("error", e.getMessage());
             return "post-edit";
+        }
+    }
+
+    /** 글쓰기 화면의 이미지 올리기 → {"url": "/uploads/…"} 또는 {"error": "…"} */
+    @PostMapping("/admin/posts/upload")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
+        try {
+            return ResponseEntity.ok(Collections.singletonMap("url", uploads.save(file)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
+        } catch (java.io.IOException e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "저장 실패: " + e.getMessage()));
         }
     }
 

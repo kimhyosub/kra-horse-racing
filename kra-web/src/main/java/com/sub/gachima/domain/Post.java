@@ -28,6 +28,17 @@ public class Post {
 
     private boolean published;
 
+    /** 대표 이미지 주소 (목록 썸네일·공유 미리보기). 없으면 null */
+    @Column(length = 300)
+    private String cover;
+
+    /** 처음 넣은 글(guides/*.md)의 판 번호. 웹에서 고친 적 없으면 더 새 판으로 자동 교체 */
+    @Column(name = "seed_version")
+    private Integer seedVersion;
+
+    /** 관리자가 웹에서 고친 적이 있나 (있으면 자동 교체 안 함) */
+    private Boolean edited;
+
     /** 목록 순서 (작을수록 위) */
     @Column(name = "sort_order")
     private int sortOrder;
@@ -48,6 +59,12 @@ public class Post {
     public void setBody(String body) { this.body = body; }
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
+    public String getCover() { return cover; }
+    public void setCover(String cover) { this.cover = cover; }
+    public Integer getSeedVersion() { return seedVersion; }
+    public void setSeedVersion(Integer seedVersion) { this.seedVersion = seedVersion; }
+    public boolean isEdited() { return Boolean.TRUE.equals(edited); }
+    public void setEdited(boolean edited) { this.edited = edited; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public LocalDateTime getCreatedAt() { return createdAt; }

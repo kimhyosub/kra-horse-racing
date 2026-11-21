@@ -2,6 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
+  <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
   <meta name="robots" content="noindex,nofollow">
   <title>가치마 · 글쓰기</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -29,9 +30,15 @@
       <label class="pf-num">순서<input name="sortOrder" type="number" th:value="${p.id == null} ? 100 : ${p.sortOrder}"></label>
     </div>
     <label>요약 (목록·검색 설명, 한두 문장)<input name="summary" th:value="${p.summary}" maxlength="300"></label>
+    <label>대표 이미지 주소 (목록 썸네일·공유 미리보기, 비워도 됨)<input name="cover" id="cover" th:value="${p.cover}" maxlength="300" placeholder="/uploads/2026-11/….png"></label>
+    <div class="pf-upload">
+      <label class="btn ghost" for="img">이미지 올리기</label>
+      <input type="file" id="img" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+      <span id="upmsg" class="hint">올리면 본문 커서 위치에 그림 코드가 들어갑니다 (5MB 이하). 휴대폰 사진·캡처도 됩니다.</span>
+    </div>
     <label>본문
-      <textarea name="body" rows="22" th:text="${p.body}" placeholder="# 소제목&#10;&#10;문단은 빈 줄로 나눕니다. **굵게**, `코드`, [링크](https://…)&#10;&#10;- 목록&#10;1. 번호 목록&#10;> 인용&#10;&#10;| 표 | 머리 |&#10;|---|---|&#10;| 칸 | 칸 |"></textarea></label>
-    <p class="hint">쓰는 법: <code># 소제목</code> · 빈 줄로 문단 · <code>**굵게**</code> · <code>- 목록</code> · <code>1. 번호</code> · <code>&gt; 인용</code> · <code>---</code> 구분선 · <code>| 표 |</code> · <code>[글자](주소)</code></p>
+      <textarea name="body" id="body" rows="22" th:text="${p.body}" placeholder="# 소제목&#10;&#10;문단은 빈 줄로 나눕니다. **굵게**, `코드`, [링크](https://…)&#10;&#10;- 목록&#10;1. 번호 목록&#10;> 인용&#10;&#10;| 표 | 머리 |&#10;|---|---|&#10;| 칸 | 칸 |"></textarea></label>
+    <p class="hint">쓰는 법: <code>![그림 설명](주소)</code> 그림 · <code># 소제목</code> · 빈 줄로 문단 · <code>**굵게**</code> · <code>- 목록</code> · <code>1. 번호</code> · <code>&gt; 인용</code> · <code>---</code> 구분선 · <code>| 표 |</code> · <code>[글자](주소)</code></p>
     <label class="pf-check"><input type="checkbox" name="published" value="true" th:checked="${p.id == null or p.published}"> 공개 (끄면 초안: 나만 보임)</label>
     <div class="btns"><button class="btn" type="submit">저장</button><a class="btn ghost" th:href="@{/admin/posts}">목록</a></div>
   </form>
@@ -39,6 +46,31 @@
     <button class="btn ghost danger" type="submit">이 글 지우기</button>
   </form>
   <nav th:replace="~{fragments :: tabbar('admin')}"></nav>
+  <script>
+    (function () {
+      var f = document.getElementById('img'), msg = document.getElementById('upmsg'), body = document.getElementById('body'), cover = document.getElementById('cover');
+      var tok = document.querySelector('meta[name=_csrf]').content, hdr = document.querySelector('meta[name=_csrf_header]').content;
+      f.addEventListener('change', function () {
+        if (!f.files.length) return;
+        var fd = new FormData(); fd.append('file', f.files[0]);
+        msg.textContent = '올리는 중…';
+        var h = {}; h[hdr] = tok;
+        fetch('/admin/posts/upload', {method: 'POST', body: fd, headers: h, credentials: 'same-origin'})
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j.error) { msg.textContent = j.error; return; }
+            var code = '\n![그림 설명을 적어 주세요](' + j.url + ')\n';
+            var s = body.selectionStart || body.value.length;
+            body.value = body.value.slice(0, s) + code + body.value.slice(body.selectionEnd || s);
+            body.focus(); body.selectionStart = body.selectionEnd = s + code.length;
+            if (!cover.value) cover.value = j.url;
+            msg.textContent = '올렸습니다: ' + j.url + (cover.value === j.url ? ' (대표 이미지로도 넣음)' : '');
+          })
+          .catch(function () { msg.textContent = '올리지 못했습니다. 다시 시도해 주세요.'; })
+          .finally(function () { f.value = ''; });
+      });
+    })();
+  </script>
 </div>
 </body>
 </html>
