@@ -25,12 +25,13 @@ public class RaceController {
     private final com.sub.gachima.service.PaperService paperService;
     private final com.sub.gachima.service.ScreenshotReader screenshotReader;
     private final com.sub.gachima.telegram.TelegramBot telegram;
+    private final com.sub.gachima.service.ModelInfo modelInfo;
 
     public RaceController(RaceService raceService, ImportService importService, ImportScanner scanner, StatsService statsService,
                           com.sub.gachima.service.PaperService paperService, com.sub.gachima.service.ScreenshotReader screenshotReader,
-                          com.sub.gachima.telegram.TelegramBot telegram) {
+                          com.sub.gachima.telegram.TelegramBot telegram, com.sub.gachima.service.ModelInfo modelInfo) {
         this.raceService = raceService; this.importService = importService; this.scanner = scanner; this.statsService = statsService;
-        this.paperService = paperService; this.screenshotReader = screenshotReader; this.telegram = telegram;
+        this.paperService = paperService; this.screenshotReader = screenshotReader; this.telegram = telegram; this.modelInfo = modelInfo;
     }
 
     @GetMapping("/login")
@@ -61,6 +62,18 @@ public class RaceController {
         model.addAttribute("edit", edit || prefilled || ("day".equals(mode) && !v.isScored()));
         model.addAttribute("tracks", RaceService.TRACKS);
         return "race";
+    }
+
+    /** 가중치: 전날 모델·당일 모델(경마장별) 요인 가중치 */
+    @GetMapping("/model")
+    public String model(@RequestParam(required = false) String date, @RequestParam(required = false) Integer meet, Model model) {
+        com.sub.gachima.domain.MeetDay md = modelInfo.find(date, meet)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "경주일이 없습니다"));
+        model.addAttribute("md", md);
+        model.addAttribute("meets", modelInfo.meetsOn(md.getRaceDate()));
+        model.addAttribute("pre", modelInfo.pre(md));
+        model.addAttribute("day", modelInfo.day(md));
+        return "model";
     }
 
     /** 점수표: 말 × 요인 점수(0~100, 50 = 경주 평균)와 근거 숫자 */

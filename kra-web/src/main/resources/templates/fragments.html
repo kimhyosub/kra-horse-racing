@@ -66,5 +66,14 @@
     <button class="logout" type="submit"><span sec:authentication="name">아이디</span> · 로그아웃</button>
   </form>
 </th:block>
-</body>
+<!-- 가중치 표 (model.html) -->
+      <section class="mw" th:fragment="weights(m)">
+        <h2 th:text="${m.title}"></h2>
+        <p class="hint" th:if="${!#strings.isEmpty(m.note)}" th:text="${m.note}"></p>
+        <div class="mw-mkt" th:if="${m.market != null}">
+          <b th:text="|배당 반영 ${m.marketText}|"></b>
+          <span>1이면 배당이 보는 확률을 그대로 출발점으로 씁니다. 1보다 작으면 인기마·비인기마 차이를 조금 줄여서 봅니다.</span>
+        </div>
+        <div class="mw-groups" th:if="${!#lists.isEmpty(m.groups)}">
+          <span th:each="g : ${m.groups}" class="mw-chip"><b th:text="${g.name}"></b> <th:block th:text="${g.pct}"></body>
 </html>

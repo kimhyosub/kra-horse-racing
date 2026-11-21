@@ -25,6 +25,7 @@
       <a th:href="@{${base}(mode='pre')}">전날 예상</a>
       <a th:href="@{${base}(mode='day')}">당일 분석</a>
       <a th:href="@{|${base}/score|}" aria-current="true">점수표</a>
+      <a th:href="@{/model(date=${v.date},meet=${v.meet})}">가중치</a>
       <th:block th:replace="~{fragments :: account}"></th:block>
     </nav>
   </header>

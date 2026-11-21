@@ -50,6 +50,7 @@ public class ImportService {
             md.setRaceDate(date); md.setMeet(meet); md.setMeetName(m.path("name").asText());
             md.setFeatsJson(feats); md.setBinJson(bin); md.setDayOnlyJson(dayOnly);
             md.setDayWeightsJson(m.path("dayWeights").toString());
+            if (doc.path("pre").isObject()) md.setPreWeightsJson(doc.path("pre").toString());
             md = meetDays.save(md);
             for (JsonNode r : m.path("races")) {
                 int rc = r.path("rcNo").asInt();

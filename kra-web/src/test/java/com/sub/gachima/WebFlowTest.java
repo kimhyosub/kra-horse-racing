@@ -76,6 +76,13 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("1·4·1착")))
                 .andExpect(content().string(containsString("기대값")));
 
+        // 가중치
+        mvc.perform(get("/model").param("date", "20261115").param("meet", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("전날 예상 모델")))
+                .andExpect(content().string(containsString("배당 반영")))
+                .andExpect(content().string(containsString("나이가 어릴수록 유리")));
+
         mvc.perform(get("/r/20261115/4/3")).andExpect(status().isOk());
         mvc.perform(get("/r/20261115/1/99")).andExpect(status().isNotFound());
 

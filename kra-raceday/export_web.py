@@ -166,7 +166,8 @@ def export(a):
 def export_day(a, date, pre, H, ref, raw_all, R):
     raw = raw_all[raw_all['rcDate'].astype(str) == date]
     meets = [int(x) for x in a.meets.split(',')] if a.meets else sorted({int(x) for x in raw['src_meet'].astype(str)})
-    doc = {'date': date, 'feats': K.FEATS, 'bin': sorted(K.BIN), 'dayOnly': list(DAY_ONLY), 'meets': []}
+    doc = {'date': date, 'feats': K.FEATS, 'bin': sorted(K.BIN), 'dayOnly': list(DAY_ONLY), 'meets': [],
+           'pre': {'feats': pre['feats'], 'bin': pre['bin'], 'w': pre['w'], 'note': pre.get('note', '')}}   # 가중치 화면용
     for m in meets:
         RD.MEET = m
         sub = raw[raw['src_meet'].astype(str) == str(m)]

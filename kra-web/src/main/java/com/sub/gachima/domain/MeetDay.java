@@ -20,6 +20,13 @@ public class MeetDay {
     private String meetName;
 
     /** 당일 모델 요인 이름 목록 (JSON 배열) */
+    /** 전날 예상 모델 {feats, bin, w, note} (가중치 화면용) */
+    @Lob
+    @Column(name = "pre_weights_json")
+    private String preWeightsJson;
+    public String getPreWeightsJson() { return preWeightsJson; }
+    public void setPreWeightsJson(String preWeightsJson) { this.preWeightsJson = preWeightsJson; }
+
     @Lob
     private String featsJson;
 

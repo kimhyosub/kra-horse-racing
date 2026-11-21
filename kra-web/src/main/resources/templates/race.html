@@ -74,6 +74,7 @@
       <a th:href="@{${base}(mode='pre')}" th:attr="aria-current=${mode == 'pre'}">전날 예상</a>
       <a th:href="@{${base}(mode='day')}" th:attr="aria-current=${mode == 'day'}">당일 분석</a>
       <a th:href="@{|${base}/score|}">점수표</a>
+      <a th:href="@{/model(date=${v.date},meet=${v.meet})}">가중치</a>
     </div>
     <div class="seg" role="group" aria-label="정렬" th:if="${mode == 'day' and v.scored}">
       <a th:href="@{${base}(mode='day',sort='p')}" th:attr="aria-current=${sort == 'p'}">우승 확률순</a>
