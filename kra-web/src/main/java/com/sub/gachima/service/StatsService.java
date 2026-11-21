@@ -93,6 +93,10 @@ public class StatsService {
                 JsonNode dv = OM.readTree(r.getDivJson());
                 if (dv.path("복승").isNumber()) rec.qDiv = dv.path("복승").asDouble();
                 if (dv.path("쌍승").isNumber()) rec.eDiv = dv.path("쌍승").asDouble();
+                if (dv.path("복연").isObject()) {
+                    Iterator<Map.Entry<String, JsonNode>> it = dv.path("복연").fields();
+                    while (it.hasNext()) { Map.Entry<String, JsonNode> e = it.next(); if (e.getValue().isNumber()) rec.bDiv.put(e.getKey(), e.getValue().asDouble()); }
+                }
             }
         } catch (Exception ignore) { }
         t.recs.add(rec);
@@ -187,13 +191,32 @@ public class StatsService {
         public int dayTop3In5;
         /** 실제 1·2착 조합의 복승·쌍승 확정 배당 (밤 수집 뒤) */
         public Double qDiv, eDiv;
+        /** 복연승 적중 조합(1-2·1-3·2-3착) 확정 배당 {"1-6": 3.2, …} */
+        public final Map<String, Double> bDiv = new HashMap<>();
+        /** 복연 박스: 당일 5두 중 2두 조합 전부. 1·2·3착이 있고 복연 배당 셋이 다 있어야 계산 */
+        public boolean isBoxB() { return isDay() && c != null && bDiv.size() == 3 && dayTop5.size() >= 2; }
+        public long getBoxBRet() {
+            long s = 0;
+            for (Map.Entry<String, Double> e : bDiv.entrySet()) {
+                String[] p = e.getKey().split("-");
+                if (dayTop5.contains(Integer.parseInt(p[0])) && dayTop5.contains(Integer.parseInt(p[1]))) s += Math.round(e.getValue() * 1000);
+            }
+            return s;
+        }
+        public int getBoxBHits() {
+            int n = 0;
+            for (String k : bDiv.keySet()) { String[] p = k.split("-"); if (dayTop5.contains(Integer.parseInt(p[0])) && dayTop5.contains(Integer.parseInt(p[1]))) n++; }
+            return n;
+        }
+        public long getBoxBProfit() { int k = getBoxK(); return getBoxBRet() - k * (k - 1) / 2 * 1000L; }
         /** 당일 5두 박스를 살 수 있나: 당일 분석 + 1·2착 + 복승·쌍승 배당 */
         public boolean isBox() { return isDay() && dayIn12 != null && qDiv != null && eDiv != null && dayTop5.size() >= 2; }
         public int getBoxK() { return dayTop5.size(); }
         /** 복승 박스(5두 → 10조합)·쌍승 박스(20조합)를 1,000원씩 샀을 때 손익(원) */
         public long getBoxQProfit() { int k = getBoxK(); return Math.round((Boolean.TRUE.equals(dayIn12) ? qDiv * 1000 : 0) - k * (k - 1) / 2 * 1000.0); }
         public long getBoxEProfit() { int k = getBoxK(); return Math.round((Boolean.TRUE.equals(dayIn12) ? eDiv * 1000 : 0) - k * (k - 1) * 1000.0); }
-        public long getBoxProfit() { return getBoxQProfit() + getBoxEProfit(); }
+        public long getBoxProfit() { return (isBox() ? getBoxQProfit() + getBoxEProfit() : 0) + (isBoxB() ? getBoxBProfit() : 0); }
+        public boolean isAnyBox() { return isBox() || isBoxB(); }
         public String getBoxProfitText() { return won(getBoxProfit()); }
         /** 출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산한 당일 분석 */
         public boolean dayAfter;
@@ -221,6 +244,8 @@ public class StatsService {
         /** 당일 5두 복승·쌍승 박스 (1,000원씩): 경주 수, 적중, 산 돈, 받은 돈 */
         public int boxN, boxHit;
         public long qCost, qRet, eCost, eRet;
+        public int bN, bHit;
+        public long bCost, bRet;
         void add(RaceRec r) {
             n++; if (r.pre1) pre1++;
             if (r.preQ != null) { qN++; if (r.preQ) q++; }
@@ -244,21 +269,33 @@ public class StatsService {
                 qCost += k * (k - 1) / 2 * 1000L; eCost += k * (k - 1) * 1000L;
                 if (Boolean.TRUE.equals(r.dayIn12)) { boxHit++; qRet += Math.round(r.qDiv * 1000); eRet += Math.round(r.eDiv * 1000); }
             }
+            if (r.isBoxB()) {
+                int k = r.getBoxK();
+                bN++; bCost += k * (k - 1) / 2 * 1000L;
+                long got = r.getBoxBRet();
+                bRet += got; if (got > 0) bHit++;
+            }
         }
         public String getBoxHitRate() { return pct(boxHit, boxN); }
         public String getQProfit() { return won(qRet - qCost); }
         public String getEProfit() { return won(eRet - eCost); }
-        public String getBoxProfit() { return won(qRet + eRet - qCost - eCost); }
+        public String getBoxProfit() { return won(qRet + eRet + bRet - qCost - eCost - bCost); }
+        public String getBProfit() { return won(bRet - bCost); }
+        public String getBRoi() { return roi(bRet, bCost); }
+        public boolean isBUp() { return bRet >= bCost; }
+        public String getBCostText() { return won0(bCost); }
+        public String getBHitRate() { return pct(bHit, bN); }
+        public boolean isAnyBox() { return boxN + bN > 0; }
         public String getQRoi() { return roi(qRet, qCost); }
         public String getERoi() { return roi(eRet, eCost); }
-        public String getBoxRoi() { return roi(qRet + eRet, qCost + eCost); }
+        public String getBoxRoi() { return roi(qRet + eRet + bRet, qCost + eCost + bCost); }
         public boolean isQUp() { return qRet >= qCost; }
         public boolean isEUp() { return eRet >= eCost; }
-        public boolean isBoxUp() { return qRet + eRet >= qCost + eCost; }
+        public boolean isBoxUp() { return qRet + eRet + bRet >= qCost + eCost + bCost; }
         public String getQCostText() { return won0(qCost); }
         public String getECostText() { return won0(eCost); }
-        public String getBoxCostText() { return won0(qCost + eCost); }
-        public String getBoxRetText() { return won0(qRet + eRet); }
+        public String getBoxCostText() { return won0(qCost + eCost + bCost); }
+        public String getBoxRetText() { return won0(qRet + eRet + bRet); }
         private static String roi(long ret, long cost) { return cost == 0 ? "-" : String.format("%.0f%%", 100.0 * ret / cost); }
         public String getDayPairRate() { return pct(dq, dqN); }
         public String getDayIn12Rate() { return pct(din12, din12N); }

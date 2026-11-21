@@ -144,7 +144,7 @@ def results_for(R, date, meet):
     return out, jk, final
 
 
-POOL_KEYS = {'단승식': '단승', '복승식': '복승', '쌍승식': '쌍승', '삼복승식': '삼복승', '삼쌍승식': '삼쌍승'}
+POOL_KEYS = {'단승식': '단승', '복승식': '복승', '쌍승식': '쌍승', '삼복승식': '삼복승', '삼쌍승식': '삼쌍승', '복연승식': '복연'}
 
 
 def dividends_for(raw_dir, date, meet, res):
@@ -170,7 +170,8 @@ def dividends_for(raw_dir, date, meet, res):
             continue   # 동착·실격 등은 건너뜀
         a, b, c = (no for _, no in lst[:3])
         win[rc] = {'단승': (a,), '복승': tuple(sorted((a, b))), '쌍승': (a, b),
-                   '삼복승': tuple(sorted((a, b, c))), '삼쌍승': (a, b, c)}
+                   '삼복승': tuple(sorted((a, b, c))), '삼쌍승': (a, b, c),
+                   '복연': {tuple(sorted(p)) for p in ((a, b), (a, c), (b, c))}}
     out = {}
     for x in items if isinstance(items, list) else []:
         k = POOL_KEYS.get(str(x.get('pool', '')).strip())
@@ -182,9 +183,14 @@ def dividends_for(raw_dir, date, meet, res):
         except (TypeError, ValueError):
             continue
         key = tuple(v for v in key if v > 0)
-        if k in ('복승', '삼복승'):
+        if k in ('복승', '삼복승', '복연'):
             key = tuple(sorted(key))
-        if rc in win and win[rc][k] == key and od > 0:
+        if rc not in win or od <= 0:
+            continue
+        if k == '복연':   # 적중 조합이 셋: {"1-6": 3.2, "1-9": 4.1, "6-9": 5.0}
+            if key in win[rc][k]:
+                out.setdefault(rc, {}).setdefault('복연', {})[f'{key[0]}-{key[1]}'] = od
+        elif win[rc][k] == key:
             out.setdefault(rc, {})[k] = od
     # 경주 전에 받은 원본(아직 확정 전 배당)이면 버린다: 단승 배당이 경주성적의 1착 확정 단승과 15% 넘게 다르면 그 경주는 제외
     bad = []

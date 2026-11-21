@@ -52,17 +52,18 @@
     </div>
 
     <!-- 당일 5두 박스 -->
-    <th:block th:if="${rp.day.boxN > 0}">
+    <th:block th:if="${rp.day.anyBox}">
     <div class="rp-box">
-      <header><b>이날 당일 5두를 박스로 샀다면</b><span>복승·쌍승 모든 조합 1,000원씩 · 확정 배당</span></header>
-      <div class="rp-kpis three">
+      <header><b>이날 당일 5두를 박스로 샀다면</b><span>복승·쌍승·복연 모든 조합 1,000원씩 · 확정 배당</span></header>
+      <div class="rp-kpis four">
         <div class="rp-kpi"><small>복승 박스 · 5두 10조합</small><b th:classappend="${rp.day.QUp} ? 'pos' : 'neg'" th:text="${rp.day.QProfit}">-</b><span th:text="|회수율 ${rp.day.QRoi} · 산 돈 ${rp.day.QCostText}|"></span></div>
         <div class="rp-kpi"><small>쌍승 박스 · 5두 20조합</small><b th:classappend="${rp.day.EUp} ? 'pos' : 'neg'" th:text="${rp.day.EProfit}">-</b><span th:text="|회수율 ${rp.day.ERoi} · 산 돈 ${rp.day.ECostText}|"></span></div>
-        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.day.boxUp} ? 'pos' : 'neg'" th:text="${rp.day.boxProfit}">-</b><span th:text="|회수율 ${rp.day.boxRoi} · ${rp.day.boxN}경주 중 ${rp.day.boxHit}경주 적중 (${rp.day.boxHitRate})|"></span></div>
+        <div class="rp-kpi"><small>복연 박스 · 5두 10조합</small><b th:classappend="${rp.day.BUp} ? 'pos' : 'neg'" th:text="${rp.day.BProfit}">-</b><span th:text="|회수율 ${rp.day.BRoi} · ${rp.day.bN}경주 중 ${rp.day.bHit}경주 적중|"></span></div>
+        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.day.boxUp} ? 'pos' : 'neg'" th:text="${rp.day.boxProfit}">-</b><span th:text="|회수율 ${rp.day.boxRoi} · 산 돈 ${rp.day.boxCostText} · 복승·쌍승 ${rp.day.boxHit}/${rp.day.boxN}경주 적중|"></span></div>
       </div>
     </div>
     </th:block>
-    <p class="rp-note" th:if="${rp.day.boxN == 0 and rp.day.dayN > 0}">복승·쌍승 확정 배당은 밤 수집(21:40) 뒤에 들어와서, 그 전에는 박스 손익을 계산할 수 없습니다.</p>
+    <p class="rp-note" th:if="${!rp.day.anyBox and rp.day.dayN > 0}">복승·쌍승 확정 배당은 밤 수집(21:40) 뒤에 들어와서, 그 전에는 박스 손익을 계산할 수 없습니다.</p>
 
     <!-- 최근 20경주일 누적 -->
     <header class="rp-head rp-head2">
@@ -81,13 +82,14 @@
       <span>전날 예상 1위 적중 <b th:text="${rp.rolling.pre1Rate}"></b> <small th:text="|(${rp.rolling.pre1}/${rp.rolling.n}경주 전체)|"></small></span>
     </div>
 
-    <th:block th:if="${rp.rolling.boxN > 0}">
+    <th:block th:if="${rp.rolling.anyBox}">
     <div class="rp-box">
-      <header><b>최근 누적 박스 손익</b><span>같은 방식 · 과거 2년 검증: 적중 65% · 회수율 복승 74% · 쌍승 76%</span></header>
-      <div class="rp-kpis three">
+      <header><b>최근 누적 박스 손익</b><span>같은 방식 · 과거 2년 검증 회수율: 복승 74% · 쌍승 76% · 복연 78%</span></header>
+      <div class="rp-kpis four">
         <div class="rp-kpi"><small>복승 박스 · 5두 10조합</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
         <div class="rp-kpi"><small>쌍승 박스 · 5두 20조합</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
-        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.rolling.boxUp} ? 'pos' : 'neg'" th:text="${rp.rolling.boxProfit}">-</b><span th:text="|회수율 ${rp.rolling.boxRoi} · ${rp.rolling.boxN}경주 중 ${rp.rolling.boxHit}경주 적중 (${rp.rolling.boxHitRate})|"></span></div>
+        <div class="rp-kpi"><small>복연 박스 · 5두 10조합</small><b th:classappend="${rp.rolling.BUp} ? 'pos' : 'neg'" th:text="${rp.rolling.BProfit}">-</b><span th:text="|회수율 ${rp.rolling.BRoi} · ${rp.rolling.bN}경주 중 ${rp.rolling.bHit}경주 적중|"></span></div>
+        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.rolling.boxUp} ? 'pos' : 'neg'" th:text="${rp.rolling.boxProfit}">-</b><span th:text="|회수율 ${rp.rolling.boxRoi} · 산 돈 ${rp.rolling.boxCostText} · 복승·쌍승 ${rp.rolling.boxHit}/${rp.rolling.boxN}경주 적중|"></span></div>
       </div>
     </div>
     </th:block>
@@ -142,7 +144,7 @@
           <i class="bd ref" th:if="${r.dayAfter}" title="출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산">확정 배당 기준</i>
           <i class="bd ref" th:unless="${r.official}">참고</i>
           <small th:text="|5두 안 3착 ${r.shownTop3In5}두|"></small>
-          <small class="rp-boxp" th:if="${r.box}" th:classappend="${r.boxProfit >= 0} ? 'pos' : 'neg'" th:text="|박스 ${r.boxProfitText}|"></small>
+          <small class="rp-boxp" th:if="${r.anyBox}" th:classappend="${r.boxProfit >= 0} ? 'pos' : 'neg'" th:text="|박스 ${r.boxProfitText}|"></small>
         </span>
       </a>
     </div>
