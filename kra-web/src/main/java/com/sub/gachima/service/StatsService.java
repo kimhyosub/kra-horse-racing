@@ -193,31 +193,37 @@ public class StatsService {
         public Double qDiv, eDiv;
         /** 복연승 적중 조합(1-2·1-3·2-3착) 확정 배당 {"1-6": 3.2, …} */
         public final Map<String, Double> bDiv = new HashMap<>();
-        /** 복연 박스: 당일 5두 중 2두 조합 전부. 1·2·3착이 있고 복연 배당 셋이 다 있어야 계산 */
+        /** 박스로 사는 당일 상위 k두 */
+        public List<Integer> top(int k) { return dayTop5.subList(0, Math.min(k, dayTop5.size())); }
+        private boolean both(int k, int x, int y) { List<Integer> t = top(k); return t.contains(x) && t.contains(y); }
+        private static int pairs(int n) { return n * (n - 1) / 2; }
+        /** 복승·쌍승 박스를 계산할 수 있나: 당일 분석 + 1·2착 + 복승·쌍승 배당 */
+        public boolean isBox() { return isDay() && b != null && qDiv != null && eDiv != null && dayTop5.size() >= 2; }
+        /** 복연 박스: 1·2·3착이 있고 복연 배당 셋이 다 있어야 계산 */
         public boolean isBoxB() { return isDay() && c != null && bDiv.size() == 3 && dayTop5.size() >= 2; }
-        public long getBoxBRet() {
+        public boolean isAnyBox() { return isBox() || isBoxB(); }
+        public boolean boxHit(int k) { return isBox() && both(k, a, b); }
+        public long boxQCost(int k) { return pairs(top(k).size()) * 1000L; }
+        public long boxECost(int k) { return pairs(top(k).size()) * 2000L; }
+        public long boxBCost(int k) { return pairs(top(k).size()) * 1000L; }
+        public long boxQRet(int k) { return boxHit(k) ? Math.round(qDiv * 1000) : 0; }
+        public long boxERet(int k) { return boxHit(k) ? Math.round(eDiv * 1000) : 0; }
+        public long boxBRet(int k) {
             long s = 0;
             for (Map.Entry<String, Double> e : bDiv.entrySet()) {
                 String[] p = e.getKey().split("-");
-                if (dayTop5.contains(Integer.parseInt(p[0])) && dayTop5.contains(Integer.parseInt(p[1]))) s += Math.round(e.getValue() * 1000);
+                if (both(k, Integer.parseInt(p[0]), Integer.parseInt(p[1]))) s += Math.round(e.getValue() * 1000);
             }
             return s;
         }
-        public int getBoxBHits() {
-            int n = 0;
-            for (String k : bDiv.keySet()) { String[] p = k.split("-"); if (dayTop5.contains(Integer.parseInt(p[0])) && dayTop5.contains(Integer.parseInt(p[1]))) n++; }
-            return n;
+        /** k두 박스(복승·쌍승·복연 1,000원씩) 손익 */
+        public long boxProfit(int k) {
+            long v = 0;
+            if (isBox()) v += boxQRet(k) + boxERet(k) - boxQCost(k) - boxECost(k);
+            if (isBoxB()) v += boxBRet(k) - boxBCost(k);
+            return v;
         }
-        public long getBoxBProfit() { int k = getBoxK(); return getBoxBRet() - k * (k - 1) / 2 * 1000L; }
-        /** 당일 5두 박스를 살 수 있나: 당일 분석 + 1·2착 + 복승·쌍승 배당 */
-        public boolean isBox() { return isDay() && dayIn12 != null && qDiv != null && eDiv != null && dayTop5.size() >= 2; }
-        public int getBoxK() { return dayTop5.size(); }
-        /** 복승 박스(5두 → 10조합)·쌍승 박스(20조합)를 1,000원씩 샀을 때 손익(원) */
-        public long getBoxQProfit() { int k = getBoxK(); return Math.round((Boolean.TRUE.equals(dayIn12) ? qDiv * 1000 : 0) - k * (k - 1) / 2 * 1000.0); }
-        public long getBoxEProfit() { int k = getBoxK(); return Math.round((Boolean.TRUE.equals(dayIn12) ? eDiv * 1000 : 0) - k * (k - 1) * 1000.0); }
-        public long getBoxProfit() { return (isBox() ? getBoxQProfit() + getBoxEProfit() : 0) + (isBoxB() ? getBoxBProfit() : 0); }
-        public boolean isAnyBox() { return isBox() || isBoxB(); }
-        public String getBoxProfitText() { return won(getBoxProfit()); }
+        public String boxProfitText(int k) { return won(boxProfit(k)); }
         /** 출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산한 당일 분석 */
         public boolean dayAfter;
         public final List<Integer> dayTop5 = new ArrayList<>();
@@ -243,6 +249,9 @@ public class StatsService {
         public int dq, dqN, din12, din12N, din123, din123N, dTop3In5, dFav1, dFavN, dPre1;
         /** 당일 5두 복승·쌍승 박스 (1,000원씩): 경주 수, 적중, 산 돈, 받은 돈 */
         public int boxN, boxHit;
+        /** 박스로 사는 당일 상위 두수 (3·4·5) */
+        public int boxK = 5;
+        public int getPairs() { return boxK * (boxK - 1) / 2; }
         public long qCost, qRet, eCost, eRet;
         public int bN, bHit;
         public long bCost, bRet;
@@ -264,15 +273,13 @@ public class StatsService {
                 if (r.pre1) dPre1++;
             }
             if (r.isBox()) {
-                int k = r.getBoxK();
                 boxN++;
-                qCost += k * (k - 1) / 2 * 1000L; eCost += k * (k - 1) * 1000L;
-                if (Boolean.TRUE.equals(r.dayIn12)) { boxHit++; qRet += Math.round(r.qDiv * 1000); eRet += Math.round(r.eDiv * 1000); }
+                qCost += r.boxQCost(boxK); eCost += r.boxECost(boxK);
+                if (r.boxHit(boxK)) { boxHit++; qRet += r.boxQRet(boxK); eRet += r.boxERet(boxK); }
             }
             if (r.isBoxB()) {
-                int k = r.getBoxK();
-                bN++; bCost += k * (k - 1) / 2 * 1000L;
-                long got = r.getBoxBRet();
+                bN++; bCost += r.boxBCost(boxK);
+                long got = r.boxBRet(boxK);
                 bRet += got; if (got > 0) bHit++;
             }
         }
@@ -319,6 +326,12 @@ public class StatsService {
         public final List<String> dates = new ArrayList<>();
         public String date;
         public final Agg day = new Agg(), rolling = new Agg();
+        /** 박스 두수: 3·4·5 */
+        public int boxK = 5;
+        /** 과거 2년(2025~2026, 3,969경주) 같은 박스의 승식별 회수율 */
+        public String getBoxBack() {
+            return boxK == 3 ? "복승 81% · 쌍승 80% · 복연 80%" : boxK == 4 ? "복승 77% · 쌍승 78% · 복연 79%" : "복승 74% · 쌍승 76% · 복연 78%";
+        }
         public int rollingDays;
         public final List<RaceRec> races = new ArrayList<>();
         public final List<String> trendDates = new ArrayList<>();
@@ -401,8 +414,12 @@ public class StatsService {
     static String won0(long v) { return String.format("%,d원", v); }
 
     /** date 가 없거나 결과가 없는 날이면 결과가 있는 가장 최근 날 */
-    public Report report(Stats s, String date) {
+    public Report report(Stats s, String date) { return report(s, date, 5); }
+
+    public Report report(Stats s, String date, int box) {
         Report rp = new Report();
+        rp.boxK = box >= 3 && box <= 5 ? box : 5;
+        rp.day.boxK = rp.boxK; rp.rolling.boxK = rp.boxK;
         TreeMap<String, List<RaceRec>> byDate = new TreeMap<>(Comparator.reverseOrder());
         for (Tally t : s.days) for (RaceRec r : t.recs) byDate.computeIfAbsent(r.date, k -> new ArrayList<>()).add(r);
         if (byDate.isEmpty()) return rp;

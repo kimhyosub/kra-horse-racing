@@ -117,12 +117,17 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("이날 당일 5두를 박스로 샀다면")))
                 .andExpect(content().string(containsString("복승 박스 · 5두 10조합")))
                 .andExpect(content().string(containsString("복연 박스 · 5두 10조합")))
+                .andExpect(content().string(containsString("href=\"/stats?date=20261115&amp;box=3\"")))
                 .andExpect(content().string(containsString("BY BET TYPE")))
                 .andExpect(content().string(containsString("1위→2위→3위")))
                 .andExpect(content().string(containsString("10.7% / 80%")))        // 삼복승 과거 검증
                 .andExpect(content().string(containsString("1경주 · 적중")))        // 서울 7R 만 승식 배당이 있음
                 .andExpect(content().string(containsString("class=\"tabbar\"")))
                 .andExpect(content().string(containsString("공식 합계")));
+        mvc.perform(get("/stats").param("date", "20261115").param("box", "3")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("이날 당일 상위 3두를 박스로 샀다면")))
+                .andExpect(content().string(containsString("쌍승 박스 · 3두 6조합")))
+                .andExpect(content().string(containsString("복승 81%")));
         mvc.perform(get("/stats").param("date", "20990101")).andExpect(status().isOk())        // 없는 날은 최근 날로
                 .andExpect(content().string(containsString("11월 15일 (일)")));
         mvc.perform(get("/admin")).andExpect(status().isOk());

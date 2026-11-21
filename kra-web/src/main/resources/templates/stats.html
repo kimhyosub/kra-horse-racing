@@ -29,6 +29,7 @@
     <select id="rpdate" name="date" class="daysel" onchange="this.form.submit()">
       <option th:each="d : ${rp.dates}" th:value="${d}" th:text="${rp.labelOf(d)}" th:selected="${d == rp.date}"></option>
     </select>
+    <input type="hidden" name="box" th:value="${rp.boxK}">
     <noscript><button class="btn" type="submit">보기</button></noscript>
   </form>
 
@@ -54,11 +55,15 @@
     <!-- 당일 5두 박스 -->
     <th:block th:if="${rp.day.anyBox}">
     <div class="rp-box">
-      <header><b>이날 당일 5두를 박스로 샀다면</b><span>복승·쌍승·복연 모든 조합 1,000원씩 · 확정 배당</span></header>
+      <header><b th:text="|이날 당일 상위 ${rp.boxK}두를 박스로 샀다면|">이날 박스</b>
+        <nav class="rp-seg" aria-label="박스 두수">
+          <a th:each="k : ${ {3,4,5} }" th:href="@{/stats(date=${rp.date},box=${k})}" th:text="|${k}두|" th:classappend="${k == rp.boxK} ? 'on'" th:attr="aria-current=${k == rp.boxK}">5두</a>
+        </nav>
+        <span>복승·쌍승·복연 모든 조합 1,000원씩 · 확정 배당</span></header>
       <div class="rp-kpis four">
-        <div class="rp-kpi"><small>복승 박스 · 5두 10조합</small><b th:classappend="${rp.day.QUp} ? 'pos' : 'neg'" th:text="${rp.day.QProfit}">-</b><span th:text="|회수율 ${rp.day.QRoi} · 산 돈 ${rp.day.QCostText}|"></span></div>
-        <div class="rp-kpi"><small>쌍승 박스 · 5두 20조합</small><b th:classappend="${rp.day.EUp} ? 'pos' : 'neg'" th:text="${rp.day.EProfit}">-</b><span th:text="|회수율 ${rp.day.ERoi} · 산 돈 ${rp.day.ECostText}|"></span></div>
-        <div class="rp-kpi"><small>복연 박스 · 5두 10조합</small><b th:classappend="${rp.day.BUp} ? 'pos' : 'neg'" th:text="${rp.day.BProfit}">-</b><span th:text="|회수율 ${rp.day.BRoi} · ${rp.day.bN}경주 중 ${rp.day.bHit}경주 적중|"></span></div>
+        <div class="rp-kpi"><small th:text="|복승 박스 · ${rp.boxK}두 ${rp.day.pairs}조합|">복승 박스</small><b th:classappend="${rp.day.QUp} ? 'pos' : 'neg'" th:text="${rp.day.QProfit}">-</b><span th:text="|회수율 ${rp.day.QRoi} · 산 돈 ${rp.day.QCostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|쌍승 박스 · ${rp.boxK}두 ${rp.day.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.day.EUp} ? 'pos' : 'neg'" th:text="${rp.day.EProfit}">-</b><span th:text="|회수율 ${rp.day.ERoi} · 산 돈 ${rp.day.ECostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|복연 박스 · ${rp.boxK}두 ${rp.day.pairs}조합|">복연 박스</small><b th:classappend="${rp.day.BUp} ? 'pos' : 'neg'" th:text="${rp.day.BProfit}">-</b><span th:text="|회수율 ${rp.day.BRoi} · ${rp.day.bN}경주 중 ${rp.day.bHit}경주 적중|"></span></div>
         <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.day.boxUp} ? 'pos' : 'neg'" th:text="${rp.day.boxProfit}">-</b><span th:text="|회수율 ${rp.day.boxRoi} · 산 돈 ${rp.day.boxCostText} · 복승·쌍승 ${rp.day.boxHit}/${rp.day.boxN}경주 적중|"></span></div>
       </div>
     </div>
@@ -84,11 +89,11 @@
 
     <th:block th:if="${rp.rolling.anyBox}">
     <div class="rp-box">
-      <header><b>최근 누적 박스 손익</b><span>같은 방식 · 과거 2년 검증 회수율: 복승 74% · 쌍승 76% · 복연 78%</span></header>
+      <header><b th:text="|최근 누적 · ${rp.boxK}두 박스 손익|">최근 누적</b><span th:text="|같은 방식 과거 2년 검증 회수율: ${rp.boxBack}|"></span></header>
       <div class="rp-kpis four">
-        <div class="rp-kpi"><small>복승 박스 · 5두 10조합</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
-        <div class="rp-kpi"><small>쌍승 박스 · 5두 20조합</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
-        <div class="rp-kpi"><small>복연 박스 · 5두 10조합</small><b th:classappend="${rp.rolling.BUp} ? 'pos' : 'neg'" th:text="${rp.rolling.BProfit}">-</b><span th:text="|회수율 ${rp.rolling.BRoi} · ${rp.rolling.bN}경주 중 ${rp.rolling.bHit}경주 적중|"></span></div>
+        <div class="rp-kpi"><small th:text="|복승 박스 · ${rp.boxK}두 ${rp.rolling.pairs}조합|">복승 박스</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|쌍승 박스 · ${rp.boxK}두 ${rp.rolling.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|복연 박스 · ${rp.boxK}두 ${rp.rolling.pairs}조합|">복연 박스</small><b th:classappend="${rp.rolling.BUp} ? 'pos' : 'neg'" th:text="${rp.rolling.BProfit}">-</b><span th:text="|회수율 ${rp.rolling.BRoi} · ${rp.rolling.bN}경주 중 ${rp.rolling.bHit}경주 적중|"></span></div>
         <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.rolling.boxUp} ? 'pos' : 'neg'" th:text="${rp.rolling.boxProfit}">-</b><span th:text="|회수율 ${rp.rolling.boxRoi} · 산 돈 ${rp.rolling.boxCostText} · 복승·쌍승 ${rp.rolling.boxHit}/${rp.rolling.boxN}경주 적중|"></span></div>
       </div>
     </div>
@@ -123,7 +128,7 @@
       <span>당일 분석 5두(없으면 전날 예상)와 실제 1·2·3착</span>
     </header>
     <div class="rp-races">
-      <a class="rp-race" th:each="r : ${rp.races}" th:href="@{|/r/${r.date}/${r.meet}/${r.rcNo}|}" th:classappend="${!r.official} ? 'ref'">
+      <a class="rp-race" th:each="r : ${rp.races}" th:href="@{|/r/${r.date}/${r.meet}/${r.rcNo}|(mode='day')}" th:classappend="${!r.official} ? 'ref'">
         <b class="rp-rc" th:text="|${r.meetName} ${r.rcNo}R|">서울 1R</b>
         <span class="rp-seq">
           <small>결과</small>
@@ -144,7 +149,7 @@
           <i class="bd ref" th:if="${r.dayAfter}" title="출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산">확정 배당 기준</i>
           <i class="bd ref" th:unless="${r.official}">참고</i>
           <small th:text="|5두 안 3착 ${r.shownTop3In5}두|"></small>
-          <small class="rp-boxp" th:if="${r.anyBox}" th:classappend="${r.boxProfit >= 0} ? 'pos' : 'neg'" th:text="|박스 ${r.boxProfitText}|"></small>
+          <small class="rp-boxp" th:if="${r.anyBox}" th:classappend="${r.boxProfit(rp.boxK) >= 0} ? 'pos' : 'neg'" th:text="|${rp.boxK}두 박스 ${r.boxProfitText(rp.boxK)}|"></small>
         </span>
       </a>
     </div>
