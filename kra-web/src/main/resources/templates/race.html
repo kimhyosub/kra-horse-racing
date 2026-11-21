@@ -91,7 +91,7 @@
             <span class="pc-name"><b th:text="${h.name}">말</b><small th:text="|${h.jk} · ${h.tr}|"></small></span>
             <span class="pc-p"><b th:text="${#numbers.formatDecimal(h.preP*100,1,1)} + '%'">0%</b>
               <span class="bar"><i th:style="|width:${h.preBar}%|"></i></span>
-              <span class="pc-res" th:if="${h.ord != null}" th:classappend="${h.ord == 1} ? 'w' : (${h.ord <= 3} ? 'p' : '')" th:text="|결과 ${h.ord}착|"></span></span>
+              <span class="pc-res" th:if="${h.ord != null}" th:classappend="${h.ord == 1} ? 'w' : (${h.ord <= 3} ? 'p' : '')" th:text="|결과 ${h.ordLabel}|"></span></span>
           </summary>
           <div class="pc-body">
             <p class="pc-rec" th:if="${!#strings.isEmpty(h.record)}" th:text="${h.record}"></p>
@@ -110,7 +110,8 @@
     <p class="flash" th:if="${paperMsg}" th:text="${paperMsg}"></p>
     <div class="paper">
       <span>모의 기록</span>
-      <span th:if="${#lists.isEmpty(v.paperBets)}"> · 없음</span>
+      <span th:if="${#lists.isEmpty(v.paperBets) and !v.scored}"> · 아직 없음 <small>(당일 배당이 들어오면 ★ 말을 1,000원씩 건 것으로 자동 기록)</small></span>
+      <span th:if="${#lists.isEmpty(v.paperBets) and v.scored}"> · 없음 <small>(이 경주는 ★ 가치마가 없어 걸지 않음)</small></span>
       <span th:each="b : ${v.paperBets}">
         · <b th:text="|★ ${b.chulNo}번 ${b.hrName} ${b.betOdds}배|"></b>
         <span th:if="${b.placedAt != null}" th:text="|(${#temporals.format(b.placedAt, 'HH:mm')}${b.placedByLabel})|"></span>
@@ -206,7 +207,7 @@
               <small th:text="${h.cardSub}"></small></span>
             <span class="pc-p"><b th:text="${#numbers.formatDecimal(h.p*100,1,1)} + '%'"></b>
               <small class="mvl" th:text="${h.moveLabel}"></small>
-              <span class="pc-res" th:if="${h.ord != null}" th:classappend="${h.ord == 1} ? 'w' : (${h.ord <= 3} ? 'p' : '')" th:text="|결과 ${h.ord}착|"></span></span>
+              <span class="pc-res" th:if="${h.ord != null}" th:classappend="${h.ord == 1} ? 'w' : (${h.ord <= 3} ? 'p' : '')" th:text="|결과 ${h.ordLabel}|"></span></span>
           </summary>
           <div class="pc-body">
             <div class="cmp">

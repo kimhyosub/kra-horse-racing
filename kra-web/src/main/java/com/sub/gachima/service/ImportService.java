@@ -59,6 +59,9 @@ public class ImportService {
                 race.setStTime(r.path("stTime").asText()); race.setDist(r.path("dist").asInt());
                 Map<Integer, Entry> byNo = new HashMap<>();
                 for (Entry e : race.getEntries()) byNo.put(e.getChulNo(), e);
+                // 파일에 착순이 아직 없으면 텔레그램으로 직접 넣은 결과를 지우지 않는다 (공식 결과가 오면 덮어씀)
+                boolean fileResult = false;
+                for (JsonNode h : r.path("horses")) if (h.path("ord").isNumber()) fileResult = true;
                 for (JsonNode h : r.path("horses")) {
                     int no = h.path("no").asInt();
                     Entry e = byNo.get(no);
@@ -71,8 +74,10 @@ public class ImportService {
                     e.setFactsJson(h.path("facts").isObject() ? h.path("facts").toString() : null);
                     e.setPreWhyJson(h.path("preWhy").isObject() ? h.path("preWhy").toString() : null);
                     e.setPreP(h.path("preP").asDouble()); e.setPreRank(h.path("preRank").asInt());
-                    e.setFinishOrd(h.path("ord").isNumber() ? h.path("ord").asInt() : null);
-                    e.setFinalOdds(h.path("finalOdds").isNumber() ? h.path("finalOdds").asDouble() : null);
+                    if (fileResult) {
+                        e.setFinishOrd(h.path("ord").isNumber() ? h.path("ord").asInt() : null);
+                        e.setFinalOdds(h.path("finalOdds").isNumber() ? h.path("finalOdds").asDouble() : null);
+                    }
                     nHorse++;
                 }
                 race = races.save(race);

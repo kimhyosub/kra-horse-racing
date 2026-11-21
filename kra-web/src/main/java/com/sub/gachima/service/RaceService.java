@@ -216,6 +216,34 @@ public class RaceService {
         return paper.record(race, scored, in.getTrack(), readMap(in.getBwdJson()), user);
     }
 
+    /**
+     * 텔레그램 등으로 직접 넣는 결과(착순). 적은 말은 그 착순, 취소로 적은 말과 당일 배당이 없던 말은 취소,
+     * 나머지는 착외(ORD_OUT). 확정 단승 배당을 알면 함께 넣는다. 저장 뒤 모의 기록을 정산한다.
+     * 공식 결과가 수집되면 ImportService 가 덮어쓴다.
+     */
+    @Transactional
+    public void saveResult(String date, int meet, int rcNo, Map<Integer, Integer> ords, Set<Integer> scratched, Map<Integer, Double> finalOdds) {
+        MeetDay md = meetDays.findByRaceDateAndMeet(date, meet).orElseThrow(() -> new NoSuchElementException("경주일 없음"));
+        Race race = races.findByMeetDayAndRcNo(md, rcNo).orElseThrow(() -> new NoSuchElementException("경주 없음"));
+        Set<Integer> nos = new TreeSet<>();
+        for (Entry e : race.getEntries()) nos.add(e.getChulNo());
+        List<Integer> bad = new ArrayList<>();
+        for (Integer no : ords.keySet()) if (!nos.contains(no)) bad.add(no);
+        if (!bad.isEmpty()) throw new IllegalArgumentException(bad + "번은 이 경주 출전마가 아닙니다");
+        if (ords.isEmpty()) throw new IllegalArgumentException("착순이 없습니다");
+        Map<Integer, Double> dayOdds = input(race, SRC_MANUAL).map(i -> readMap(i.getOddsJson())).orElse(Collections.<Integer, Double>emptyMap());
+        for (Entry e : race.getEntries()) {
+            int no = e.getChulNo();
+            if (ords.containsKey(no)) e.setFinishOrd(ords.get(no));
+            else if (scratched.contains(no) || (!dayOdds.isEmpty() && !dayOdds.containsKey(no))) e.setFinishOrd(null);
+            else e.setFinishOrd(Entry.ORD_OUT);
+            Double fo = finalOdds.get(no);
+            if (fo != null && fo >= 1.0) e.setFinalOdds(fo);
+        }
+        races.save(race);
+        paper.settle(race);
+    }
+
     /** "12.5", "+3", "-4" 같은 입력을 숫자로. 배당은 1.0 이상만 받는다. */
     static Map<Integer, Double> parse(Map<Integer, String> raw, boolean odds) {
         Map<Integer, Double> out = new TreeMap<>();
@@ -345,6 +373,7 @@ public class RaceService {
         public Double finalOdds, inputOdds, inputBwd;
         public boolean scored, value, firstStart;
         public List<GroupBar> groups = new ArrayList<>();
+        public String getOrdLabel() { return ord == null ? "" : ord >= Entry.ORD_OUT ? "착외" : ord + "착"; }
         public double getGapLeft() { return Math.min(xm, xp); }
         public double getGapWidth() { return Math.abs(xp - xm); }
         public boolean isUp() { return xp > xm; }

@@ -56,6 +56,9 @@ public class Entry {
     /** 전날 예상 순위 */
     private int preRank;
 
+    /** 직접 넣은 결과에서 착순을 적지 않은 말 (4착 이하 등). 화면에는 '착외' */
+    public static final int ORD_OUT = 99;
+
     /** 확정 착순 (경주 전 null) */
     private Integer finishOrd;
 

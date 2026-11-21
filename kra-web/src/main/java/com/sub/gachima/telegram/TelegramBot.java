@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
  *    → 당일 분석 1·2·3위와 ★ 가치마를 답장, 다른 허용 대화에도 알림
  *  - 웹에서 당일 입력을 저장해도 허용 대화 전부에 같은 요약을 보낸다 (notifyAll)
  *  - 사진 설명(캡션)에 "서울 7", "부경 5R", "다습" 처럼 쓰면 경주·주로를 그대로 쓴다
+ *  - 결과: 글로 "서울 7 결과 5-2-7" (취소 4, 단승 6.2 선택), 또는 결과 화면 스크린샷 (캡션 "결과" 또는 화면을 보고 판단)
+ *    → 착순 저장 → ★ 모의 기록 정산 → 결과 요약 답장. 공식 결과가 수집되면 그쪽이 덮어쓴다
  * 서버로 들어오는 주소가 필요 없는 long polling 방식이라 집 PC 에서 그대로 돈다.
  */
 @Component
@@ -116,8 +118,11 @@ public class TelegramBot {
         if (m.path("photo").isArray() && m.path("photo").size() > 0) fileId = m.path("photo").get(m.path("photo").size() - 1).path("file_id").asText();
         else if (m.path("document").path("mime_type").asText("").startsWith("image/")) fileId = m.path("document").path("file_id").asText();
         if (fileId == null) {
-            // 글만 온 경우: "다습", "제주 포화", "함수율 12", "부경 8%" 처럼 짧은 주로 메시지면 그날 주로로 기억
-            if (chats.contains(chat) && !text.startsWith("/")) handleTrackText(chat, msgId, text);
+            // 글만 온 경우: "서울 7 결과 5-2-7" 이면 결과, "다습", "제주 포화", "함수율 12" 처럼 짧은 주로 메시지면 그날 주로로 기억
+            if (chats.contains(chat) && !text.startsWith("/")) {
+                if (RESULT_WORD.matcher(text).find() && text.matches("(?s).*\\d.*")) handleResultText(chat, msgId, text, "tg:" + who);
+                else handleTrackText(chat, msgId, text);
+            }
             return;   // 그 밖의 글은 조용히 넘어감 (단톡방 잡담)
         }
         if (!chats.contains(chat)) { tg.sendMessage(chat, "허용되지 않은 대화입니다. /id 로 ID를 확인해 주인에게 알려 주세요.", msgId); return; }
@@ -140,8 +145,10 @@ public class TelegramBot {
                 null, 0, Collections.<Integer, String>emptyMap());
 
         LocalDateTime now = LocalDateTime.now(clock.withZone(KST));
-        Choice c = choose(cands, r, hint, now);
+        boolean result = hint.result || r.result;
+        Choice c = choose(cands, r, hint, now, result);
         if (c == null) { tg.sendMessage(chat, "어느 경주인지 찾지 못했습니다. 캡션에 \"서울 7\"처럼 경주를 적어 다시 보내 주세요.", msgId); return; }
+        if (result) { handleResultPhoto(chat, msgId, today, c, r, "tg:" + who); return; }
         if (r.odds.size() < 2) { tg.sendMessage(chat, "배당을 2두 이상 읽지 못했습니다 (" + c.race.meetName + " " + c.race.rcNo + "R). 단승 배당이 보이는 화면으로 다시 보내 주세요.", msgId); return; }
 
         List<String> warn = new ArrayList<>();
@@ -165,6 +172,116 @@ public class TelegramBot {
         races.saveInput(today, c.race.meet, c.race.rcNo, track, odds, bwd, by);
         RaceView v = races.view(today, c.race.meet, c.race.rcNo).orElseThrow(IllegalStateException::new);
         String msg = RaceSummary.of(v, publicUrl, by, warn);
+        tg.sendMessage(chat, msg, msgId);
+        for (Long other : chats) if (other != chat) safeSend(other, msg);
+    }
+
+    // ---------------- 결과 ----------------
+
+    static final Pattern RESULT_WORD = Pattern.compile("결과|착순");
+
+    /** 글로 받은 결과: 날짜·경마장·경주, 착순(마번 순서), 취소 마번, 1착 단승 배당 */
+    static class ResultText {
+        Hint hint;
+        final List<Integer> order = new ArrayList<>();
+        final Set<Integer> scratched = new TreeSet<>();
+        Double winOdds;
+    }
+
+    /**
+     * "서울 7 결과 5-2-7", "결과 부경3R 4 1 9 취소 6", "11/15 서울 7 결과 3,2,1 단승 8.8", "제주 2 결과 1착 5 2착 3 3착 8".
+     * 경주 번호는 "R/경주"가 붙은 숫자, 없으면 맨 앞 숫자. 나머지 숫자가 1착부터 차례로 마번.
+     */
+    static ResultText parseResult(String s, LocalDate today) {
+        ResultText out = new ResultText();
+        Matcher w = Pattern.compile("단승\\s*(?:\\d{1,2}\\s*번\\s*)?(\\d{1,3}(?:\\.\\d)?)\\s*배?|(\\d{1,3}\\.\\d)\\s*배").matcher(s);
+        if (w.find()) { out.winOdds = Double.valueOf(w.group(1) != null ? w.group(1) : w.group(2)); s = s.substring(0, w.start()) + " " + s.substring(w.end()); }
+        Matcher x = Pattern.compile("(?:취소|제외)\\s*((?:\\d{1,2}\\s*번?\\s*[,·/]?\\s*)+)").matcher(s);
+        if (x.find()) {
+            for (String n : x.group(1).split("\\D+")) if (!n.isEmpty()) out.scratched.add(Integer.parseInt(n));
+            s = s.substring(0, x.start()) + " " + s.substring(x.end());
+        }
+        // "결과" 앞은 경주, 뒤는 착순. "결과 서울 7 5-2-7" 처럼 앞에 오면 뒤쪽 첫 경주 번호까지를 경주로 본다
+        Matcher k = RESULT_WORD.matcher(s);
+        String head = s, tail = "";
+        if (k.find()) { head = s.substring(0, k.start()); tail = s.substring(k.end()); }
+        if (!head.matches("(?s).*\\d.*")) {
+            Matcher rm = Pattern.compile("\\d{1,2}\\s*(?:R|r|경주)|\\d{1,2}").matcher(tail);
+            if (rm.find()) { head = head + " " + tail.substring(0, rm.end()); tail = tail.substring(rm.end()); }
+        }
+        out.hint = parseCaption(head, today);
+        out.hint.result = true;
+        s = tail;
+        Matcher pairs = Pattern.compile("([1-9])\\s*착\\s*(\\d{1,2})").matcher(s);
+        Map<Integer, Integer> byPlace = new TreeMap<>();
+        while (pairs.find()) byPlace.put(Integer.parseInt(pairs.group(1)), Integer.parseInt(pairs.group(2)));
+        if (!byPlace.isEmpty()) out.order.addAll(byPlace.values());
+        else {
+            Matcher n = Pattern.compile("\\d{1,2}").matcher(s);
+            while (n.find()) out.order.add(Integer.parseInt(n.group()));
+        }
+        return out;
+    }
+
+    static final String RESULT_HELP = "결과는 \"서울 7 결과 5-2-7\"처럼 경마장·경주·착순(1착부터 마번)을 적어 주세요. "
+            + "취소마는 \"취소 4\", 1착 확정 배당은 \"단승 6.2\"를 덧붙이면 됩니다. 결과 화면 스크린샷에 캡션 \"결과\"를 달아 보내도 됩니다.";
+
+    void handleResultText(long chat, long msgId, String text, String by) throws Exception {
+        LocalDate todayDate = LocalDate.now(clock.withZone(KST));
+        ResultText rt = parseResult(text, todayDate);
+        if (rt.hint.rc == null || rt.order.isEmpty()) { tg.sendMessage(chat, RESULT_HELP, msgId); return; }
+        String date = (rt.hint.date != null ? rt.hint.date : todayDate).format(DateTimeFormatter.BASIC_ISO_DATE);
+        List<RaceRef> pool = new ArrayList<>();
+        for (RaceRef c : races.racesOn(date)) if (c.rcNo == rt.hint.rc && (rt.hint.meet == null || c.meet == rt.hint.meet)) pool.add(c);
+        if (pool.isEmpty()) {
+            tg.sendMessage(chat, "(" + date.substring(4, 6) + "/" + date.substring(6) + ") " + (rt.hint.meet == null ? "" : "그 경마장 ") + rt.hint.rc + "경주 데이터가 없습니다.", msgId);
+            return;
+        }
+        if (pool.size() > 1) {
+            List<String> names = new ArrayList<>();
+            for (RaceRef c : pool) names.add(c.meetName);
+            tg.sendMessage(chat, String.join("·", names) + " 모두 " + rt.hint.rc + "경주가 있습니다. \"" + names.get(0) + " " + rt.hint.rc + " 결과 …\"처럼 경마장을 적어 주세요.", msgId);
+            return;
+        }
+        RaceRef race = pool.get(0);
+        Set<Integer> seen = new HashSet<>();
+        for (Integer no : rt.order) if (!seen.add(no)) { tg.sendMessage(chat, no + "번이 두 번 적혀 있습니다. " + RESULT_HELP, msgId); return; }
+        Map<Integer, Integer> ords = new LinkedHashMap<>();
+        for (int i = 0; i < rt.order.size(); i++) ords.put(rt.order.get(i), i + 1);
+        Map<Integer, Double> fin = new HashMap<>();
+        List<String> warn = new ArrayList<>();
+        if (rt.winOdds != null) fin.put(rt.order.get(0), rt.winOdds);
+        saveAndReply(chat, msgId, date, race, ords, rt.scratched, fin, by, warn);
+    }
+
+    void handleResultPhoto(long chat, long msgId, String date, Choice c, ScreenshotReader.Reading r, String by) throws Exception {
+        if (r.ord.isEmpty()) {
+            tg.sendMessage(chat, "착순을 읽지 못했습니다 (" + c.race.meetName + " " + c.race.rcNo + "R). 순위가 보이는 화면으로 다시 보내거나, " + RESULT_HELP, msgId);
+            return;
+        }
+        Map<Integer, Integer> ords = new LinkedHashMap<>();
+        Set<Integer> places = new HashSet<>();
+        for (Map.Entry<Integer, Integer> e : r.ord.entrySet())
+            if (c.race.names.containsKey(e.getKey()) && places.add(e.getValue())) ords.put(e.getKey(), e.getValue());   // 동착은 첫 말만
+        List<String> warn = new ArrayList<>();
+        warn.add(c.how);
+        Integer winner = null;
+        for (Map.Entry<Integer, Integer> e : ords.entrySet()) if (e.getValue() == 1) winner = e.getKey();
+        if (winner == null) warn.add("1착을 읽지 못했습니다. 다르면 \"" + c.race.meetName + " " + c.race.rcNo + " 결과 5-2-7\"처럼 글로 다시 보내 주세요.");
+        else if (!r.odds.containsKey(winner)) warn.add("1착 확정 단승 배당을 못 읽어, ★ 적중이면 기록할 때 배당으로 정산합니다.");
+        saveAndReply(chat, msgId, date, c.race, ords, r.scratched, r.odds, by, warn);
+    }
+
+    private void saveAndReply(long chat, long msgId, String date, RaceRef race, Map<Integer, Integer> ords, Set<Integer> scratched,
+                              Map<Integer, Double> fin, String by, List<String> warn) throws Exception {
+        try {
+            races.saveResult(date, race.meet, race.rcNo, ords, scratched, fin);
+        } catch (IllegalArgumentException e) {
+            tg.sendMessage(chat, race.meetName + " " + race.rcNo + "R: " + e.getMessage() + ". " + RESULT_HELP, msgId);
+            return;
+        }
+        RaceView v = races.view(date, race.meet, race.rcNo).orElseThrow(IllegalStateException::new);
+        String msg = RaceSummary.result(v, publicUrl, by, warn);
         tg.sendMessage(chat, msg, msgId);
         for (Long other : chats) if (other != chat) safeSend(other, msg);
     }
@@ -218,7 +335,7 @@ public class TelegramBot {
 
     // ---------------- 어느 경주인가 ----------------
 
-    static class Hint { Integer meet, rc; String track; LocalDate date; }
+    static class Hint { Integer meet, rc; String track; LocalDate date; boolean result; }
 
     static Hint parseCaption(String s) { return parseCaption(s, LocalDate.now(KST)); }
 
@@ -236,6 +353,7 @@ public class TelegramBot {
             } catch (java.time.DateTimeException ignore) { /* 날짜가 아님 */ }
         }
         for (Map.Entry<String, Integer> e : MEETS.entrySet()) if (s.contains(e.getKey())) { h.meet = e.getValue(); break; }
+        h.result = RESULT_WORD.matcher(s).find();
         h.track = trackOf(s);
         if (h.track != null) s = s.replaceAll("함수율\\s*\\d{1,2}\\s*%?|\\d{1,2}\\s*%", " ");   // 함수율 숫자를 경주 번호로 읽지 않게
         Matcher mm = Pattern.compile("(\\d{1,2})\\s*(?:R|r|경주)?").matcher(s);
@@ -253,6 +371,11 @@ public class TelegramBot {
      * 마릿수(배당을 읽은 수)가 출전마 수와 같은지도 본다.
      */
     static Choice choose(List<RaceRef> cands, ScreenshotReader.Reading r, Hint hint, LocalDateTime now) {
+        return choose(cands, r, hint, now, false);
+    }
+
+    /** result=true 면 결과 화면: 출발 시각이 이미 지난 경주 중 가장 최근 것을 더 높게 본다 */
+    static Choice choose(List<RaceRef> cands, ScreenshotReader.Reading r, Hint hint, LocalDateTime now, boolean result) {
         Integer meet = hint.meet != null ? hint.meet : (r.meetSeen == null ? null : meetOf(r.meetSeen));
         Integer rc = hint.rc != null ? hint.rc : r.raceNoSeen;
         List<RaceRef> pool = new ArrayList<>();
@@ -271,7 +394,10 @@ public class TelegramBot {
             LocalDateTime st = start(c);
             if (st != null) {
                 long min = Duration.between(now, st).toMinutes();
-                if (min >= -3) score += 3 - Math.min(min, 600) / 200.0;   // 출발 전(또는 막 출발), 가까울수록
+                if (result) {
+                    if (min <= 0) score += 3 - Math.min(-min, 600) / 200.0;   // 이미 출발한 경주, 최근일수록
+                    else score -= 5 + Math.min(min, 600) / 200.0;
+                } else if (min >= -3) score += 3 - Math.min(min, 600) / 200.0;   // 출발 전(또는 막 출발), 가까울수록
                 else score -= 5 + Math.min(-min, 600) / 200.0;          // 이미 지난 경주
             }
             if (score > bestScore) { bestScore = score; best = c; bestNames = names; }
@@ -281,6 +407,7 @@ public class TelegramBot {
         if (hint.meet != null && hint.rc != null) how = "캡션대로 " + best.meetName + " " + best.rcNo + "R";
         else if (pool.size() == 1 && rc != null) how = "화면의 경주 번호로 " + best.meetName + " " + best.rcNo + "R";
         else if (bestNames >= 2) how = "마명 " + bestNames + "개가 맞아 " + best.meetName + " " + best.rcNo + "R";
+        else if (result) how = "가장 최근에 출발한 " + best.meetName + " " + best.rcNo + "R 로 골랐습니다. 다르면 캡션에 \"부경 5 결과\"처럼 적어 다시 보내 주세요";
         else how = "출발 시각이 가장 가까워 " + best.meetName + " " + best.rcNo + "R 로 골랐습니다. 다르면 캡션에 \"부경 5\"처럼 적어 다시 보내 주세요";
         return new Choice(best, how);
     }

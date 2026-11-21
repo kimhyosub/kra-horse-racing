@@ -53,6 +53,10 @@ public class ScreenshotReader {
         public String track, notes;
         public final Map<Integer, Double> odds = new TreeMap<>(), bwd = new TreeMap<>();
         public final Map<Integer, String> names = new TreeMap<>();
+        /** 경주 결과(착순) 화면이면 true. 이때 odds 는 확정 단승 배당 */
+        public boolean result;
+        public final Map<Integer, Integer> ord = new TreeMap<>();
+        public final Set<Integer> scratched = new TreeSet<>();
     }
 
     public Reading read(List<Image> images, String meetName, int rcNo, Map<Integer, String> horses) throws IOException {
@@ -92,6 +96,7 @@ public class ScreenshotReader {
         ObjectNode props = schema.putObject("properties");
         props.putObject("race_no_seen").put("type", "integer").put("description", "화면에 보이는 경주 번호. 안 보이면 생략");
         props.putObject("meet_seen").put("type", "string").put("description", "화면에 보이는 경마장: 서울/제주/부경/영천. 안 보이면 생략");
+        props.putObject("is_result").put("type", "boolean").put("description", "경주가 끝난 결과(착순·순위) 화면이면 true");
         props.putObject("track").put("type", "string").put("description", "건조/양호/다습/포화/불량 중 하나. 안 보이면 생략");
         ObjectNode hs = props.putObject("horses");
         hs.put("type", "array");
@@ -102,6 +107,7 @@ public class ScreenshotReader {
         ip.putObject("name").put("type", "string").put("description", "화면에 보이는 마명. 안 보이면 생략");
         ip.putObject("odds").put("type", "number").put("description", "단승 배당. 안 보이거나 확실하지 않으면 생략");
         ip.putObject("bwd").put("type", "number").put("description", "마체중 증감 kg (478(+3) 이면 3). 안 보이면 생략");
+        ip.putObject("ord").put("type", "integer").put("description", "결과 화면일 때 도착 순위(1착=1). 결과 화면이 아니면 생략");
         ip.putObject("scratched").put("type", "boolean").put("description", "출전 취소·제외로 표시되어 있으면 true");
         item.putArray("required").add("no");
         props.putObject("notes").put("type", "string").put("description", "읽기 어려웠던 점 (짧게, 한국어)");
@@ -138,6 +144,8 @@ public class ScreenshotReader {
         b.append("- scratched: 출전 취소·제외·주행 중지 등으로 표시된 말.\n");
         b.append("- track: 주로 상태(건조/양호/다습/포화/불량). 함수율만 보이면 5% 이하 건조, 6~9% 양호, 10~14% 다습, 15~19% 포화, 20% 이상 불량.\n");
         b.append("- race_no_seen: 화면에 보이는 경주 번호.\n");
+        b.append("- 경주 결과(착순·순위·도착 순서) 화면이면 is_result=true, 말마다 ord(도착 순위)를 넣고, odds 에는 확정 단승 배당(보이는 말만)을 넣으세요. "
+                + "'단승 5번 3.4'처럼 1착 말의 단승 배당만 따로 보이면 그 말의 odds 로 넣으세요. 복승·쌍승 배당은 쓰지 마세요.\n");
         b.append("화면에 없거나 흐려서 확실하지 않은 값은 넣지 마세요. 추측하지 마세요. 마명이 위 목록과 다르면 notes 에 적으세요.\n");
         b.append("반드시 record_race_screen 도구를 한 번 호출해서 답하세요. 도구를 쓸 수 없으면 같은 모양의 JSON 하나만 답하세요.");
         return b.toString();
@@ -160,12 +168,14 @@ public class ScreenshotReader {
         String m = input.path("meet_seen").asText("").trim();
         if (!m.isEmpty()) r.meetSeen = m;
         r.notes = input.path("notes").asText(null);
+        r.result = input.path("is_result").asBoolean(false);
         for (JsonNode h : input.path("horses")) {
             if (!h.path("no").isNumber()) continue;
             int no = h.path("no").asInt();
             String nm = h.path("name").asText("").trim();
             if (!nm.isEmpty()) r.names.put(no, nm);
-            if (h.path("scratched").asBoolean(false)) continue;
+            if (h.path("scratched").asBoolean(false)) { r.scratched.add(no); continue; }
+            if (h.path("ord").isNumber() && h.path("ord").asInt() >= 1 && h.path("ord").asInt() <= 20) r.ord.put(no, h.path("ord").asInt());
             if (h.path("odds").isNumber() && h.path("odds").asDouble() >= 1.0) r.odds.put(no, h.path("odds").asDouble());
             if (h.path("bwd").isNumber() && Math.abs(h.path("bwd").asDouble()) <= 40) r.bwd.put(no, h.path("bwd").asDouble());
         }

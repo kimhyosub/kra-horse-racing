@@ -76,7 +76,7 @@ public class PaperBet {
     public String getStatus() {
         if (!settled) return "대기";
         if (finishOrd == null) return "취소";
-        return finishOrd == 1 ? "적중" : finishOrd + "착";
+        return finishOrd == 1 ? "적중" : finishOrd >= Entry.ORD_OUT ? "착외" : finishOrd + "착";
     }
     public String getResultLabel() { return isWin() ? "적중 " + getPayout() + "배" : getStatus(); }
     public String getMeetName() {

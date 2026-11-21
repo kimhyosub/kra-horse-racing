@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sub.gachima.domain.DayInput;
 import com.sub.gachima.domain.Repositories.DayInputRepository;
 import com.sub.gachima.service.ImportService;
+import com.sub.gachima.service.RaceService;
+import com.sub.gachima.service.RaceService.EntryView;
+import com.sub.gachima.service.RaceService.RaceView;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sub.gachima.service.ScreenshotReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +47,7 @@ class TelegramBotTest {
     @Autowired ImportService importService;
     @Autowired DayInputRepository inputs;
     @Autowired ObjectMapper om;
+    @Autowired RaceService raceService;
     @MockBean TelegramClient tg;
     @MockBean ScreenshotReader reader;
 
@@ -167,5 +173,105 @@ class TelegramBotTest {
         // 시계는 11/15 13:00 이지만, 캡션 날짜가 우선 — 없는 날짜면 안내
         photo(111, "11/16 서울7");
         verify(tg).sendMessage(eq(111L), contains("(11/16) 경주 데이터가 없습니다. 날짜를 확인해 주세요"), eq(9L));
+    }
+
+    // ---------------- 결과 ----------------
+
+    private void text(long chat, String t) throws Exception {
+        bot.handle(om.readTree("{\"update_id\":5,\"message\":{\"message_id\":7,\"chat\":{\"id\":" + chat + "},"
+                + "\"from\":{\"first_name\":\"Sub\"},\"text\":\"" + t + "\"}}"));
+    }
+
+    private Integer ord(int meet, int rc, int no) {
+        RaceView v = raceService.view("20261115", meet, rc).get();
+        for (EntryView e : v.entries) if (e.no == no) return e.ord;
+        throw new AssertionError(no);
+    }
+
+    @Test
+    void parseResultText() {
+        LocalDate d = LocalDate.of(2026, 11, 15);
+        TelegramBot.ResultText a = TelegramBot.parseResult("서울 7 결과 5-2-7", d);
+        assertEquals(Integer.valueOf(1), a.hint.meet);
+        assertEquals(Integer.valueOf(7), a.hint.rc);
+        assertNull(a.hint.date);                                   // 5-2 를 날짜로 읽지 않음
+        assertEquals(java.util.Arrays.asList(5, 2, 7), a.order);
+
+        TelegramBot.ResultText b = TelegramBot.parseResult("결과 부경3R 4 1 9 취소 6, 8 단승 12.5", d);
+        assertEquals(Integer.valueOf(3), b.hint.meet);
+        assertEquals(Integer.valueOf(3), b.hint.rc);
+        assertEquals(java.util.Arrays.asList(4, 1, 9), b.order);
+        assertEquals(new java.util.TreeSet<>(java.util.Arrays.asList(6, 8)), b.scratched);
+        assertEquals(Double.valueOf(12.5), b.winOdds);
+
+        TelegramBot.ResultText c = TelegramBot.parseResult("11/14 제주 2경주 착순 1착 5 2착 3 3착 8", d);
+        assertEquals(LocalDate.of(2026, 11, 14), c.hint.date);
+        assertEquals(Integer.valueOf(2), c.hint.rc);
+        assertEquals(java.util.Arrays.asList(5, 3, 8), c.order);
+
+        assertTrue(TelegramBot.parseResult("결과 7", d).order.isEmpty());
+    }
+
+    @Test
+    void resultByText() throws Exception {
+        text(111, "서울 7 결과 5-2-7 단승 9.1");
+        ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+        verify(tg).sendMessage(eq(111L), msg.capture(), eq(7L));
+        String m = msg.getValue();
+        assertTrue(m.contains("서울 7R 결과"), m);
+        assertTrue(m.contains("1착  5번"), m);
+        assertTrue(m.contains("단승 9.1배"), m);
+        assertTrue(m.contains("전날 1위"), m);
+        assertTrue(m.contains("★ 모의 기록"), m);
+        assertTrue(m.contains("공식 결과가 수집되면"), m);
+        verify(tg).sendMessage(eq(222L), contains("서울 7R 결과"), isNull());
+        assertEquals(Integer.valueOf(1), ord(1, 7, 5));
+        assertEquals(Integer.valueOf(3), ord(1, 7, 7));
+        assertEquals(Integer.valueOf(com.sub.gachima.domain.Entry.ORD_OUT), ord(1, 7, 3));
+
+        // 착순이 아직 없는 파일을 다시 불러와도 직접 넣은 결과는 그대로
+        ObjectNode doc = (ObjectNode) om.readTree(new ClassPathResource("day-20261115.json").getFile());
+        for (JsonNode mt : doc.path("meets")) for (JsonNode r : mt.path("races")) for (JsonNode h : r.path("horses")) {
+            ((ObjectNode) h).remove("ord"); ((ObjectNode) h).remove("finalOdds");
+        }
+        java.io.File f = new java.io.File("target/test-import-tg/day-20261115-noord.json");
+        f.getParentFile().mkdirs();
+        om.writeValue(f, doc);
+        importService.importFile(f);
+        assertEquals(Integer.valueOf(1), ord(1, 7, 5));
+
+        // 공식 결과(착순 있는 파일)가 오면 덮어씀
+        importService.importFile(new ClassPathResource("day-20261115.json").getFile());
+        assertEquals(Integer.valueOf(1), ord(1, 7, 3));
+    }
+
+    @Test
+    void resultTextAsksWhenUnclear() throws Exception {
+        text(111, "3 결과 1-2-3");      // 서울·영천 모두 3경주
+        verify(tg).sendMessage(eq(111L), contains("경마장을 적어 주세요"), eq(7L));
+        text(222, "서울 7 결과 4-4-1");
+        verify(tg).sendMessage(eq(222L), contains("4번이 두 번"), eq(7L));
+        text(111, "오늘 결과 좋네");      // 숫자 없는 잡담은 무시
+        verify(tg, times(1)).sendMessage(eq(111L), anyString(), eq(7L));
+        text(111, "서울 7 결과 30-2-1");
+        verify(tg).sendMessage(eq(111L), contains("출전마가 아닙니다"), eq(7L));
+    }
+
+    @Test
+    void resultByScreenshot() throws Exception {
+        ScreenshotReader.Reading r = new ScreenshotReader.Reading();
+        r.result = true; r.raceNoSeen = 4; r.meetSeen = "영천";
+        r.ord.put(2, 1); r.ord.put(6, 2); r.ord.put(1, 3);
+        r.odds.put(2, 7.7);
+        when(reader.read(anyList(), isNull(), eq(0), anyMap())).thenReturn(r);
+        photo(111, "");
+        ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+        verify(tg).sendMessage(eq(111L), msg.capture(), eq(9L));
+        String m = msg.getValue();
+        assertTrue(m.contains("영천 4R 결과"), m);
+        assertTrue(m.contains("1착  2번"), m);
+        assertTrue(m.contains("단승 7.7배"), m);
+        RaceView v = raceService.view("20261115", 4, 4).get();
+        for (EntryView e : v.entries) if (e.no == 2) assertEquals(Integer.valueOf(1), e.ord);
     }
 }

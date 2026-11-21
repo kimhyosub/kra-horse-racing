@@ -9,7 +9,7 @@
       th:style="|background:${c[i]};color:${t[i]}|" th:text="${no}">1</span>
 
 <span th:fragment="fin(ord)" class="fin" th:classappend="${ord != null and ord == 1} ? 'w' : (${ord != null and ord <= 3} ? 'p' : '')"
-      th:text="${ord != null} ? |${ord}착| : '-'">-</span>
+      th:text="${ord == null} ? '-' : (${ord >= 99} ? '착외' : |${ord}착|)">-</span>
 <!-- 성적 표 한 줄씩 -->
 <th:block th:fragment="tallyRows(rows, byDay)">
 <tbody>
