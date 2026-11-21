@@ -38,6 +38,10 @@ class WebFlowTest {
         mvc.perform(get("/r/20261115/1/7"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("전날 예상 5두")))
+                .andExpect(content().string(containsString("전날 예상 읽는 법")))
+                .andExpect(content().string(containsString("포인트아이")))
+                .andExpect(content().string(containsString("7전 2승 · 입상 4 · 최근 1·4·1·2·4착 · 28일 만")))
+                .andExpect(content().string(containsString("최근 성적 좋음")))
                 .andExpect(content().string(containsString("마스터플랜")));
 
         mvc.perform(post("/r/20261115/1/7/input").with(csrf())

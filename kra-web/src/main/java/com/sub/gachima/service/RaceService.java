@@ -91,6 +91,18 @@ public class RaceService {
         return Optional.ofNullable(best == null ? null : best.getTrack());
     }
 
+    private Map<String, Object> readObj(String json) {
+        if (json == null || json.isEmpty()) return Collections.emptyMap();
+        try { return om.readValue(json, new TypeReference<Map<String, Object>>() {}); }
+        catch (IOException e) { return Collections.emptyMap(); }
+    }
+
+    private Map<String, Double> readDoubles(String json) {
+        if (json == null || json.isEmpty()) return Collections.emptyMap();
+        try { return om.readValue(json, new TypeReference<Map<String, Double>>() {}); }
+        catch (IOException e) { return Collections.emptyMap(); }
+    }
+
     public static class RaceRef {
         public String date, meetName, stTime;
         public int meet, rcNo;
@@ -143,6 +155,9 @@ public class RaceService {
             x.ord = e.getFinishOrd(); x.finalOdds = e.getFinalOdds();
             x.inputOdds = odds.get(e.getChulNo()); x.inputBwd = bwd.get(e.getChulNo());
             x.firstStart = e.isFirstStart();
+            Map<String, Object> facts = readObj(e.getFactsJson());
+            x.record = PreReasons.record(facts);
+            x.reasons = PreReasons.of(readDoubles(e.getPreWhyJson()), facts, 3);
             DayModel.Result r = day.get(e.getChulNo());
             if (r != null) {
                 x.scored = true; x.odds = r.odds; x.pm = r.pMarket; x.p = r.pModel; x.ev = r.ev; x.value = r.value;
@@ -312,6 +327,9 @@ public class RaceService {
         public int no, preRank;
         public Integer ord, dayRank, move;
         public String name, jk, tr, why;
+        /** 전날 예상 근거: 기록 한 줄, 순위를 움직인 요인 */
+        public String record = "";
+        public List<PreReasons.Reason> reasons = new ArrayList<>();
         public double preP, preBar, odds, pm, p, ev, xm, xp;
         public Double finalOdds, inputOdds, inputBwd;
         public boolean scored, value, firstStart;

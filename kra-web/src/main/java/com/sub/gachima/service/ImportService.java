@@ -67,6 +67,8 @@ public class ImportService {
                     e.setDays(h.path("days").isNumber() ? h.path("days").asDouble() : null);
                     e.setFirstStart(h.path("first").asInt() == 1);
                     e.setFeaturesJson(h.path("f").toString());
+                    e.setFactsJson(h.path("facts").isObject() ? h.path("facts").toString() : null);
+                    e.setPreWhyJson(h.path("preWhy").isObject() ? h.path("preWhy").toString() : null);
                     e.setPreP(h.path("preP").asDouble()); e.setPreRank(h.path("preRank").asInt());
                     e.setFinishOrd(h.path("ord").isNumber() ? h.path("ord").asInt() : null);
                     e.setFinalOdds(h.path("finalOdds").isNumber() ? h.path("finalOdds").asDouble() : null);

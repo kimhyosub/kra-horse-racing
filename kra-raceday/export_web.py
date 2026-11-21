@@ -20,6 +20,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 NAME = {1: '서울', 2: '제주', 3: '부경', 4: '영천'}
 DAY_W = {1: 'model_weights.json', 2: 'model_weights_meet2.json', 3: 'model_weights_meet3.json', 4: 'model_weights.json'}
 DAY_ONLY = ('risky_f', 'stable_f', 'wet_early', 'bwd')   # 당일에 정해지는 값: 웹에서 입력으로 다시 계산
+# 전날 예상 근거를 묶는 요인 그룹 (웹 DayModel.GROUPS 와 같은 이름)
+GROUPS = {
+    '전개(선행력)': ['early4', 'behind3', 'best_behind'],
+    '속도 기록': ['g1f4'],
+    '최근 폼': ['form3', 'place_rate'],
+    '거리 적합': ['dist_place', 'dist_change'],
+    '컨디션': ['log_days', 'first'],
+    '기수·조교사': ['jk_rate', 'tr_rate', 'jk_change'],
+    '조건 변화': ['cls_change', 'tool_change_f', 'budam_change', 'wgBudam', 'age', 'rating'],
+    '심판 기록': ['ref_last_f', 'ref_180'],
+}
 
 
 def load_w(name):
@@ -65,6 +76,52 @@ def track_state(s):
         return w if w in ('건조', '양호', '다습', '포화', '불량') else None
     v = int(m)
     return '건조' if v <= 5 else '양호' if v <= 9 else '다습' if v <= 14 else '포화' if v <= 19 else '불량'
+
+
+def num_or_none(v, nd=None):
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(v):
+        return None
+    return int(round(v)) if nd == 0 else (round(v, nd) if nd else v)
+
+
+def raw_rate(H, key, value, day, meet):
+    """1년 승률(보정 없는 실제 값)과 출전 수"""
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None, 0
+    h = H[(H['meetc'] == meet) & (H[key] == value) & ((day - H['date']).dt.days <= 365)]
+    n = len(h)
+    return (round(100 * h['win'].sum() / n, 1) if n else None), n
+
+
+def facts_for(h, P, H, day, meet):
+    """화면에 보여 줄 '근거' 숫자 (사람이 읽는 값)"""
+    f = {'starts': 0 if P is None else int(len(P)), 'age': num_or_none(h.get('age'), 0), 'rating': num_or_none(h.get('rating'), 0),
+         'budam': num_or_none(h.get('wgBudam'), 1), 'dist': num_or_none(h.get('rcDist'), 0)}
+    if P is not None and len(P):
+        last = P.iloc[-5:][::-1]   # 최근 것이 앞
+        f['recent'] = ['중' if d else str(int(o)) for o, d in zip(last['ord'], last['dnf'])]
+        f['wins'] = int(P['win'].sum()); f['top3'] = int(P['top3'].sum())
+        f['days'] = int((day - P.iloc[-1]['date']).days)
+        f['lastDist'] = num_or_none(P.iloc[-1]['rcDist'], 0)
+        same = P[(P['rcDist'] - h['rcDist']).abs() <= 100]
+        f['distStarts'] = int(len(same)); f['distTop3'] = int(same['top3'].sum())
+        e4 = P['early_pos'].iloc[-4:].mean()
+        f['early'] = None if math.isnan(e4) else round(float(e4), 2)            # 0 = 맨 앞, 1 = 맨 뒤
+        g = P['g1f_rel'].iloc[-4:].mean()
+        f['g1f'] = None if math.isnan(g) else round(float(g), 2)                 # 초, 음수 = 그 경주 중간값보다 빠름
+        f['clsChange'] = num_or_none(h.get('cls_change'), 0)
+        f['budamChange'] = num_or_none(h.get('budam_change'), 1)
+        f['jkChange'] = bool(h.get('jk_change') == 1.0)
+        f['toolChange'] = bool(h.get('tool_change_f') == 1.0)
+        f['refLast'] = bool(h.get('ref_last_f') == 1.0)
+    f['ref180'] = num_or_none(h.get('ref_180'), 0)
+    f['jkWin'], f['jkStarts'] = raw_rate(H, 'jkNo', h.get('jkNo'), day, meet)
+    f['trWin'], f['trStarts'] = raw_rate(H, 'trNo', h.get('trNo'), day, meet)
+    return f
 
 
 def results_for(R, date, meet):
@@ -118,7 +175,10 @@ def export_day(a, date, pre, H, ref, raw_all, R):
             continue
         E = RD.load_entries(a.entries, date, a.history)
         E['bw'] = np.nan; E['bwd'] = np.nan; E['wet'] = False; E['odds'] = 1.0
-        F = K.features_for(E, H, ref, pd.to_datetime(date), meet=m)
+        day = pd.to_datetime(date)
+        F = K.features_for(E, H, ref, day, meet=m)
+        Hb = H[H['date'] < day]
+        byhorse = {k: g for k, g in Hb.groupby('hrNo')}
         names = sub.set_index([K.num(sub['rcNo']), K.num(sub['chulNo'])])
         st = sub.groupby(K.num(sub['rcNo']))['stTime'].first()
         res, jk_today, final = results_for(R, date, m)
@@ -126,7 +186,10 @@ def export_day(a, date, pre, H, ref, raw_all, R):
         for rn, d in F.groupby('rcNo'):
             d = d.sort_values('chulNo').reset_index(drop=True)
             X = standardize(d, pre['feats'], set(pre['bin']))
-            u = X @ np.asarray(pre['w']); p = np.exp(u - u.max()); p /= p.sum()
+            W = np.asarray(pre['w'])
+            u = X @ W; p = np.exp(u - u.max()); p /= p.sum()
+            C = X * W   # 말마다 요인별 기여 (같은 경주 평균 대비)
+            col = {f: j for j, f in enumerate(pre['feats'])}
             rank = {i: k + 1 for k, i in enumerate(np.argsort(-p))}
             horses = []
             for i, h in d.iterrows():
@@ -140,7 +203,10 @@ def export_day(a, date, pre, H, ref, raw_all, R):
                     'days': clean(h['days']), 'first': int(h['first']),
                     'f': [None if f in DAY_ONLY else clean(h[f]) for f in K.FEATS],
                     'preP': round(float(p[i]), 5), 'preRank': int(rank[i]),
-                    'ord': None if fin is None else fin[0], 'finalOdds': None if fin is None else fin[1]})
+                    'ord': None if fin is None else fin[0], 'finalOdds': None if fin is None else fin[1],
+                    # 전날 예상에서 요인마다 이 말을 얼마나 올렸나(+)/내렸나(-) — 같은 경주 평균 대비, 로짓 단위
+                    'preWhy': {f: round(float(C[i, j]), 4) for f, j in col.items() if abs(C[i, j]) >= 0.005},
+                    'facts': facts_for(h, byhorse.get(h['hrNo']), Hb, day, m)})
             t = str(st.get(rn, '')).replace('출발', '').strip().lstrip(':').strip()
             race = {'rcNo': int(rn), 'stTime': t, 'dist': int(d['rcDist'].iloc[0]), 'horses': horses}
             if int(rn) in final and len(final[int(rn)]['odds']) >= 2:

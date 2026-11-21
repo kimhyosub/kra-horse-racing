@@ -37,6 +37,19 @@ public class Entry {
     @Lob
     private String featuresJson;
 
+    /** 전날 예상 근거: 사람이 읽는 기록 (최근 착순, 휴양일, 같은 거리 성적, 기수 승률 …) JSON */
+    @Lob
+    private String factsJson;
+
+    /** 전날 예상 근거: 요인마다 이 말을 올린(+)/내린(-) 정도 JSON {"form3":0.18,...} */
+    @Lob
+    private String preWhyJson;
+
+    public String getFactsJson() { return factsJson; }
+    public void setFactsJson(String factsJson) { this.factsJson = factsJson; }
+    public String getPreWhyJson() { return preWhyJson; }
+    public void setPreWhyJson(String preWhyJson) { this.preWhyJson = preWhyJson; }
+
     /** 전날 예상 우승 확률 */
     private double preP;
 
