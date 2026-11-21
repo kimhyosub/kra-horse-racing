@@ -51,6 +51,19 @@
       <span>전날 예상 1위 적중 <b th:text="${rp.day.pre1Rate}"></b> <small th:text="|(${rp.day.pre1}/${rp.day.n}경주 전체)|"></small></span>
     </div>
 
+    <!-- 당일 5두 박스 -->
+    <th:block th:if="${rp.day.boxN > 0}">
+    <div class="rp-box">
+      <header><b>이날 당일 5두를 박스로 샀다면</b><span>복승·쌍승 모든 조합 1,000원씩 · 확정 배당</span></header>
+      <div class="rp-kpis three">
+        <div class="rp-kpi"><small>복승 박스 · 5두 10조합</small><b th:classappend="${rp.day.QUp} ? 'pos' : 'neg'" th:text="${rp.day.QProfit}">-</b><span th:text="|회수율 ${rp.day.QRoi} · 산 돈 ${rp.day.QCostText}|"></span></div>
+        <div class="rp-kpi"><small>쌍승 박스 · 5두 20조합</small><b th:classappend="${rp.day.EUp} ? 'pos' : 'neg'" th:text="${rp.day.EProfit}">-</b><span th:text="|회수율 ${rp.day.ERoi} · 산 돈 ${rp.day.ECostText}|"></span></div>
+        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.day.boxUp} ? 'pos' : 'neg'" th:text="${rp.day.boxProfit}">-</b><span th:text="|회수율 ${rp.day.boxRoi} · ${rp.day.boxN}경주 중 ${rp.day.boxHit}경주 적중 (${rp.day.boxHitRate})|"></span></div>
+      </div>
+    </div>
+    </th:block>
+    <p class="rp-note" th:if="${rp.day.boxN == 0 and rp.day.dayN > 0}">복승·쌍승 확정 배당은 밤 수집(21:40) 뒤에 들어와서, 그 전에는 박스 손익을 계산할 수 없습니다.</p>
+
     <!-- 최근 20경주일 누적 -->
     <header class="rp-head rp-head2">
       <div><small>ROLLING</small><h3 th:text="|최근 ${rp.rollingDays}경주일 누적|">최근 20경주일 누적</h3></div>
@@ -67,6 +80,17 @@
       <span>당일 5두 중 3착 안 평균 <b th:text="|${rp.rolling.dayTop3In5Avg}두|"></b></span>
       <span>전날 예상 1위 적중 <b th:text="${rp.rolling.pre1Rate}"></b> <small th:text="|(${rp.rolling.pre1}/${rp.rolling.n}경주 전체)|"></small></span>
     </div>
+
+    <th:block th:if="${rp.rolling.boxN > 0}">
+    <div class="rp-box">
+      <header><b>최근 누적 박스 손익</b><span>같은 방식 · 과거 2년 검증: 적중 65% · 회수율 복승 74% · 쌍승 76%</span></header>
+      <div class="rp-kpis three">
+        <div class="rp-kpi"><small>복승 박스 · 5두 10조합</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
+        <div class="rp-kpi"><small>쌍승 박스 · 5두 20조합</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
+        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.rolling.boxUp} ? 'pos' : 'neg'" th:text="${rp.rolling.boxProfit}">-</b><span th:text="|회수율 ${rp.rolling.boxRoi} · ${rp.rolling.boxN}경주 중 ${rp.rolling.boxHit}경주 적중 (${rp.rolling.boxHitRate})|"></span></div>
+      </div>
+    </div>
+    </th:block>
 
     <!-- 추이 -->
     <div class="rp-charts">
@@ -118,57 +142,49 @@
           <i class="bd ref" th:if="${r.dayAfter}" title="출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산">확정 배당 기준</i>
           <i class="bd ref" th:unless="${r.official}">참고</i>
           <small th:text="|5두 안 3착 ${r.shownTop3In5}두|"></small>
+          <small class="rp-boxp" th:if="${r.box}" th:classappend="${r.boxProfit >= 0} ? 'pos' : 'neg'" th:text="|박스 ${r.boxProfitText}|"></small>
         </span>
       </a>
     </div>
   </section>
   </th:block>
 
-  <!-- 모의 장부 · 사후 검증 한눈에 -->
-  <h2 class="sec">★ 가치마 성적</h2>
-  <section class="kpis" th:with="t=${s.total}, l=${ledger.total}">
-    <div class="kpi hl" th:if="${l != null}">
-      <small>모의 장부 회수율 (출발 전 기록)</small>
-      <b th:classappend="${l.up} ? 'pos' : 'neg'" th:text="${l.roi}">-</b>
-      <span th:text="|${l.n}건 · 적중 ${l.wins} (${l.hitRate}) · 손익 ${l.profit}단위|"></span>
+  <!-- ★ 가치마 성적 -->
+  <section class="rp-card">
+    <header class="rp-head">
+      <div><small>VALUE PICKS</small><h2>★ 가치마 성적</h2></div>
+      <a class="rp-link" th:href="@{/guide/paper-ledger}">읽는 법</a>
+    </header>
+    <div class="rp-kpis three" th:with="t=${s.total}, l=${ledger.total}">
+      <div class="rp-kpi tot"><small>모의 장부 회수율 · 출발 전 기록</small>
+        <b th:if="${l != null}" th:classappend="${l.up} ? 'pos' : 'neg'" th:text="${l.roi}">-</b><b th:if="${l == null}">-</b>
+        <span th:if="${l != null}" th:text="|${l.n}건 · 적중 ${l.wins} (${l.hitRate}) · 손익 ${l.profit}단위|"></span><span th:if="${l == null}">아직 기록 없음</span></div>
+      <div class="rp-kpi"><small>★ 확정 배당 사후 검증</small>
+        <b th:if="${t != null}" th:classappend="${t.finUp} ? 'pos' : 'neg'" th:text="${t.finRoi}">-</b><b th:if="${t == null}">-</b>
+        <span th:if="${t != null}" th:text="|${t.finN}건 · 적중 ${t.finWin}|"></span></div>
+      <div class="rp-kpi"><small>과거 2년 검증 · 확정 배당</small><b>119%</b><span>1,219건 · 95% 범위 102~138%</span></div>
     </div>
-    <div class="kpi" th:if="${t != null}">
-      <small>★ 최종배당 사후 검증</small>
-      <b th:classappend="${t.finUp} ? 'pos' : 'neg'" th:text="${t.finRoi}">-</b>
-      <span th:text="|${t.finN}건 · 적중 ${t.finWin}|"></span>
-    </div>
-    <div class="kpi" th:if="${t != null}">
-      <small>전체 1위 적중 (영천 제외)</small>
-      <b th:text="${t.pre1Rate}">-</b>
-      <span th:text="|${t.races}경주 · 당일 1위 ${t.day1Rate} · 인기 1위 ${t.favRate}|"></span>
-    </div>
+    <p class="rp-note">모의 장부는 출발 전 마지막 배당의 ★ 를 단승 1단위로 기록하고 확정 배당으로 정산한 공식 기록입니다. 100% 이상이면 이익이고, 300건 전에는 결론을 내리지 않습니다.</p>
   </section>
-  <p class="hint">모의 장부는 출발 전 마지막 배당의 ★ 를 단승 1단위로 기록하고 확정 배당으로 정산한 공식 기록입니다. 100% 이상이면 이익. 300건 전에는 결론을 내리지 않습니다 — <a th:href="@{/guide/paper-ledger}">읽는 법</a></p>
 
-  <!-- 승식별 회수율: 당일 분석 1·2·3위를 그대로 샀을 때 -->
-  <h2 class="sec" th:unless="${s.empty}">승식별 회수율 · 당일 분석 1·2·3위 그대로</h2>
-  <div class="sc-wrap" th:unless="${s.empty}">
-    <table class="sc st pools">
-      <thead><tr><th class="sticky">승식</th><th>산 조합</th>
-        <th th:each="t : ${s.meets}" th:text="${t.name}"></th>
-        <th>과거 2년 검증<br><small>적중률 / 회수율</small></th></tr></thead>
-      <tbody>
-        <tr th:each="i : ${#numbers.sequence(0, 4)}">
-          <td class="sticky"><b th:text="${s.meets[0].pools[i].name}"></b></td>
-          <td class="lft" th:text="${s.meets[0].pools[i].rule}"></td>
-          <td class="num" th:each="t : ${s.meets}" th:with="p=${t.pools[i]}" th:classappend="${t.total} ? 'tot'">
-            <b th:classappend="${p.up} ? 'pos' : 'neg'" th:text="${p.roi}">-</b>
-            <small th:text="|${p.n}경주 · 적중 ${p.hit} (${p.hitRate})|"></small></td>
-          <td class="num muted" th:text="${s.meets[0].pools[i].back}"></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="hint warn" th:if="${!s.empty and s.total != null and !s.total.hasPoolDiv}">아직 복승·쌍승·삼복승·삼쌍승 확정 배당이 들어온 경주가 없습니다.
-    PC 명령 프롬프트에서 <code>automation\kra-daily.bat -From 2026-11-06 -To 2026-11-22 -SkipCollect</code> 를 한 번 실행하면 지난 경주가 채워지고, 이후로는 매일 밤 자동으로 들어옵니다.</p>
-  <p class="hint" th:unless="${s.empty}">각 경주에서 당일 분석 1위·2위·3위를 승식마다 1단위씩 샀다고 치고 확정 배당으로 정산한 회수율입니다 (100% 이상이면 이익).
-    단승 외 배당은 밤 수집(확정배당) 뒤에 반영되고, 그 전까지 해당 경주는 빠집니다.
-    <b>과거 2년 검증</b>은 학습에 쓰지 않은 2025~2026 서울·부경·제주 3,969경주에서 같은 방식으로 산 결과로, 모든 승식이 100%에 못 미쳤습니다 — 1·2·3위를 그냥 사는 것보다 ★(기대값 1.1 이상)만 고르는 이유입니다.</p>
+  <!-- 승식별 회수율 -->
+  <section class="rp-card" th:unless="${s.empty}">
+    <header class="rp-head">
+      <div><small>BY BET TYPE</small><h2>승식별 회수율 · 당일 1·2·3위 그대로</h2></div>
+      <span th:text="|공식 합계 (영천 제외)|"></span>
+    </header>
+    <div class="rp-pools" th:with="tot=${s.total}">
+      <div class="rp-pool" th:each="p, st : ${tot.pools}">
+        <div class="rp-pool-h"><b th:text="${p.name}">단승</b><small th:text="${p.rule}"></small></div>
+        <b class="rp-pool-v" th:classappend="${p.n == 0} ? '' : (${p.up} ? 'pos' : 'neg')" th:text="${p.roi}">-</b>
+        <span th:text="|${p.n}경주 · 적중 ${p.hit} (${p.hitRate})|"></span>
+        <span class="rp-pool-m"><th:block th:each="t : ${s.meets}" th:unless="${t.total}" th:with="q=${t.pools[st.index]}"><i th:text="|${t.name} ${q.roi}|"></i></th:block></span>
+        <span class="rp-pool-b" th:text="|과거 2년 ${p.back}|"></span>
+      </div>
+    </div>
+    <p class="hint warn" th:if="${s.total != null and !s.total.hasPoolDiv}">아직 복승·쌍승·삼복승·삼쌍승 확정 배당이 들어온 경주가 없습니다. PC에서 <code>automation\kra-daily.bat -From 2026-11-06 -To 2026-11-22 -SkipCollect</code> 를 한 번 실행하면 지난 경주가 채워집니다.</p>
+    <p class="rp-note">각 경주에서 당일 1위·2위·3위를 승식마다 1단위씩 샀다고 치고 확정 배당으로 정산했습니다. 과거 2년(3,969경주)은 '적중률 / 회수율'이며, 모든 승식이 100%에 못 미쳤습니다.</p>
+  </section>
 
   <details class="rp-more" th:unless="${s.empty}">
     <summary>경마장별 · 경주일별 자세한 표</summary>
@@ -215,8 +231,9 @@
 
   </details>
 
+  <details class="rp-more" th:unless="${ledger.empty}">
+    <summary th:text="|모의 장부 기록 보기 (${ledger.bets.size()}건)|">모의 장부 기록 보기</summary>
   <!-- 모의 장부 -->
-  <h2 class="sec">모의 장부 기록</h2>
   <p class="hint" th:if="${ledger.empty}">아직 기록이 없습니다. 출발 전 당일 배당이 반영되면 ★ 가 자동으로 기록됩니다.</p>
   <div class="sc-wrap" th:unless="${ledger.empty}">
     <table class="sc st">
@@ -239,6 +256,7 @@
       </tbody>
     </table>
   </div>
+  </details>
   <footer th:replace="~{fragments :: foot}"></footer>
   <nav th:replace="~{fragments :: tabbar('stats')}"></nav>
 </div>

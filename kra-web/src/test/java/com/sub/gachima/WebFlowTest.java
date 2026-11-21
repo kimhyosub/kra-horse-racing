@@ -114,6 +114,9 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("5두 안 3착")))
                 .andExpect(content().string(containsString("같은 경주 인기 1위 우승")))
                 .andExpect(content().string(containsString("확정 배당 기준")))
+                .andExpect(content().string(containsString("이날 당일 5두를 박스로 샀다면")))
+                .andExpect(content().string(containsString("복승 박스 · 5두 10조합")))
+                .andExpect(content().string(containsString("BY BET TYPE")))
                 .andExpect(content().string(containsString("1위→2위→3위")))
                 .andExpect(content().string(containsString("10.7% / 80%")))        // 삼복승 과거 검증
                 .andExpect(content().string(containsString("1경주 · 적중")))        // 서울 7R 만 승식 배당이 있음

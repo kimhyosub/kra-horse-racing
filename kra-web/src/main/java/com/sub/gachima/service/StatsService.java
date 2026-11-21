@@ -88,6 +88,13 @@ public class StatsService {
         }
         for (Entry e : es) if (e.getFinishOrd() != null && e.getFinishOrd() <= 3 && e.getPreRank() <= 5) rec.top3In5++;
         if (fav != null) { rec.favNo = fav.getChulNo(); rec.fav1 = fav.getChulNo() == win.getChulNo(); }
+        try {
+            if (r.getDivJson() != null) {
+                JsonNode dv = OM.readTree(r.getDivJson());
+                if (dv.path("복승").isNumber()) rec.qDiv = dv.path("복승").asDouble();
+                if (dv.path("쌍승").isNumber()) rec.eDiv = dv.path("쌍승").asDouble();
+            }
+        } catch (Exception ignore) { }
         t.recs.add(rec);
         t.races++;
         if (win.getPreRank() == 1) t.pre1++;
@@ -178,6 +185,16 @@ public class StatsService {
         public Integer a, b, c, favNo, dayNo;
         public Boolean preQ, in512, in5123, fav1, day1, dayPair, dayIn12, dayIn123;
         public int dayTop3In5;
+        /** 실제 1·2착 조합의 복승·쌍승 확정 배당 (밤 수집 뒤) */
+        public Double qDiv, eDiv;
+        /** 당일 5두 박스를 살 수 있나: 당일 분석 + 1·2착 + 복승·쌍승 배당 */
+        public boolean isBox() { return isDay() && dayIn12 != null && qDiv != null && eDiv != null && dayTop5.size() >= 2; }
+        public int getBoxK() { return dayTop5.size(); }
+        /** 복승 박스(5두 → 10조합)·쌍승 박스(20조합)를 1,000원씩 샀을 때 손익(원) */
+        public long getBoxQProfit() { int k = getBoxK(); return Math.round((Boolean.TRUE.equals(dayIn12) ? qDiv * 1000 : 0) - k * (k - 1) / 2 * 1000.0); }
+        public long getBoxEProfit() { int k = getBoxK(); return Math.round((Boolean.TRUE.equals(dayIn12) ? eDiv * 1000 : 0) - k * (k - 1) * 1000.0); }
+        public long getBoxProfit() { return getBoxQProfit() + getBoxEProfit(); }
+        public String getBoxProfitText() { return won(getBoxProfit()); }
         /** 출발 전 배당 입력이 없어 경주 후 확정 배당으로 계산한 당일 분석 */
         public boolean dayAfter;
         public final List<Integer> dayTop5 = new ArrayList<>();
@@ -201,6 +218,9 @@ public class StatsService {
         public int n, pre1, q, qN, in12, in12N, in123, in123N, dayN, day1, favN, fav1, starRaces, starHit, top3In5;
         /** 당일 분석이 있던 경주만: 1·2위 동시, 5두 안 1·2착·1·2·3착, 같은 경주의 인기 1위·전날 1위 */
         public int dq, dqN, din12, din12N, din123, din123N, dTop3In5, dFav1, dFavN, dPre1;
+        /** 당일 5두 복승·쌍승 박스 (1,000원씩): 경주 수, 적중, 산 돈, 받은 돈 */
+        public int boxN, boxHit;
+        public long qCost, qRet, eCost, eRet;
         void add(RaceRec r) {
             n++; if (r.pre1) pre1++;
             if (r.preQ != null) { qN++; if (r.preQ) q++; }
@@ -218,7 +238,28 @@ public class StatsService {
                 if (r.fav1 != null) { dFavN++; if (r.fav1) dFav1++; }
                 if (r.pre1) dPre1++;
             }
+            if (r.isBox()) {
+                int k = r.getBoxK();
+                boxN++;
+                qCost += k * (k - 1) / 2 * 1000L; eCost += k * (k - 1) * 1000L;
+                if (Boolean.TRUE.equals(r.dayIn12)) { boxHit++; qRet += Math.round(r.qDiv * 1000); eRet += Math.round(r.eDiv * 1000); }
+            }
         }
+        public String getBoxHitRate() { return pct(boxHit, boxN); }
+        public String getQProfit() { return won(qRet - qCost); }
+        public String getEProfit() { return won(eRet - eCost); }
+        public String getBoxProfit() { return won(qRet + eRet - qCost - eCost); }
+        public String getQRoi() { return roi(qRet, qCost); }
+        public String getERoi() { return roi(eRet, eCost); }
+        public String getBoxRoi() { return roi(qRet + eRet, qCost + eCost); }
+        public boolean isQUp() { return qRet >= qCost; }
+        public boolean isEUp() { return eRet >= eCost; }
+        public boolean isBoxUp() { return qRet + eRet >= qCost + eCost; }
+        public String getQCostText() { return won0(qCost); }
+        public String getECostText() { return won0(eCost); }
+        public String getBoxCostText() { return won0(qCost + eCost); }
+        public String getBoxRetText() { return won0(qRet + eRet); }
+        private static String roi(long ret, long cost) { return cost == 0 ? "-" : String.format("%.0f%%", 100.0 * ret / cost); }
         public String getDayPairRate() { return pct(dq, dqN); }
         public String getDayIn12Rate() { return pct(din12, din12N); }
         public String getDayIn123Rate() { return pct(din123, din123N); }
@@ -317,6 +358,10 @@ public class StatsService {
     }
 
     public static final int ROLLING_DAYS = 20;
+
+    /** +12,300원 / −30,000원 */
+    static String won(long v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + String.format("%,d원", Math.abs(v)); }
+    static String won0(long v) { return String.format("%,d원", v); }
 
     /** date 가 없거나 결과가 없는 날이면 결과가 있는 가장 최근 날 */
     public Report report(Stats s, String date) {
