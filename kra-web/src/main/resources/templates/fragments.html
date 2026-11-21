@@ -67,13 +67,27 @@
   </form>
 </th:block>
 <!-- 가중치 표 (model.html) -->
-      <section class="mw" th:fragment="weights(m)">
-        <h2 th:text="${m.title}"></h2>
-        <p class="hint" th:if="${!#strings.isEmpty(m.note)}" th:text="${m.note}"></p>
-        <div class="mw-mkt" th:if="${m.market != null}">
-          <b th:text="|배당 반영 ${m.marketText}|"></b>
-          <span>1이면 배당이 보는 확률을 그대로 출발점으로 씁니다. 1보다 작으면 인기마·비인기마 차이를 조금 줄여서 봅니다.</span>
-        </div>
-        <div class="mw-groups" th:if="${!#lists.isEmpty(m.groups)}">
-          <span th:each="g : ${m.groups}" class="mw-chip"><b th:text="${g.name}"></b> <th:block th:text="${g.pct}"></body>
+<section class="mw" th:fragment="weights(m)">
+  <h2 th:text="${m.title}"></h2>
+  <p class="hint" th:if="${!#strings.isEmpty(m.note)}" th:text="${m.note}"></p>
+  <div class="mw-mkt" th:if="${m.market != null}">
+    <b th:text="|배당 반영 ${m.marketText}|"></b>
+    <span>1이면 배당이 보는 확률을 그대로 출발점으로 씁니다. 1보다 작으면 인기마·비인기마 차이를 조금 줄여서 봅니다.</span>
+  </div>
+  <div class="mw-groups" th:if="${!#lists.isEmpty(m.groups)}">
+    <span th:each="g : ${m.groups}" class="mw-chip"><b th:text="${g.name}"></b> <span th:text="${g.pct}"></span></span>
+  </div>
+  <table class="mw-t" th:if="${!#lists.isEmpty(m.rows)}">
+    <thead><tr><th>요인</th><th>무엇이 유리한가</th><th class="num">가중치</th><th class="bcol">크기</th></tr></thead>
+    <tbody>
+      <tr th:each="r : ${m.rows}">
+        <td><b th:text="${r.name}"></b><small th:text="${r.group} + (${r.bin} ? ' · 예/아니오' : '')"></small></td>
+        <td class="eff" th:text="${r.effect}"></td>
+        <td class="num" th:text="${r.w}"></td>
+        <td class="bcol"><span class="wbar"><i th:style="|width:${r.bar}%|"></i></span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+</body>
 </html>

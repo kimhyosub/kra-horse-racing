@@ -46,20 +46,5 @@
     <section th:replace="~{fragments :: weights(${day})}"></section>
   </div>
 </div>
-</span>
-        </div>
-        <table class="mw-t" th:if="${!#lists.isEmpty(m.rows)}">
-          <thead><tr><th>요인</th><th>무엇이 유리한가</th><th class="num">가중치</th><th class="bcol">크기</th></tr></thead>
-          <tbody>
-            <tr th:each="r : ${m.rows}">
-              <td><b th:text="${r.name}"></b><small th:text="${r.group} + (${r.bin} ? ' · 예/아니오' : '')"></small></td>
-              <td th:text="${r.effect}" th:class="${r.up} ? 'eff up' : 'eff dn'"></td>
-              <td class="num" th:text="${r.w}"></td>
-              <td class="bcol"><span class="wbar"><i th:class="${r.up} ? 'up' : 'dn'" th:style="|width:${r.bar}%|"></i></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-</th:block>
 </body>
 </html>
