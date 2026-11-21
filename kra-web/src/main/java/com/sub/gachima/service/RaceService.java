@@ -179,6 +179,8 @@ public class RaceService {
         v.values = v.dayOrder.stream().filter(a -> a.value).collect(Collectors.toList());
         v.paperBets = paper.forRace(race);
         v.paperLock = paper.lockState(race);
+        v.review = Commentary.of(v.entries, v.track, true);
+        v.preReview = Commentary.of(v.entries, null, false);
     }
 
     private static String why(EntryView x, DayModel.Result r) {
@@ -281,6 +283,8 @@ public class RaceService {
         public List<Integer> result;
         public List<com.sub.gachima.domain.PaperBet> paperBets = new ArrayList<>();
         public PaperService.Outcome paperLock;
+        /** 총평: 당일 분석 기준 / 전날 예상 기준 */
+        public Commentary review, preReview;
         public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }

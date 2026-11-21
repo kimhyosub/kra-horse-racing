@@ -76,6 +76,7 @@
 
   <!-- 전날 예상: 순위와 그 근거 -->
   <th:block th:if="${mode == 'pre'}">
+    <section th:replace="~{fragments :: review(${v.preReview}, '가치마 총평 · 전날 예상')}"></section>
     <div class="howto">
       <b>전날 예상 읽는 법</b>
       <span>확률 = 배당 없이 지난 기록만으로 계산한 우승 확률 (출전마 합계 100%). 파란 테두리 다섯 마리가 전날 고른 1~5위입니다.</span>
@@ -178,6 +179,8 @@
         </div>
       </div>
     </section>
+
+    <section th:replace="~{fragments :: review(${v.review}, '가치마 총평 · 당일 분석')}"></section>
 
     <div class="howto" th:if="${v.scored}">
       <b>당일 분석 읽는 법</b>

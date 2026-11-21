@@ -64,6 +64,8 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("★ 8번 15.4배")))
                 .andExpect(content().string(containsString("1.31")))
                 .andExpect(content().string(containsString("당일 분석 읽는 법")))
+                .andExpect(content().string(containsString("가치마 총평")))
+                .andExpect(content().string(containsString("순서까지 맞을 확률")))
                 .andExpect(content().string(containsString("배당이 보는 확률")))
                 .andExpect(content().string(containsString("당일 1·2·3위")))
                 .andExpect(content().string(containsString("→ 1.10 이상, ★ 가치마")));

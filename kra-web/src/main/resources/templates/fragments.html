@@ -112,5 +112,12 @@
     </div>
   </details>
 </nav>
+<!-- 총평 -->
+<section th:fragment="review(c, title)" class="review" th:if="${c != null and !c.empty}">
+  <header><span class="rv-tag" th:classappend="${c.levelClass}" th:text="${c.level}">보통</span><b th:text="${title}">총평</b></header>
+  <p class="rv-head" th:text="${c.headline}"></p>
+  <ul><li th:each="pt : ${c.points}" th:text="${pt}"></li></ul>
+  <small>모델 숫자로 자동으로 쓴 참고 의견입니다. 조합 확률은 각 말의 우승 확률로 계산한 추정치입니다.</small>
+</section>
 </body>
 </html>

@@ -335,3 +335,16 @@ body{padding-bottom:84px}
 .cmp3 b{font:700 15px var(--num);text-align:right}
 .cbar.d i{background:var(--value)}
 @media (max-width:520px){.kpi.wide2{grid-column:auto}.topbar .logo small{display:none}}
+
+/* ---------- 총평 ---------- */
+.review{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--model);border-radius:14px;padding:12px 14px;margin:12px 0;display:grid;gap:6px}
+.review header{display:flex;align-items:center;gap:8px}
+.review header b{font:400 17px var(--display)}
+.rv-tag{font:700 11px var(--body);padding:3px 9px;border-radius:999px;background:var(--bg);color:var(--muted)}
+.rv-tag.wait{background:#fdecea;color:#a8322a}
+.rv-tag.star{background:var(--value);color:#1b1400}
+.rv-tag.solid{background:var(--model);color:#fff}
+.rv-head{margin:0;font-size:15px;font-weight:500;line-height:1.55}
+.review ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:13.5px;color:var(--ink)}
+.review li::marker{color:var(--muted)}
+.review small{font-size:11.5px;color:var(--muted)}

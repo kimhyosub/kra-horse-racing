@@ -18,6 +18,10 @@ public final class RaceSummary {
         if (v.track != null) b.append(" · 주로 ").append(esc(v.track));
         b.append('\n');
 
+        if (v.review != null && !v.review.isEmpty()) {
+            b.append("\n💬 <b>총평 · ").append(esc(v.review.level)).append("</b>\n").append(esc(v.review.headline)).append('\n');
+            for (int i = 0; i < Math.min(3, v.review.points.size()); i++) b.append("· ").append(esc(v.review.points.get(i))).append('\n');
+        }
         if (!v.isScored()) {
             b.append("당일 분석: 배당이 2두 이상 있어야 계산됩니다.\n");
         } else {
