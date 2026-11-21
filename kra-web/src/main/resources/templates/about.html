@@ -2,9 +2,8 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
+  <th:block th:replace="~{fragments :: seo('가치마 소개 · 이용안내 | 무료 경마 분석 베타', '가치마는 한국 경마(서울·부경·제주) 전날 예상 순위와 당일 배당으로 다시 계산한 가치마(★) · 요인별 점수표, 공개 모의 장부와 성적을 무료로 보여주는 경마 분석 베타 서비스입니다.')}"></th:block>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>가치마 · 소개 · 이용안내</title>
-  <meta name="description" content="가치마: 한국 경마 전날 예상과 당일 배당 분석을 공개 기록과 함께 보여주는 무료 베타 서비스">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
   <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
   <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
@@ -54,8 +53,16 @@
 
   <section class="ab">
     <h2>개인정보</h2>
-    <p>가치마는 회원 가입이 없고, 방문자의 이름·연락처 같은 개인정보를 받지 않습니다. 운영자 로그인용 쿠키와 서비스 운영에 필요한 접속 기록(서버 로그)만 남습니다.
-      앞으로 광고(예: Google 애드센스)를 붙이면 광고 업체가 쿠키를 쓸 수 있으며, 그때 이 안내를 고칩니다.</p>
+    <p>가치마는 회원 가입이 없고, 방문자의 이름·연락처 같은 개인정보를 받지 않습니다. 운영자 로그인용 쿠키와 서비스 운영에 필요한 접속 기록(서버 로그)만 남습니다.</p>
+    <p th:if="${site.ads}">이 사이트는 <b>Google 애드센스</b> 광고를 게재합니다. Google을 비롯한 제3자 광고 업체는 쿠키를 사용해 이용자의 이 사이트 및 다른 사이트 방문 기록을 바탕으로 광고를 게재할 수 있습니다.
+      Google의 광고 쿠키 사용 방식은 <a href="https://policies.google.com/technologies/ads?hl=ko" rel="noopener" target="_blank">Google 광고 정책</a>에서 볼 수 있고,
+      맞춤 광고는 <a href="https://adssettings.google.com" rel="noopener" target="_blank">Google 광고 설정</a>에서 끌 수 있습니다.</p>
+    <p th:unless="${site.ads}">앞으로 광고(Google 애드센스)를 붙이면 광고 업체가 쿠키를 쓸 수 있으며, 그때 이 안내를 고칩니다.</p>
+  </section>
+
+  <section class="ab" th:if="${!#strings.isEmpty(site.contact)}">
+    <h2>문의</h2>
+    <p>오류 제보·제안·문의: <a th:href="|mailto:${site.contact}|" th:text="${site.contact}">메일</a></p>
   </section>
 
   <footer th:replace="~{fragments :: foot}"></footer>

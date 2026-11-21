@@ -48,6 +48,13 @@ gachima:
     chats: ${GACHIMA_TELEGRAM_CHATS:}
   # 알림 속 링크 주소
   public-url: ${GACHIMA_PUBLIC_URL:https://gachima.zipbabstudio.com}
+  ads:
+    # 애드센스 게시자 ID (예: ca-pub-1234567890123456). 넣으면 모든 공개 화면에 애드센스 코드·확인 메타태그, /ads.txt 가 생김
+    client: ${GACHIMA_ADSENSE_CLIENT:}
+    # 구글 서치 콘솔 'HTML 태그' 확인 코드 (content="…" 안의 값만)
+    gsc-verify: ${GACHIMA_GSC_VERIFY:}
+    # 이용안내에 보일 연락처 (이메일 등)
+    contact: ${GACHIMA_CONTACT:}
   ui:
     # 당일 분석 화면에서 배당·마체중 입력칸과 스크린샷 올리기를 보일지 (기본: 숨김, 텔레그램으로 입력)
     web-input: ${GACHIMA_WEB_INPUT:false}

@@ -2,8 +2,8 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
+  <th:block th:replace="~{fragments :: seo(${v.seoTitle}, ${v.seoDesc})}"></th:block>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title th:text="|가치마 · ${v.meetName} ${v.rcNo}R|">가치마</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
   <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
   <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->

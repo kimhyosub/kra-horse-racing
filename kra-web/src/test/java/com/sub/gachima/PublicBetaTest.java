@@ -43,6 +43,8 @@ class PublicBetaTest {
                     .andExpect(content().string(containsString("관리자 로그인")))
                     .andExpect(content().string(not(containsString("로그아웃"))));
         mvc.perform(get("/robots.txt")).andExpect(status().isOk()).andExpect(content().string(containsString("Disallow: /admin")));
+        mvc.perform(get("/sitemap.xml")).andExpect(status().isOk());
+        mvc.perform(get("/ads.txt")).andExpect(status().isNotFound());   // 애드센스 ID 없으면 없음
         mvc.perform(get("/admin")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));
         mvc.perform(post("/r/20261115/1/7/input").with(csrf()).param("odds_1", "3.0").param("odds_2", "4.0"))
                 .andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));

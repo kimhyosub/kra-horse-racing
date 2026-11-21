@@ -317,6 +317,25 @@ public class RaceService {
         public BetPicks picks;
         public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
+        /** 검색·공유용 설명: 날짜·경주·거리·출발 + 전날 예상 1~3위 */
+        public String getSeoTitle() {
+            return getDayLabelShort() + " " + meetName + " " + rcNo + "경주 예상·분석 | 가치마";
+        }
+        public String getSeoDesc() {
+            StringBuilder b = new StringBuilder();
+            b.append(getDayLabelShort()).append(' ').append(meetName).append(' ').append(rcNo).append("경주 ")
+             .append(dist).append("m");
+            if (stTime != null && !stTime.isEmpty()) b.append(", ").append(stTime).append(" 출발");
+            b.append(". 전날 예상 ");
+            List<EntryView> t = preOrder.subList(0, Math.min(3, preOrder.size()));
+            for (int i = 0; i < t.size(); i++) { if (i > 0) b.append(", "); b.append(i + 1).append("위 ").append(t.get(i).no).append("번 ").append(t.get(i).name); }
+            b.append(". 당일 배당으로 다시 계산한 가치마(★)와 요인별 점수표, 공개 성적을 함께 봅니다.");
+            return b.toString();
+        }
+        private String getDayLabelShort() {
+            java.time.LocalDate d = java.time.LocalDate.parse(date, java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+            return d.getMonthValue() + "월 " + d.getDayOfMonth() + "일(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ")";
+        }
         public List<EntryView> getPreTop5() { return preOrder.subList(0, Math.min(5, preOrder.size())); }
         public List<EntryView> getDayTop3() { return dayOrder.subList(0, Math.min(3, dayOrder.size())); }
         /** 가치마가 없을 때 기대값이 가장 높은 말 */

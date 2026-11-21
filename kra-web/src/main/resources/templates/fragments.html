@@ -95,6 +95,25 @@
     <div><b>가치마<i class="beta">베타</i></b><small th:text="${sub}">전날 예상하고, 당일 배당으로 다시 읽는 경마 분석</small></div></a>
 </header>
 
+<!-- 검색·공유·광고 머리 태그: 제목, 설명, 대표 주소, 공유 미리보기(OG), 애드센스, 서치 콘솔 -->
+<th:block th:fragment="seo(title, desc)">
+  <title th:text="${title}">가치마</title>
+  <meta name="description" th:content="${desc}">
+  <link rel="canonical" th:href="${canonical}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="가치마">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" th:content="${title}">
+  <meta property="og:description" th:content="${desc}">
+  <meta property="og:url" th:content="${canonical}">
+  <meta property="og:image" th:content="|${site.url}/og.png|">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="google-site-verification" th:if="${!#strings.isEmpty(site.gscVerify)}" th:content="${site.gscVerify}">
+  <th:block th:if="${site.ads}">
+    <meta name="google-adsense-account" th:content="${site.adsClient}">
+    <script async th:src="|https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${site.adsClient}|" crossorigin="anonymous"></script>
+  </th:block>
+</th:block>
 <!-- 바닥글: 공개 베타 고지 -->
 <footer th:fragment="foot" class="foot">
   <div class="foot-how">

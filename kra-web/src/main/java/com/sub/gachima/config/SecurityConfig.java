@@ -87,7 +87,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain chain(HttpSecurity http, UserDetailsService users) throws Exception {
         http.authorizeRequests(a -> {
-                    a.antMatchers("/css/**", "/login", "/favicon.ico", "/favicon.svg", "/logo.svg", "/manifest.json", "/icons/**", "/error", "/robots.txt").permitAll();
+                    a.antMatchers("/css/**", "/login", "/favicon.ico", "/favicon.svg", "/logo.svg", "/manifest.json", "/icons/**", "/error", "/robots.txt", "/sitemap.xml", "/ads.txt", "/og.png").permitAll();
                     a.antMatchers("/admin/**", "/admin").hasRole(ADMIN);
                     a.antMatchers(HttpMethod.POST, "/r/**").hasAnyRole(ADMIN, INPUT);
                     a.antMatchers(HttpMethod.GET, "/about").permitAll();
