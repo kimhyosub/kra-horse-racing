@@ -31,6 +31,11 @@
       <form method="post" th:action="@{/admin/import(force=true)}"><button class="btn ghost" type="submit">전부 다시 불러오기</button></form>
     </div>
   </section>
+  <h2 class="sec">가이드 글</h2>
+  <section class="input">
+    <p class="hint">공개 화면의 '가이드'에 올라가는 설명 글을 쓰고 고칩니다.</p>
+    <div class="btns"><a class="btn" th:href="@{/admin/posts}">글 목록</a><a class="btn ghost" th:href="@{/admin/posts/new}">새 글 쓰기</a></div>
+  </section>
   <h2 class="sec">스크린샷 읽기</h2>
   <section class="input">
     <p class="hint" th:if="${shotEnabled}">켜짐: 경주 화면(당일 분석)에서 스크린샷을 올리면 배당·마체중을 읽어 칸을 채웁니다.</p>

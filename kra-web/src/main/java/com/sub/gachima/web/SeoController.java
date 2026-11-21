@@ -19,9 +19,10 @@ public class SeoController {
     private final SiteInfo site;
     private final RaceService raceService;
     private final RaceRepository races;
+    private final com.sub.gachima.service.PostService posts;
 
-    public SeoController(SiteInfo site, RaceService raceService, RaceRepository races) {
-        this.site = site; this.raceService = raceService; this.races = races;
+    public SeoController(SiteInfo site, RaceService raceService, RaceRepository races, com.sub.gachima.service.PostService posts) {
+        this.site = site; this.raceService = raceService; this.races = races; this.posts = posts;
     }
 
     private String base(HttpServletRequest req) {
@@ -49,6 +50,9 @@ public class SeoController {
         url(x, b + "/about", null, "monthly");
         url(x, b + "/stats", null, "daily");
         url(x, b + "/model", null, "weekly");
+        url(x, b + "/guide", null, "weekly");
+        for (com.sub.gachima.domain.Post p : posts.published())
+            url(x, b + "/guide/" + p.getSlug(), p.getUpdatedAt() == null ? null : p.getUpdatedAt().toLocalDate().toString(), "monthly");
         for (MeetDay md : raceService.allMeetDays()) {
             String d = md.getRaceDate(), day = d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6);
             for (Race r : races.findByMeetDayOrderByRcNo(md))

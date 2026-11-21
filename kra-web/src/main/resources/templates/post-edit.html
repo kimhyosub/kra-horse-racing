@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>가치마 · 글쓰기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
+  <link rel="manifest" th:href="@{/manifest.json}">
+  <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="가치마">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#fbefd2">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap">
+  <header th:replace="~{fragments :: topbar((${p.id == null} ? '새 가이드 글' : '가이드 글 고치기'))}"></header>
+  <div class="flash err" th:if="${error}" th:text="${error}"></div>
+  <form class="post-form" method="post" th:action="@{/admin/posts}">
+    <input type="hidden" name="id" th:value="${p.id}">
+    <label>제목<input name="title" th:value="${p.title}" required maxlength="120" placeholder="예) 기대값이란?"></label>
+    <div class="pf-row">
+      <label>주소 (영문)<span class="pf-pre">/guide/</span><input name="slug" th:value="${p.slug}" required pattern="[a-z0-9][a-z0-9-]{1,78}" placeholder="expected-value"></label>
+      <label class="pf-num">순서<input name="sortOrder" type="number" th:value="${p.id == null} ? 100 : ${p.sortOrder}"></label>
+    </div>
+    <label>요약 (목록·검색 설명, 한두 문장)<input name="summary" th:value="${p.summary}" maxlength="300"></label>
+    <label>본문
+      <textarea name="body" rows="22" th:text="${p.body}" placeholder="# 소제목&#10;&#10;문단은 빈 줄로 나눕니다. **굵게**, `코드`, [링크](https://…)&#10;&#10;- 목록&#10;1. 번호 목록&#10;> 인용&#10;&#10;| 표 | 머리 |&#10;|---|---|&#10;| 칸 | 칸 |"></textarea></label>
+    <p class="hint">쓰는 법: <code># 소제목</code> · 빈 줄로 문단 · <code>**굵게**</code> · <code>- 목록</code> · <code>1. 번호</code> · <code>&gt; 인용</code> · <code>---</code> 구분선 · <code>| 표 |</code> · <code>[글자](주소)</code></p>
+    <label class="pf-check"><input type="checkbox" name="published" value="true" th:checked="${p.id == null or p.published}"> 공개 (끄면 초안: 나만 보임)</label>
+    <div class="btns"><button class="btn" type="submit">저장</button><a class="btn ghost" th:href="@{/admin/posts}">목록</a></div>
+  </form>
+  <form th:if="${p.id != null}" method="post" th:action="@{|/admin/posts/${p.id}/delete|}" onsubmit="return confirm('이 글을 지울까요?')">
+    <button class="btn ghost danger" type="submit">이 글 지우기</button>
+  </form>
+  <nav th:replace="~{fragments :: tabbar('admin')}"></nav>
+</div>
+</body>
+</html>

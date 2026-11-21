@@ -317,7 +317,7 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .meetpills a[aria-current="true"]{background:var(--ink);color:var(--paper)}
 body{padding-bottom:84px}
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));z-index:50;
-  display:grid;grid-template-columns:repeat(4,1fr);width:min(440px,calc(100% - 24px));background:var(--paper);
+  display:grid;grid-template-columns:repeat(5,1fr);width:min(500px,calc(100% - 24px));background:var(--paper);
   border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(19,26,46,.16);padding:4px}
 .tabbar>a,.tabbar summary{display:grid;justify-items:center;gap:2px;padding:7px 4px;border-radius:14px;color:var(--muted);text-decoration:none;font:700 11px var(--body);cursor:pointer;list-style:none}
 .tabbar summary::-webkit-details-marker{display:none}
@@ -411,3 +411,45 @@ table.pk tr.rec td:first-child{box-shadow:inset 3px 0 0 var(--value)}
   .tabbar svg{width:24px;height:24px}
   .tabbar .more .sheet{left:calc(100% + 12px);right:auto;bottom:auto;top:0}
 }
+/* ---------- 가이드 ---------- */
+a.btn{text-decoration:none;display:inline-block}
+.btn.danger{border-color:#a8322a;color:#a8322a}
+.flash.err{background:#fbe3df;color:#7a1f17}
+.guide-list{display:grid;gap:10px}
+.guide-card{display:flex;gap:14px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;color:var(--ink);text-decoration:none}
+.guide-card:hover{border-color:var(--ink)}
+.guide-card .gc-no{flex:0 0 32px;height:32px;border-radius:10px;background:var(--bg);display:grid;place-items:center;font:700 14px var(--num);color:var(--muted)}
+.guide-card b{font-size:16px}
+.guide-card p{margin:3px 0 0;font-size:13.5px;color:var(--muted);line-height:1.55}
+.post{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px 22px 26px}
+.post h1{font:400 26px var(--display);margin:0 0 6px;line-height:1.3}
+.post-meta{margin:0 0 18px;font-size:12.5px;color:var(--muted)}
+.post-meta a{color:inherit}
+.post-draft{margin:0 0 8px;font-size:12px;font-weight:700;color:#a8322a}
+.post-body{font-size:15.5px;line-height:1.85;max-width:68ch}
+.post-body h2{font:400 20px var(--display);margin:28px 0 8px}
+.post-body h3{font-size:16.5px;margin:22px 0 6px}
+.post-body h4{font-size:15px;margin:18px 0 4px}
+.post-body p{margin:0 0 14px}
+.post-body ul,.post-body ol{margin:0 0 14px;padding-left:22px}
+.post-body li{margin:3px 0}
+.post-body blockquote{margin:0 0 14px;padding:10px 14px;border-left:3px solid var(--value);background:var(--value-soft);border-radius:0 10px 10px 0}
+.post-body code{font:500 13.5px var(--num);background:var(--bg);padding:1px 5px;border-radius:5px}
+.post-body hr{border:0;border-top:1px solid var(--line);margin:22px 0}
+.post-body a{color:var(--model)}
+.post-table{overflow-x:auto;margin:0 0 16px}
+.post-table table{border-collapse:collapse;font-size:14px;min-width:100%}
+.post-table th,.post-table td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;white-space:nowrap}
+.post-table th{font-size:12.5px;color:var(--muted)}
+.post-more{display:grid;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.post-more a{color:var(--ink);font-size:14.5px}
+.post-form{display:grid;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
+.post-form label{display:grid;gap:5px;font-size:13px;font-weight:700;color:var(--muted)}
+.post-form input:not([type=checkbox]),.post-form textarea{font:15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;box-sizing:border-box}
+.post-form textarea{font:14px/1.7 var(--num);resize:vertical}
+.post-form .pf-row{display:grid;grid-template-columns:1fr 110px;gap:10px}
+.post-form .pf-pre{font:500 12px var(--num);color:var(--muted)}
+.post-form .pf-check{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)}
+@media (max-width:560px){.post{padding:18px 16px 22px}.post h1{font-size:22px}}
+.post,.post-body,.post-more,.guide-list{min-width:0}
+.post-table{max-width:100%}

@@ -35,4 +35,10 @@ public final class Repositories {
     public interface ImportLogRepository extends JpaRepository<ImportLog, String> {
         List<ImportLog> findAllByOrderByFileNameDesc();
     }
+
+    public interface PostRepository extends JpaRepository<Post, Long> {
+        Optional<Post> findBySlug(String slug);
+        List<Post> findAllByOrderBySortOrderAscCreatedAtDesc();
+        List<Post> findByPublishedTrueOrderBySortOrderAscCreatedAtDesc();
+    }
 }

@@ -90,7 +90,7 @@ public class SecurityConfig {
                     a.antMatchers("/css/**", "/login", "/favicon.ico", "/favicon.svg", "/logo.svg", "/manifest.json", "/icons/**", "/error", "/robots.txt", "/sitemap.xml", "/ads.txt", "/og.png").permitAll();
                     a.antMatchers("/admin/**", "/admin").hasRole(ADMIN);
                     a.antMatchers(HttpMethod.POST, "/r/**").hasAnyRole(ADMIN, INPUT);
-                    a.antMatchers(HttpMethod.GET, "/about").permitAll();
+                    a.antMatchers(HttpMethod.GET, "/about", "/guide", "/guide/**").permitAll();
                     if (publicRead) a.antMatchers(HttpMethod.GET, "/", "/r/**", "/stats", "/model").permitAll();
                     a.anyRequest().authenticated();
                 })

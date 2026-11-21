@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8">
+  <th:block th:replace="~{fragments :: seo('경마 가이드 · 가치마 보는 법과 기대값 | 가치마', '가치마 보는 법 · 기대값 · 배당과 공제율 · 승식 정리 · 주로 상태 · 모의 장부 읽는 법 등 경마 분석을 처음 보는 분을 위한 설명 글.')}"></th:block>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
+  <link rel="manifest" th:href="@{/manifest.json}">
+  <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="가치마">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#fbefd2">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap">
+  <header th:replace="~{fragments :: topbar('가이드 · 경마 분석을 처음 보는 분께')}"></header>
+  <div class="flash" th:if="${msg}" th:text="${msg}"></div>
+  <p class="hint" th:if="${#lists.isEmpty(posts)}">아직 글이 없습니다.</p>
+  <section class="guide-list">
+    <a class="guide-card" th:each="p, st : ${posts}" th:href="@{|/guide/${p.slug}|}">
+      <span class="gc-no" th:text="${st.count}">1</span>
+      <div><b th:text="${p.title}">제목</b><p th:text="${p.summary}">요약</p></div>
+    </a>
+  </section>
+  <p class="hint" sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/posts}">글 관리</a> · <a th:href="@{/admin/posts/new}">새 글 쓰기</a></p>
+  <footer th:replace="~{fragments :: foot}"></footer>
+  <nav th:replace="~{fragments :: tabbar('guide')}"></nav>
+</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>가치마 · 가이드 글 관리</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
+  <link rel="manifest" th:href="@{/manifest.json}">
+  <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="가치마">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#fbefd2">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap">
+  <header th:replace="~{fragments :: topbar('가이드 글 관리')}"></header>
+  <div class="flash" th:if="${msg}" th:text="${msg}"></div>
+  <div class="btns"><a class="btn" th:href="@{/admin/posts/new}">새 글 쓰기</a><a class="btn ghost" th:href="@{/guide}">가이드 보기</a></div>
+  <div class="sc-wrap">
+    <table class="sc st">
+      <thead><tr><th class="sticky">제목</th><th>주소</th><th>순서</th><th>상태</th><th>고친 날</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="p : ${posts}">
+          <td class="sticky lft"><a th:href="@{|/guide/${p.slug}|}" th:text="${p.title}"></a></td>
+          <td class="lft" th:text="|/guide/${p.slug}|"></td>
+          <td class="num" th:text="${p.sortOrder}"></td>
+          <td class="num" th:text="${p.published} ? '공개' : '초안'"></td>
+          <td class="num" th:text="${#temporals.format(p.updatedAt, 'MM.dd HH:mm')}"></td>
+          <td class="num"><a th:href="@{|/admin/posts/${p.id}|}">고치기</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <nav th:replace="~{fragments :: tabbar('admin')}"></nav>
+</div>
+</body>
+</html>
