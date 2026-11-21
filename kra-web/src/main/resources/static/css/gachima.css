@@ -272,3 +272,32 @@ table.days.stats.ledger tr.ref td{color:var(--muted)}
 .wbar i{display:block;height:100%;border-radius:4px}
 .wbar i{background:var(--model)}
 @media (max-width:520px){.mw-grid{grid-template-columns:1fr}.mw-t .bcol{width:22%}}
+
+/* ---------- 성적 ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:2px}
+.kpi small{font-size:12px;color:var(--muted)}
+.kpi b{font:700 28px var(--num);line-height:1.15}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi.hl{border-color:var(--value);box-shadow:0 0 0 1px var(--value) inset}
+.pos{color:#1e8e4f} .neg{color:#a8322a}
+.mcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.mcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.mcard.tot{border-color:var(--model);box-shadow:0 0 0 1px var(--model) inset}
+.mcard header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.mcard header b{font:400 18px var(--display)}
+.mcard header span{font:700 12px var(--num);color:var(--muted)}
+.mcard dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:13px}
+.mcard dt{color:var(--muted)}
+.mcard dd{margin:0;text-align:right;font-family:var(--num);font-weight:700}
+.mcard dd em{font-style:normal}
+.sc.st{min-width:760px}
+.sc.st td{font-size:13px}
+.sc.st td.lft{text-align:left}
+.sc.st tr.ref td{color:var(--muted)}
+.sc.st .sticky a{color:var(--ink);font-weight:700;text-decoration:none}
+.res{font:700 12px var(--body);padding:2px 8px;border-radius:999px;background:var(--bg);color:var(--muted)}
+.res.w{background:var(--value);color:#1b1400}
+.res.wait{background:transparent;border:1px dashed var(--line)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pos{color:#5fd08f}:root:not([data-theme="light"]) .neg{color:#ff8a7a}}
+:root[data-theme="dark"] .pos{color:#5fd08f} :root[data-theme="dark"] .neg{color:#ff8a7a}

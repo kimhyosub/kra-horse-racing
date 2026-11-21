@@ -156,6 +156,13 @@ public class PaperService {
         public List<PaperBet> bets = new ArrayList<>();
         public final List<Row> rows = new ArrayList<>();
         public boolean isEmpty() { return bets.isEmpty(); }
+        /** 경마장 이름(성적 화면과 같은 이름) → 장부 합계 */
+        public Map<String, Row> getByName() {
+            Map<String, Row> m = new HashMap<>();
+            for (Row r : rows) m.put(r.name, r);
+            return m;
+        }
+        public Row getTotal() { for (Row r : rows) if (r.total) return r; return null; }
     }
 
     public static class Row {

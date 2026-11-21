@@ -77,6 +77,7 @@ public class StatsService {
     public static class Stats {
         public final List<Tally> meets = new ArrayList<>(), days = new ArrayList<>();
         public boolean isEmpty() { return days.isEmpty(); }
+        public Tally getTotal() { for (Tally t : meets) if (t.total) return t; return null; }
     }
 
     public static class Tally {
