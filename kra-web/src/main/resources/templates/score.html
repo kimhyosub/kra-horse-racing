@@ -17,8 +17,8 @@
   <link rel="stylesheet" th:href="@{/css/gachima.css}">
 </head>
 <body>
-<div class="wrap wide" th:with="base=|/r/${v.date}/${v.meet}/${v.rcNo}|">
-  <header th:replace="~{fragments :: topbar(|${v.dateLabel} ${v.meetName} ${v.rcNo}R 점수표|)}"></header>
+<div class="wrap" th:with="base=|/r/${v.date}/${v.meet}/${v.rcNo}|">
+  <th:block th:replace="~{fragments :: racehead(${v}, 'pre', true)}"></th:block>
   <div class="mode">
     <div class="seg" role="group" aria-label="분석 단계">
       <a th:href="@{${base}(mode='pre')}">전날 예상</a>
@@ -27,10 +27,6 @@
     </div>
   </div>
 
-  <nav class="sc-tabs" aria-label="경주">
-    <a th:each="tb : ${v.tabs}" th:href="@{|/r/${v.date}/${v.meet}/${tb.rcNo}/score|}" th:text="|${tb.rcNo}R|"
-       th:attr="aria-current=${tb.rcNo == v.rcNo}"></a>
-  </nav>
 
   <div class="howto">
     <b>점수표 읽는 법</b>

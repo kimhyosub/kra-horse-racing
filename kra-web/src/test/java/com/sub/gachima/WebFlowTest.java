@@ -77,6 +77,9 @@ class WebFlowTest {
         mvc.perform(get("/r/20261115/1/7/score"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("점수표 읽는 법")))
+                .andExpect(content().string(containsString("class=\"picker\"")))                 // 다른 경주 화면과 같은 머리
+                .andExpect(content().string(containsString("href=\"/r/20261115/1/6/score\"")))   // 경주 번호를 누르면 그 경주 점수표
+                .andExpect(content().string(containsString("확정 착순")))
                 .andExpect(content().string(containsString("최근 성적")))
                 .andExpect(content().string(containsString("1·4·1착")))
                 .andExpect(content().string(containsString("기대값")));

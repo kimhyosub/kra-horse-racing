@@ -19,48 +19,7 @@
 <body>
 <div class="wrap" th:with="base=|/r/${v.date}/${v.meet}/${v.rcNo}|">
 
-  <header th:replace="~{fragments :: topbar('전날 예상하고, 당일 배당으로 다시 읽는 경마 분석')}"></header>
-  <div class="picker">
-      <span class="daynav">
-        <a class="dayarrow" th:if="${v.prevDay != null}" th:href="@{|/r/${v.prevDay.date}/${v.prevDay.meet}/1|(mode=${mode})}" aria-label="이전 경주일">‹</a>
-        <span class="dayarrow off" th:if="${v.prevDay == null}">‹</span>
-        <select class="daysel" aria-label="경주일 고르기" onchange="location.href=this.value">
-          <option th:each="d : ${v.days}" th:value="@{|/r/${d.date}/${d.meet}/1|(mode=${mode})}" th:text="${d.label}" th:selected="${d.date == v.date}">11.20 (금)</option>
-        </select>
-        <a class="dayarrow" th:if="${v.nextDay != null}" th:href="@{|/r/${v.nextDay.date}/${v.nextDay.meet}/1|(mode=${mode})}" aria-label="다음 경주일">›</a>
-        <span class="dayarrow off" th:if="${v.nextDay == null}">›</span>
-      </span>
-      <div class="meetpills"><a th:each="m : ${v.meets}" th:href="@{|/r/${v.date}/${m.meet}/1|(mode=${mode})}" th:text="${m.name}"
-         th:attr="aria-current=${m.meet == v.meet}">서울</a></div>
-  </div>
-
-  <section class="board">
-    <nav class="tabs" aria-label="경주 선택">
-      <a th:each="t : ${v.tabs}" class="tab" th:href="@{|/r/${v.date}/${v.meet}/${t.rcNo}|(mode=${mode})}"
-         th:attr="aria-selected=${t.rcNo == v.rcNo}">[[${t.rcNo}]]R<i class="lit" th:if="${t.value}"></i></a>
-    </nav>
-    <div class="race">
-      <div class="no" th:text="|${v.rcNo}R|">7R</div>
-      <h1 th:text="|${v.meetName} ${v.rcNo}경주|">서울 7경주</h1>
-      <div class="meta"><span th:text="|${v.stTime} 출발|"></span><span th:text="|${v.dist}m|"></span>
-        <span th:text="${v.track}"></span><span th:text="|${#lists.size(v.entries)}두|"></span>
-        <span th:if="${!#lists.isEmpty(v.result)}">결과 확정</span></div>
-    </div>
-    <div class="tote">
-      <div><h2>전날 예상 5두</h2>
-        <div class="seq"><th:block th:each="h : ${v.preTop5}"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block></th:block></div></div>
-      <div class="val"><h2>당일 분석 · 가치마</h2>
-        <div class="seq" th:if="${v.scored}">
-          <th:block th:each="h : ${v.dayTop3}"><th:block th:insert="~{fragments :: cloth(${h.no})}"></th:block></th:block>
-          <span th:if="${#lists.isEmpty(v.values)}">가치마 없음</span>
-          <span th:each="h : ${v.values}" style="color:var(--value)" th:text="|★ ${h.no}번 ${h.odds}배|"></span>
-        </div>
-        <div class="seq" th:unless="${v.scored}"><span>당일 배당 입력 전</span></div></div>
-      <div><h2>확정 착순</h2>
-        <div class="seq"><th:block th:each="n : ${v.result}"><th:block th:insert="~{fragments :: cloth(${n})}"></th:block></th:block>
-          <span th:if="${#lists.isEmpty(v.result)}">경주 전</span></div></div>
-    </div>
-  </section>
+  <th:block th:replace="~{fragments :: racehead(${v}, ${mode}, false)}"></th:block>
 
   <div class="mode">
     <div class="seg" role="group" aria-label="분석 단계">
