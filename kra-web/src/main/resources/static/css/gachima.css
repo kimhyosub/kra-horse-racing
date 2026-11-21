@@ -371,3 +371,5 @@ table.pk tr.rec td:first-child{box-shadow:inset 3px 0 0 var(--value)}
 .sc.pools td b{font:700 15px var(--num)}
 .sc td.muted{color:var(--muted);font-size:12.5px}
 .sc.pools th small{font-weight:400;color:var(--muted)}
+.sc.pools td.lft{white-space:nowrap}
+.hint.warn{color:var(--ink);background:var(--value-soft);border-radius:10px;padding:8px 12px}

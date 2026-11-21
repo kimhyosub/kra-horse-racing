@@ -152,6 +152,8 @@ def dividends_for(raw_dir, date, meet, res):
     성적 화면의 '당일 분석 1·2·3위 그대로 샀을 때' 승식별 회수율용. 원본이 아직 없으면 빈 dict"""
     path = os.path.join(raw_dir, 'all-odds', f'meet{meet}', date[:4], f'{date}.json')
     if not os.path.exists(path):
+        if res:
+            print(f'  확정배당 원본 없음: {path} (all-odds 수집 뒤 다시 export 하면 승식 회수율에 들어감)')
         return {}
     try:
         items = json.load(open(path, encoding='utf-8'))

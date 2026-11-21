@@ -129,6 +129,7 @@ try {
             '--entries', (Join-Path $DataDir 'entry-sheet.csv'),
             '--history', (Join-Path $DataDir 'race-result.csv'),
             '--referee', (Join-Path $DataDir 'referee.csv'),
+            '--raw', (Join-Path $DataDir 'raw'),
             '--out', $WebDir)
         Log '[2/2] 웹용 파일 만들기 (export_web.py)'
         $Python = Find-Python $Python
