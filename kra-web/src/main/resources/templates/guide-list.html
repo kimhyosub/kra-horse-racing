@@ -21,11 +21,19 @@
   <header th:replace="~{fragments :: topbar('가이드 · 경마 분석을 처음 보는 분께')}"></header>
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
   <p class="hint" th:if="${#lists.isEmpty(posts)}">아직 글이 없습니다.</p>
+  <nav class="gtabs" aria-label="분류">
+    <a th:href="@{/guide}" th:classappend="${cat == null} ? 'on'">전체</a>
+    <a th:each="c : ${cats}" th:href="@{/guide(cat=${c.key})}" th:classappend="${cat == c.key} ? 'on'" th:text="${c.value}">분류</a>
+  </nav>
+  <p class="hint" th:if="${cat == 'basic'}">처음이라면 위에서부터 차례로 읽어 보세요.</p>
   <section class="guide-list">
     <a class="guide-card" th:each="p, st : ${posts}" th:href="@{|/guide/${p.slug}|}">
       <img class="gc-thumb" th:if="${p.cover != null}" th:src="${p.cover}" alt="" loading="lazy">
       <span class="gc-no" th:unless="${p.cover != null}" th:text="${st.count}">1</span>
-      <div><b th:text="${p.title}">제목</b><p th:text="${p.summary}">요약</p></div>
+      <div>
+        <span class="gc-meta"><em th:class="|gc-cat gc-${p.category}|" th:text="${p.categoryLabel}">분류</em><span th:text="${#temporals.format(p.createdAt, 'yyyy.MM.dd')}"></span></span>
+        <b th:text="${p.title}">제목</b><p th:text="${p.summary}">요약</p>
+      </div>
     </a>
   </section>
   <p class="hint" sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/posts}">글 관리</a> · <a th:href="@{/admin/posts/new}">새 글 쓰기</a></p>

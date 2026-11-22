@@ -39,7 +39,18 @@ public class Post {
     /** 관리자가 웹에서 고친 적이 있나 (있으면 자동 교체 안 함) */
     private Boolean edited;
 
-    /** 목록 순서 (작을수록 위) */
+    /** 분류: basic(기초 가이드) · analysis(데이터 분석) · weekly(주간 총평). 없으면 기초 가이드로 본다 */
+    @Column(length = 20)
+    private String category;
+
+    public static final java.util.Map<String, String> CATS;
+    static {
+        java.util.Map<String, String> m = new java.util.LinkedHashMap<>();
+        m.put("basic", "기초 가이드"); m.put("analysis", "데이터 분석"); m.put("weekly", "주간 총평");
+        CATS = java.util.Collections.unmodifiableMap(m);
+    }
+
+    /** 목록 순서 (작을수록 위). 기초 가이드 탭에서만 쓰고, 나머지는 최신 글이 위 */
     @Column(name = "sort_order")
     private int sortOrder;
 
@@ -65,6 +76,11 @@ public class Post {
     public void setSeedVersion(Integer seedVersion) { this.seedVersion = seedVersion; }
     public boolean isEdited() { return Boolean.TRUE.equals(edited); }
     public void setEdited(boolean edited) { this.edited = edited; }
+    public String getCategory() { return category == null || !CATS.containsKey(category) ? "basic" : category; }
+    public void setCategory(String category) { this.category = category == null || !CATS.containsKey(category.trim()) ? null : category.trim(); }
+    public String getCategoryLabel() { return CATS.get(getCategory()); }
+    /** DB 에 분류가 아직 없나 (예전 글) */
+    public boolean hasCategory() { return category != null; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public LocalDateTime getCreatedAt() { return createdAt; }

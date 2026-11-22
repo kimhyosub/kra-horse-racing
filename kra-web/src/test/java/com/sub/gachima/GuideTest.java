@@ -38,7 +38,7 @@ class GuideTest {
                 .andExpect(content().string(containsString("<h2>기대값 = 우승 확률 × 배당</h2>")))
                 .andExpect(content().string(containsString("<title>기대값이란? — 잘 맞히는 것과 돈이 되는 것은 다르다 · 가치마 가이드</title>")))
                 .andExpect(content().string(containsString("<meta name=\"description\" content=\"우승 확률 × 배당으로")))
-                .andExpect(content().string(containsString("다른 가이드")))
+                .andExpect(content().string(containsString("다른 기초 가이드")))
                 .andExpect(content().string(not(containsString("고치기"))));
         mvc.perform(get("/guide/bet-types")).andExpect(content().string(containsString("<div class=\"post-table\"><table>")));
         mvc.perform(get("/guide/expected-value"))
@@ -54,6 +54,28 @@ class GuideTest {
         mvc.perform(get("/guide/none")).andExpect(status().isNotFound());
         mvc.perform(get("/sitemap.xml")).andExpect(content().string(containsString("/guide/how-to-read</loc>")));
         mvc.perform(get("/admin/posts")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    void categoriesAndNewestFirst() throws Exception {
+        String all = mvc.perform(get("/guide")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("class=\"gtabs\"")))
+                .andReturn().getResponse().getContentAsString();
+        // 전체: 최신 글이 위 (주간 총평 → 데이터 분석 → 기초 가이드)
+        int w = all.indexOf("/guide/weekly-2026-11-22"), a = all.indexOf("/guide/favorites-roi"), b = all.indexOf("/guide/how-to-read");
+        org.junit.jupiter.api.Assertions.assertTrue(w > 0 && w < a && a < b, "최신 글이 위");
+        // 기초 가이드 탭: 읽는 순서(order), 분석 글은 없음
+        String basic = mvc.perform(get("/guide").param("cat", "basic")).andReturn().getResponse().getContentAsString();
+        org.junit.jupiter.api.Assertions.assertTrue(basic.indexOf("/guide/how-to-read") < basic.indexOf("/guide/expected-value"));
+        org.junit.jupiter.api.Assertions.assertFalse(basic.contains("/guide/favorites-roi"));
+        mvc.perform(get("/guide").param("cat", "weekly"))
+                .andExpect(content().string(containsString("/guide/weekly-2026-11-22")))
+                .andExpect(content().string(not(containsString("/guide/how-to-read\""))));
+        mvc.perform(get("/guide").param("cat", "nope")).andExpect(status().isOk());              // 모르는 분류 = 전체
+        mvc.perform(get("/guide/box-betting"))
+                .andExpect(content().string(containsString("데이터 분석")))
+                .andExpect(content().string(containsString("다른 데이터 분석")))
+                .andExpect(content().string(containsString("2026.11.22")));
     }
 
     @Test

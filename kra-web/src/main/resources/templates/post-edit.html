@@ -27,8 +27,14 @@
     <label>제목<input name="title" th:value="${p.title}" required maxlength="120" placeholder="예) 기대값이란?"></label>
     <div class="pf-row">
       <label>주소 (영문)<span class="pf-pre">/guide/</span><input name="slug" th:value="${p.slug}" required pattern="[a-z0-9][a-z0-9-]{1,78}" placeholder="expected-value"></label>
+      <label class="pf-cat">분류<select name="category">
+        <option value="basic" th:selected="${p.category == 'basic'}">기초 가이드</option>
+        <option value="analysis" th:selected="${p.category == 'analysis'}">데이터 분석</option>
+        <option value="weekly" th:selected="${p.category == 'weekly'}">주간 총평</option>
+      </select></label>
       <label class="pf-num">순서<input name="sortOrder" type="number" th:value="${p.id == null} ? 100 : ${p.sortOrder}"></label>
     </div>
+    <p class="hint">순서는 기초 가이드 탭에서 읽는 순서로만 씁니다. 전체·데이터 분석·주간 총평은 새 글이 위로 갑니다.</p>
     <label>요약 (목록·검색 설명, 한두 문장)<input name="summary" th:value="${p.summary}" maxlength="300"></label>
     <label>대표 이미지 주소 (목록 썸네일·공유 미리보기, 비워도 됨)<input name="cover" id="cover" th:value="${p.cover}" maxlength="300" placeholder="/uploads/2026-11/….png"></label>
     <div class="pf-upload">

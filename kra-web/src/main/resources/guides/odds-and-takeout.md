@@ -3,6 +3,8 @@ summary: 배당 숫자를 시장이 보는 우승 확률로 바꾸는 법, 마�
 order: 30
 version: 2
 cover: /guide-img/takeout.png
+category: basic
+date: 2026-11-21 09:00
 ---
 # 배당을 확률로 바꾸기
 

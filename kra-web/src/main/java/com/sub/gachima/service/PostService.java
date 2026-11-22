@@ -21,7 +21,8 @@ import java.util.Optional;
  * 가이드 글. 실행할 때 classpath:guides/*.md 를 글로 넣는다.
  *  - 같은 주소의 글이 없으면 새로 넣고
  *  - 있으면, 웹에서 고친 적이 없고 파일의 version 이 더 클 때만 새 판으로 바꾼다 (고친 글은 절대 덮어쓰지 않음)
- * 파일 형식: 맨 위 "title: …", "summary: …", "order: 10", "version: 2", "cover: /guide-img/x.png", "published: false" 줄,
+ * 파일 형식: 맨 위 "title: …", "summary: …", "order: 10", "version: 2", "cover: /guide-img/x.png", "published: false",
+ * "category: basic|analysis|weekly", "date: 2026-11-22 21:00"(글 날짜, 목록은 최신 글이 위) 줄,
  * 그 다음 "---", 그 아래 본문(마크다운).
  */
 @Service
@@ -33,7 +34,28 @@ public class PostService {
 
     public PostService(PostRepository posts) { this.posts = posts; }
 
-    public List<Post> published() { return posts.findByPublishedTrueOrderBySortOrderAscCreatedAtDesc(); }
+    public List<Post> published() { return published(null); }
+
+    /**
+     * 공개 글. cat 이 없으면 전체를 최신 글부터, 기초 가이드는 읽는 순서(order)대로, 나머지 분류는 최신 글부터.
+     * 날짜가 같으면 order 순.
+     */
+    public List<Post> published(String cat) {
+        List<Post> l = new java.util.ArrayList<>();
+        for (Post p : posts.findByPublishedTrueOrderBySortOrderAscCreatedAtDesc())
+            if (cat == null || cat.equals(p.getCategory())) l.add(p);
+        if ("basic".equals(cat)) return l;   // 이미 order 순
+        l.sort((a, b) -> {
+            int c = cmpDate(b, a);
+            return c != 0 ? c : Integer.compare(a.getSortOrder(), b.getSortOrder());
+        });
+        return l;
+    }
+
+    private static int cmpDate(Post a, Post b) {
+        if (a.getCreatedAt() == null || b.getCreatedAt() == null) return a.getCreatedAt() == null ? (b.getCreatedAt() == null ? 0 : -1) : 1;
+        return a.getCreatedAt().compareTo(b.getCreatedAt());
+    }
     public List<Post> all() { return posts.findAllByOrderBySortOrderAscCreatedAtDesc(); }
     public Optional<Post> bySlug(String slug) { return posts.findBySlug(slug); }
     public Optional<Post> byId(long id) { return posts.findById(id); }
@@ -45,6 +67,11 @@ public class PostService {
 
     @Transactional
     public Post save(Long id, String slug, String title, String summary, String body, boolean published, int order, String cover) {
+        return save(id, slug, title, summary, body, published, order, cover, null);
+    }
+
+    @Transactional
+    public Post save(Long id, String slug, String title, String summary, String body, boolean published, int order, String cover, String category) {
         slug = slug == null ? "" : slug.trim().toLowerCase();
         if (!slug.matches(SLUG_RULE)) throw new IllegalArgumentException("주소는 영문 소문자·숫자·하이픈(-)으로 2~80자: 예) how-to-read");
         if (title == null || title.trim().isEmpty()) throw new IllegalArgumentException("제목을 넣어 주세요");
@@ -57,6 +84,7 @@ public class PostService {
         p.setSlug(slug); p.setTitle(title.trim()); p.setSummary(summary == null ? null : summary.trim());
         p.setBody(body == null ? "" : body); p.setPublished(published); p.setSortOrder(order);
         p.setCover(cover == null || cover.trim().isEmpty() ? null : cover.trim());
+        if (category != null) p.setCategory(category);
         p.setEdited(true);
         return posts.save(p);
     }
@@ -80,6 +108,13 @@ public class PostService {
                 Optional<Post> old = posts.findBySlug(slug);
                 if (!old.isPresent()) { posts.save(f); n++; continue; }
                 Post p = old.get();
+                if (!p.hasCategory() && f.hasCategory()) {
+                    // 분류가 생기기 전에 들어간 글: 분류와 글 날짜만 채운다 (고친 글도)
+                    p.setCategory(f.getCategory());
+                    if (f.getCreatedAt() != null) p.setCreatedAt(f.getCreatedAt());
+                    posts.save(p);
+                    up++;
+                }
                 int have = p.getSeedVersion() == null ? 1 : p.getSeedVersion();
                 if (p.isEdited() || f.getSeedVersion() == null || f.getSeedVersion() <= have) continue;
                 p.setTitle(f.getTitle()); p.setSummary(f.getSummary()); p.setBody(f.getBody()); p.setCover(f.getCover());
@@ -110,11 +145,25 @@ public class PostService {
             else if (k.equals("version")) p.setSeedVersion(Integer.parseInt(v));
             else if (k.equals("cover")) p.setCover(v);
             else if (k.equals("published")) p.setPublished(Boolean.parseBoolean(v));
+            else if (k.equals("category")) p.setCategory(v);
+            else if (k.equals("date")) p.setCreatedAt(parseDate(v));
         }
         p.setBody(body.trim() + "\n");
         LocalDateTime now = LocalDateTime.now();
-        p.setCreatedAt(now); p.setUpdatedAt(now);
+        if (p.getCreatedAt() == null) p.setCreatedAt(now);
+        p.setUpdatedAt(p.getCreatedAt());
         return p;
+    }
+
+    /** "2026-11-22" 또는 "2026-11-22 21:00" */
+    static LocalDateTime parseDate(String v) {
+        try {
+            String t = v.trim().replace('T', ' ');
+            if (t.length() == 10) return java.time.LocalDate.parse(t).atStartOfDay();
+            return LocalDateTime.parse(t.replace(' ', 'T'));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static byte[] readAll(InputStream in) throws java.io.IOException {

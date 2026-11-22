@@ -3,6 +3,8 @@ summary: 경주 화면의 전날 예상, 당일 분석, ★ 가치마, 점수표
 order: 10
 version: 2
 cover: /guide-img/system-flow.png
+category: basic
+date: 2026-11-21 09:00
 ---
 ![가치마가 한 경주를 보는 흐름: 전날 예상 → 당일 배당 → ★ → 결과와 성적](/guide-img/system-flow.png)
 

@@ -27,8 +27,11 @@ public class GuideController {
     public GuideController(PostService posts, UploadService uploads, SiteInfo site) { this.posts = posts; this.uploads = uploads; this.site = site; }
 
     @GetMapping("/guide")
-    public String list(Model model) {
-        model.addAttribute("posts", posts.published());
+    public String list(@RequestParam(required = false) String cat, Model model) {
+        if (cat != null && !Post.CATS.containsKey(cat)) cat = null;
+        model.addAttribute("posts", posts.published(cat));
+        model.addAttribute("cat", cat);
+        model.addAttribute("cats", Post.CATS);
         return "guide-list";
     }
 
@@ -40,7 +43,9 @@ public class GuideController {
         model.addAttribute("p", p);
         model.addAttribute("html", Markdown.toHtml(p.getBody()));
         model.addAttribute("desc", p.getSummary() != null && !p.getSummary().isEmpty() ? p.getSummary() : Markdown.plain(p.getBody(), 150));
-        model.addAttribute("others", posts.published());
+        java.util.List<Post> others = new java.util.ArrayList<>();
+        for (Post o : posts.published(p.getCategory())) if (!o.getId().equals(p.getId())) others.add(o);
+        model.addAttribute("others", others.size() > 6 ? others.subList(0, 6) : others);
         if (p.getCover() != null) model.addAttribute("ogImage", p.getCover().startsWith("http") ? p.getCover() : site.get().url + p.getCover());
         return "guide";
     }
@@ -69,15 +74,15 @@ public class GuideController {
     public String save(@RequestParam(required = false) Long id, @RequestParam String slug, @RequestParam String title,
                        @RequestParam(required = false) String summary, @RequestParam(required = false) String body,
                        @RequestParam(defaultValue = "false") boolean published, @RequestParam(defaultValue = "100") int sortOrder,
-                       @RequestParam(required = false) String cover,
+                       @RequestParam(required = false) String cover, @RequestParam(required = false) String category,
                        Model model, RedirectAttributes ra) {
         try {
-            Post p = posts.save(id, slug, title, summary, body, published, sortOrder, cover);
+            Post p = posts.save(id, slug, title, summary, body, published, sortOrder, cover, category);
             ra.addFlashAttribute("msg", published ? "저장했습니다 (공개)" : "저장했습니다 (비공개 초안)");
             return "redirect:/guide/" + p.getSlug();
         } catch (IllegalArgumentException e) {
             Post p = id == null ? new Post() : posts.byId(id).orElse(new Post());
-            p.setSlug(slug); p.setTitle(title); p.setSummary(summary); p.setBody(body); p.setPublished(published); p.setSortOrder(sortOrder); p.setCover(cover);
+            p.setSlug(slug); p.setTitle(title); p.setSummary(summary); p.setBody(body); p.setPublished(published); p.setSortOrder(sortOrder); p.setCover(cover); p.setCategory(category);
             model.addAttribute("p", p);
             model.addAttribute("error", e.getMessage());
             return "post-edit";

@@ -22,14 +22,16 @@
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
   <article class="post">
     <p class="post-draft" th:unless="${p.published}">비공개 초안 (관리자에게만 보임)</p>
+    <a class="post-cat" th:href="@{/guide(cat=${p.category})}" th:text="${p.categoryLabel}">분류</a>
     <h1 th:text="${p.title}">제목</h1>
-    <p class="post-meta"><b class="post-by">가치마</b> · <span th:text="${#temporals.format(p.updatedAt, 'yyyy.MM.dd')}"></span>
+    <p class="post-meta"><b class="post-by">가치마</b> · <span th:text="${#temporals.format(p.createdAt, 'yyyy.MM.dd')}"></span>
       <a sec:authorize="hasRole('ADMIN')" th:href="@{|/admin/posts/${p.id}|}">· 고치기</a></p>
     <div class="post-body" th:utext="${html}"></div>
   </article>
-  <nav class="post-more" th:if="${#lists.size(others) > 1}">
-    <b>다른 가이드</b>
-    <th:block th:each="o : ${others}"><a th:unless="${o.id == p.id}" th:href="@{|/guide/${o.slug}|}" th:text="${o.title}"></a></th:block>
+  <nav class="post-more" th:unless="${#lists.isEmpty(others)}">
+    <b th:text="|다른 ${p.categoryLabel}|">다른 가이드</b>
+    <a th:each="o : ${others}" th:href="@{|/guide/${o.slug}|}" th:text="${o.title}"></a>
+    <a class="pm-all" th:href="@{/guide}">가이드 전체 보기 →</a>
   </nav>
   <footer th:replace="~{fragments :: foot}"></footer>
   <nav th:replace="~{fragments :: tabbar('guide')}"></nav>

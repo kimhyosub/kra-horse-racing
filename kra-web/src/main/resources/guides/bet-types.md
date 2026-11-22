@@ -3,6 +3,8 @@ summary: 한국 경마의 7가지 승식이 각각 무엇을 맞혀야 하는지
 order: 40
 version: 2
 cover: /guide-img/pool-roi.png
+category: basic
+date: 2026-11-21 09:00
 ---
 # 7가지 승식
 
