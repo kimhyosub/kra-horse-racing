@@ -1,5 +1,7 @@
 # automation — 가치마 자동 수집
 
+> 클라우드 서버(Oracle, 리눅스)로 옮기는 방법과 서버용 스크립트: [CLOUD.md](CLOUD.md), `linux/`
+
 매일 밤 한 번:
 
 ```
