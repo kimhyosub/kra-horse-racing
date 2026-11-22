@@ -49,7 +49,7 @@ gachima:
     # 허용(=알림 받을) 대화 ID, 쉼표로. 봇에게 /id 를 보내면 알려 줌
     chats: ${GACHIMA_TELEGRAM_CHATS:}
   # 알림 속 링크 주소
-  public-url: ${GACHIMA_PUBLIC_URL:https://gachima.zipbabstudio.com}
+  public-url: ${GACHIMA_PUBLIC_URL:https://gachima.co.kr}
   ads:
     # 애드센스 게시자 ID (예: ca-pub-1234567890123456). 넣으면 모든 공개 화면에 애드센스 코드·확인 메타태그, /ads.txt 가 생김
     client: ${GACHIMA_ADSENSE_CLIENT:}

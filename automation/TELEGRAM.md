@@ -31,7 +31,7 @@ setx GACHIMA_TELEGRAM_CHATS "123456789,-1001234567890"
 ```
 
 - 허용 대화에서만 스크린샷을 처리하고, 알림도 허용 대화 전부로 갑니다.
-- 링크 주소는 기본 `https://gachima.zipbabstudio.com` (`GACHIMA_PUBLIC_URL`로 변경).
+- 링크 주소는 기본 `https://gachima.co.kr` (`GACHIMA_PUBLIC_URL`로 변경).
 - IntelliJ 로 웹을 돌리면 IntelliJ 를 완전히 껐다 켜야 환경변수가 들어갑니다.
 - 관리 화면 **텔레그램** 칸에 "켜짐: 허용 대화 N개" 가 보이면 끝.
 
