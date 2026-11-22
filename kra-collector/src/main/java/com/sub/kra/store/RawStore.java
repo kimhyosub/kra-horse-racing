@@ -43,6 +43,18 @@ public class RawStore {
         return saved.isAfter(date);
     }
 
+    /** 저장된 파일의 행 수 (없거나 읽을 수 없으면 0) */
+    public int count(String api, int meet, LocalDate date) {
+        File f = file(api, meet, date);
+        if (!f.isFile()) return 0;
+        try {
+            JsonNode n = om.readTree(f);
+            return n != null && n.isArray() ? n.size() : 0;
+        } catch (IOException e) {
+            return 0;
+        }
+    }
+
     public void save(String api, int meet, LocalDate date, List<JsonNode> items) throws IOException {
         File f = file(api, meet, date);
         File dir = f.getParentFile();

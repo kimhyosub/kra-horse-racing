@@ -22,6 +22,8 @@ param(
     [switch]$SkipOdds,
     # 확정배당(all-odds)만 받기: 출전표·경주성적·심판은 건너뜀 (지난 날짜 승식 배당 채우기용)
     [switch]$OddsOnly,
+    # 이미 받은 날짜도 다시 받기 (장애로 비거나 일부만 받은 날 복구용). 새로 받은 게 더 적으면 기존 파일을 유지함
+    [switch]$Refresh,
     [switch]$SkipCollect,
     [switch]$SkipExport,
     # 낮 동안 30분마다 도는 결과 반영용: 로그를 따로(results-*.log) 남기고 오래된 것은 3일만 보관
@@ -121,6 +123,7 @@ try {
             ('--kra.apis.all-odds.enabled=' + ($OddsOnly -or -not $SkipOdds).ToString().ToLower()),
             # 웹용 파일은 확정배당 원본(JSON)을 직접 읽으므로, 확정배당만 받을 때는 큰 CSV 를 다시 쓰지 않는다
             ('--kra.export-apis=' + $(if ($OddsOnly) { 'referee' } else { $apis -join ',' })),
+            ('--kra.skip-existing=' + (-not $Refresh).ToString().ToLower()),
             '--logging.charset.console=UTF-8')
         Log "[1/2] 수집기: $($apis -join ', ')"
         $rc = Run $Java $argv

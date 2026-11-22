@@ -44,7 +44,10 @@ public class KraApiClient {
             p.put("numOfRows", String.valueOf(props.getNumOfRows()));
             ResponseParser.Page res = fetchPage(url, p);
             all.addAll(res.items);
-            if (res.items.isEmpty() || all.size() >= res.totalCount) break;
+            if (all.size() >= res.totalCount) break;
+            // 다 받기 전에 빈 페이지가 오면(서버 장애 등) 일부만 받은 것 → 저장하지 않도록 실패로 처리
+            if (res.items.isEmpty())
+                throw new KraApiException("PARTIAL", "총 " + res.totalCount + "건 중 " + all.size() + "건만 받음 (" + page + "쪽이 비어 있음)");
             page++;
         }
         return all;

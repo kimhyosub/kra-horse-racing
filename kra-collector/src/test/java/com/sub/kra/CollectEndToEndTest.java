@@ -46,6 +46,10 @@ class CollectEndToEndTest {
                       .append(",\"hrName\":\"말,").append(i).append("\",\"ord\":").append(i + 1).append('}');
                 }
                 body = "{\"response\":{\"header\":{\"resultCode\":\"00\"},\"body\":{\"items\":{\"item\":" + sb + "]},\"totalCount\":" + total + "}}}";
+            } else if (date.endsWith("04")) {                // 장애 흉내: 총 3건이라면서 2쪽이 비어 옴
+                body = page == 1
+                        ? "{\"response\":{\"header\":{\"resultCode\":\"00\"},\"body\":{\"items\":{\"item\":[{\"chulNo\":1},{\"chulNo\":2}]},\"totalCount\":3}}}"
+                        : "{\"response\":{\"header\":{\"resultCode\":\"00\"},\"body\":{\"items\":\"\",\"totalCount\":3}}}";
             } else body = "{\"response\":{\"header\":{\"resultCode\":\"00\"},\"body\":{\"items\":\"\",\"totalCount\":0}}}";
             byte[] b = body.getBytes(StandardCharsets.UTF_8);
             ex.sendResponseHeaders(200, b.length);
@@ -96,5 +100,28 @@ class CollectEndToEndTest {
         CollectService.Summary s = new CollectService(p, new KraApiClient(p, om), new RawStore(p, om)).run();
         assertTrue(s.stoppedByLimit);
         assertEquals(1, s.saved);                            // 5/1(빈 날)만 저장, 5/2 도중 한도
+    }
+
+    /** 서버 장애로 빈 응답·일부만 온 경우: 이미 받아 둔 파일을 덮어쓰지 않고, 일부만 받은 것은 저장하지 않는다 */
+    @Test void keepsExistingDataWhenServerReturnsLess(@TempDir Path dir) throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        KraProperties p = props(dir);
+        p.setFrom("2026-05-01"); p.setTo("2026-05-01");
+        RawStore store = new RawStore(p, om);
+        java.time.LocalDate d = java.time.LocalDate.of(2026, 5, 1);
+        java.util.List<com.fasterxml.jackson.databind.JsonNode> two = new java.util.ArrayList<>();
+        two.add(om.readTree("{\"chulNo\":1}")); two.add(om.readTree("{\"chulNo\":2}"));
+        store.save("race-result", 1, d, two);
+        // 경주 당일에 저장된 파일 → 확정 전으로 보고 다시 받게 함
+        store.file("race-result", 1, d).setLastModified(java.sql.Timestamp.valueOf("2026-05-01 18:00:00").getTime());
+        CollectService.Summary s = new CollectService(p, new KraApiClient(p, om), store).run();
+        assertEquals(1, s.failed);
+        assertEquals(2, store.count("race-result", 1, d));    // 빈 응답이 덮어쓰지 않음
+
+        KraProperties p2 = props(dir);
+        p2.setFrom("2026-05-04"); p2.setTo("2026-05-04");
+        CollectService.Summary s2 = new CollectService(p2, new KraApiClient(p2, om), store).run();
+        assertEquals(1, s2.failed);
+        assertFalse(store.exists("race-result", 1, java.time.LocalDate.of(2026, 5, 4)));   // 3건 중 2건만 온 것은 저장 안 함
     }
 }

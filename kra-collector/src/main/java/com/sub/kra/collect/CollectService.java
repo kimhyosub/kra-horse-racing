@@ -65,6 +65,13 @@ public class CollectService {
                         List<JsonNode> items = client.fetchAll(def.getUrl(), p);
                         // 오늘·미래 날짜의 빈 응답은 저장하지 않음 (결과가 나온 뒤 다시 받을 수 있도록)
                         if (items.isEmpty() && !d.isBefore(LocalDate.now())) { s.emptyDays++; continue; }
+                        // 이미 받아 둔 파일보다 적게 오면(장애로 빈 응답·일부만 응답) 덮어쓰지 않는다
+                        int had = store.count(api, meet, d);
+                        if (had > 0 && items.size() < had) {
+                            s.failed++;
+                            log.warn("[{}] meet{} {} → {}행만 와서 기존 {}행을 유지합니다 (서버 장애로 보임, 나중에 다시 받음)", api, meet, d, items.size(), had);
+                            continue;
+                        }
                         store.save(api, meet, d, items);
                         s.saved++; s.rows += items.size();
                         if (items.isEmpty()) s.emptyDays++;
