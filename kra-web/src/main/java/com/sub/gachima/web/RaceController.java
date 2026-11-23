@@ -25,6 +25,8 @@ public class RaceController {
     private final com.sub.gachima.service.PaperService paperService;
     private final com.sub.gachima.service.ScreenshotReader screenshotReader;
     private final com.sub.gachima.telegram.TelegramBot telegram;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sub.gachima.telegram.ChannelPublisher channelPublisher;
     private final com.sub.gachima.service.ModelInfo modelInfo;
     /** 당일 분석 화면의 배당·마체중 입력칸과 스크린샷 올리기 (기본 숨김, 텔레그램으로 입력) */
     @org.springframework.beans.factory.annotation.Value("${gachima.ui.web-input:false}")
@@ -136,6 +138,7 @@ public class RaceController {
         model.addAttribute("shotEnabled", screenshotReader.isEnabled());
         model.addAttribute("tgEnabled", telegram.isEnabled());
         model.addAttribute("tgChats", telegram.getChats().size());
+        model.addAttribute("tgChannel", channelPublisher.getChannel());
         return "admin";
     }
 

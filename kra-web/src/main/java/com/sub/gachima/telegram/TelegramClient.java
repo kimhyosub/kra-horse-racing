@@ -35,13 +35,37 @@ public class TelegramClient {
     }
 
     public void sendMessage(long chatId, String html, Long replyTo) throws IOException {
-        ObjectNode b = om.createObjectNode();
+        ObjectNode b = message(html);
         b.put("chat_id", chatId);
+        if (replyTo != null) b.putObject("reply_parameters").put("message_id", replyTo).put("allow_sending_without_reply", true);
+        call("sendMessage", b, 20_000);
+    }
+
+    /** 채널(@이름 또는 -100… ID)로 보내고 메시지 번호를 돌려준다 */
+    public long sendMessage(String chatId, String html) throws IOException {
+        ObjectNode b = message(html);
+        b.put("chat_id", chatId);
+        return call("sendMessage", b, 20_000).path("result").path("message_id").asLong();
+    }
+
+    /** 보낸 메시지 고치기. 내용이 같으면 텔레그램이 오류를 주는데 무시한다 */
+    public void editMessage(String chatId, long messageId, String html) throws IOException {
+        ObjectNode b = message(html);
+        b.put("chat_id", chatId);
+        b.put("message_id", messageId);
+        try {
+            call("editMessageText", b, 20_000);
+        } catch (IOException e) {
+            if (e.getMessage() == null || !e.getMessage().contains("not modified")) throw e;
+        }
+    }
+
+    private ObjectNode message(String html) {
+        ObjectNode b = om.createObjectNode();
         b.put("text", html.length() > 4000 ? html.substring(0, 4000) + "…" : html);
         b.put("parse_mode", "HTML");
         b.put("disable_web_page_preview", true);
-        if (replyTo != null) b.putObject("reply_parameters").put("message_id", replyTo).put("allow_sending_without_reply", true);
-        call("sendMessage", b, 20_000);
+        return b;
     }
 
     public void typing(long chatId) {

@@ -36,6 +36,11 @@ public class ImportService {
         this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.paper = paper; this.om = om; this.dir = new File(dir);
     }
 
+    private org.springframework.context.ApplicationEventPublisher events = e -> { };
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setEvents(org.springframework.context.ApplicationEventPublisher events) { if (events != null) this.events = events; }
+
     public File getDir() { return dir; }
 
     @Transactional
@@ -84,6 +89,7 @@ public class ImportService {
                 race = races.save(race);
                 saveFinal(race, r.path("final"));
                 paper.settle(race);
+                if (fileResult) events.publishEvent(new RaceEvent(RaceEvent.Kind.RESULT, md.getRaceDate(), md.getMeet(), race.getRcNo()));
                 nRace++;
             }
         }

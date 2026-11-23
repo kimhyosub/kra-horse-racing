@@ -26,9 +26,14 @@ public class RaceService {
     private final ObjectMapper om;
     private final PaperService paper;
 
+    private org.springframework.context.ApplicationEventPublisher events = e -> { };
+
     public RaceService(MeetDayRepository meetDays, RaceRepository races, DayInputRepository inputs, ObjectMapper om, PaperService paper) {
         this.meetDays = meetDays; this.races = races; this.inputs = inputs; this.om = om; this.paper = paper;
     }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setEvents(org.springframework.context.ApplicationEventPublisher events) { if (events != null) this.events = events; }
 
     public Optional<MeetDay> latest() {
         return meetDays.findAllByOrderByRaceDateDescMeetAsc().stream().findFirst();
@@ -214,7 +219,9 @@ public class RaceService {
         in.setCreatedAt(LocalDateTime.now());
         inputs.save(in);
         List<DayModel.Result> scored = model(md).score(horses(race, in), in.getTrack());
-        return paper.record(race, scored, in.getTrack(), readMap(in.getBwdJson()), user);
+        PaperService.Outcome o = paper.record(race, scored, in.getTrack(), readMap(in.getBwdJson()), user);
+        if (o == PaperService.Outcome.RECORDED) events.publishEvent(new RaceEvent(RaceEvent.Kind.INPUT, date, meet, rcNo));
+        return o;
     }
 
     /**
@@ -243,6 +250,7 @@ public class RaceService {
         }
         races.save(race);
         paper.settle(race);
+        events.publishEvent(new RaceEvent(RaceEvent.Kind.RESULT, date, meet, rcNo));
     }
 
     /** "12.5", "+3", "-4" 같은 입력을 숫자로. 배당은 1.0 이상만 받는다. */

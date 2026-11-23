@@ -44,6 +44,7 @@
   <h2 class="sec">텔레그램</h2>
   <section class="input">
     <p class="hint" th:if="${tgEnabled}" th:text="|켜짐: 허용 대화 ${tgChats}개. 스크린샷을 보내면 경주를 찾아 저장하고 당일 분석을 답장합니다.|"></p>
+    <p class="hint" th:if="${tgEnabled}" th:text="${#strings.isEmpty(tgChannel)} ? '공개 채널: 꺼짐 (GACHIMA_TELEGRAM_CHANNEL)' : |공개 채널: ${tgChannel} (출발 전 분석·결과·하루 결산 자동)|"></p>
     <p class="hint" th:unless="${tgEnabled}">꺼짐: PC 사용자 환경변수 TELEGRAM_BOT_TOKEN, GACHIMA_TELEGRAM_CHATS 를 넣고 웹을 다시 실행하세요. (automation/TELEGRAM.md)</p>
   </section>
   <h2 class="sec">자동 수집</h2>

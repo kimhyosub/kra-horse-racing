@@ -48,6 +48,8 @@ gachima:
     token: ${TELEGRAM_BOT_TOKEN:}
     # 허용(=알림 받을) 대화 ID, 쉼표로. 봇에게 /id 를 보내면 알려 줌
     chats: ${GACHIMA_TELEGRAM_CHATS:}
+    # 공개 채널 (@채널이름 또는 -100… ID). 봇을 채널 관리자로 넣으면 출발 전 분석·결과·하루 결산을 자동으로 올림
+    channel: ${GACHIMA_TELEGRAM_CHANNEL:}
   # 알림 속 링크 주소
   public-url: ${GACHIMA_PUBLIC_URL:https://gachima.co.kr}
   ads:
