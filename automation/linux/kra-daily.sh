@@ -14,6 +14,7 @@
 # 종료 코드: 0 정상, 1 실패, 3 일부 실패(계속 진행함)
 set -uo pipefail
 
+export LANG=C.UTF-8 LC_ALL=C.UTF-8   # 서버 기본 로캘(POSIX)이면 한글이 깨짐
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 # 윈도우에서 만든 파일이면 줄 끝 \r 을 떼고 읽는다

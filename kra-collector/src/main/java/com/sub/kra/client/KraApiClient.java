@@ -61,7 +61,9 @@ public class KraApiClient {
             sleep(props.getRequestDelayMs());
             calls++;
             try {
-                String body = rest.getForObject(uri, String.class);
+                // 응답에 charset 이 없으면 RestTemplate 이 ISO-8859-1 로 읽어 한글이 깨지므로 바이트로 받아 UTF-8 로 푼다
+                byte[] raw = rest.getForObject(uri, byte[].class);
+                String body = raw == null ? "" : new String(raw, java.nio.charset.StandardCharsets.UTF_8);
                 return parser.parse(body);
             } catch (KraApiException e) {
                 if (e.isFatal() || attempt >= props.getMaxRetries()) throw e;

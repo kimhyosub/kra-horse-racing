@@ -20,6 +20,8 @@
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 테스트 JVM 의 기본 문자셋을 UTF-8 로 (리눅스 서버 기본 로캘이 POSIX 여도 한글이 깨지지 않게) -->
+        <argLine>-Dfile.encoding=UTF-8</argLine>
     </properties>
 
     <dependencies>

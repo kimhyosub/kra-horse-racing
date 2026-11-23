@@ -6,6 +6,7 @@
 #   ./deploy.sh --no-restart 빌드만 (install.sh 가 처음에 씀)
 # PC 에서:  automation\deploy.bat   (ssh gachima 로 이 스크립트를 실행)
 set -euo pipefail
+export LANG=C.UTF-8 LC_ALL=C.UTF-8   # 서버 기본 로캘(POSIX)이면 한글이 깨짐
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 TEST=0; ALL=0; RESTART=1
