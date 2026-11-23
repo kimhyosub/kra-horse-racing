@@ -14,14 +14,27 @@ echo "== 1/6 시간대 Asia/Seoul"
 sudo timedatectl set-timezone Asia/Seoul
 
 echo "== 2/6 프로그램 설치"
-sudo apt-get update -q
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q openjdk-17-jdk-headless maven python3 python3-numpy python3-pandas git curl
+# 새 서버는 켜자마자 자동 업데이트가 apt 를 잡고 있어서, 끝날 때까지 기다린다 (최대 10분)
+wait_apt() {
+  for i in $(seq 1 120); do
+    { pgrep -x apt || pgrep -x apt-get || pgrep -x dpkg || pgrep -f unattended-upgrade; } >/dev/null || return 0
+    [ $i = 1 ] && echo "   자동 업데이트가 끝나기를 기다리는 중…"
+    sleep 5
+  done
+}
+APT="sudo apt-get -o DPkg::Lock::Timeout=600"
+wait_apt
+$APT update -q
+sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y -q openjdk-17-jdk-headless maven python3 python3-numpy python3-pandas git curl
 if ! command -v cloudflared >/dev/null; then
   sudo mkdir -p --mode=0755 /usr/share/keyrings
   curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
   echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" | sudo tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
-  sudo apt-get update -q && sudo apt-get install -y -q cloudflared
+  wait_apt
+  $APT update -q
+  $APT install -y -q cloudflared
 fi
+command -v cloudflared >/dev/null || { echo "!! cloudflared 설치 실패. 잠시 뒤 install.sh 를 다시 돌리세요."; exit 1; }
 
 echo "== 3/6 데이터 폴더 $DATA"
 sudo mkdir -p $DATA/{web,db,logs,uploads,raw,backup}
