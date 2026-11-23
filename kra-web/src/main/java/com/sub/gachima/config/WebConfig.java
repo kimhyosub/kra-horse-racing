@@ -14,6 +14,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry r) {
-        r.addResourceHandler("/uploads/**").addResourceLocations(uploads.getDir().toURI().toString()).setCachePeriod(60 * 60 * 24 * 30);
+        // 폴더가 아직 없으면 toURI() 끝에 '/' 가 안 붙어 파일을 못 찾으므로 만들고, '/' 를 보장한다
+        uploads.getDir().mkdirs();
+        String loc = uploads.getDir().getAbsoluteFile().toURI().toString();
+        if (!loc.endsWith("/")) loc += "/";
+        r.addResourceHandler("/uploads/**").addResourceLocations(loc).setCachePeriod(60 * 60 * 24 * 30);
     }
 }

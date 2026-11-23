@@ -74,6 +74,7 @@ class TelegramBotTest {
         for (int i = 0; i < odds.length; i++) { r.odds.put(i + 1, odds[i]); r.bwd.put(i + 1, bwd[i]); }
         when(reader.read(anyList(), isNull(), eq(0), anyMap())).thenReturn(r);
 
+        long before = inputs.findAll().stream().filter(x -> "tg:Sub".equals(x.getCreatedBy())).count();   // 같은 DB 를 쓰는 다른 테스트가 먼저 저장했을 수 있음
         photo(111, "");
 
         verify(tg).download("big");
@@ -92,8 +93,8 @@ class TelegramBotTest {
         verify(tg).sendMessage(eq(222L), anyString(), isNull());     // 다른 대화에도 알림
 
         List<DayInput> saved = inputs.findAll().stream().filter(x -> "tg:Sub".equals(x.getCreatedBy())).collect(Collectors.toList());
-        assertEquals(1, saved.size());
-        assertEquals("다습", saved.get(0).getTrack());
+        assertEquals(before + 1, saved.size());
+        assertEquals("다습", saved.get(saved.size() - 1).getTrack());
     }
 
     @Test
