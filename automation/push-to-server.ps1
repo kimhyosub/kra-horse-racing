@@ -11,9 +11,12 @@ PC 의 C:\kra-data 를 클라우드 서버로 옮기고, PC 쪽 가치마(웹·�
 param([string]$Server = 'gachima', [string]$DataDir = 'C:\kra-data')
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+. (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'common.ps1')
+$ssh = Find-Exe 'ssh'; $scp = Find-Exe 'scp'; $tar = Find-Exe 'tar'
+$sa = Ssh-Args $DataDir
 
 Write-Host "== 서버 연결 확인 ($Server)"
-ssh -o BatchMode=yes $Server 'test -x ~/kra-horse-racing/automation/linux/import-data.sh && echo ok'
+& $ssh @sa -o BatchMode=yes $Server 'test -x ~/kra-horse-racing/automation/linux/import-data.sh && echo ok'
 if ($LASTEXITCODE -ne 0) { throw "서버에 연결되지 않거나 install.sh 를 아직 안 돌렸습니다 (CLOUD.md 2~4단계)" }
 
 Write-Host '== PC 자동 수집·웹 작업 끄기 (작업 스케줄러 > Gachima, 지우지 않고 사용 안 함으로)'
@@ -30,19 +33,21 @@ Get-NetTCPConnection -LocalPort 8090 -State Listen -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 3
 
 $parent = Split-Path -Parent $DataDir; $leaf = Split-Path -Leaf $DataDir
-$tgz = Join-Path $env:TEMP 'kra-data.tgz'
+# 사용자 폴더(TEMP)가 한글이면 scp 가 경로를 못 읽을 수 있어 데이터 폴더 안 sshkey 에 둔다 (묶을 때 sshkey 는 뺌: 접속 키가 서버로 가지 않게)
+New-Item -ItemType Directory -Force -Path (Join-Path $DataDir 'sshkey') | Out-Null
+$tgz = Join-Path $DataDir 'sshkey\kra-data.tgz'
 Write-Host "== $DataDir 묶기 (로그 빼고, 몇 분 걸림)"
 if (Test-Path $tgz) { Remove-Item $tgz }
-tar.exe -czf $tgz -C $parent --exclude="$leaf/logs" --exclude="$leaf/db/*.lock.db" --exclude="$leaf/db/*.trace.db" $leaf
+& $tar -czf $tgz -C $parent --exclude="$leaf/logs" --exclude="$leaf/sshkey" --exclude="$leaf/backup" --exclude="$leaf/db/*.lock.db" --exclude="$leaf/db/*.trace.db" $leaf
 if ($LASTEXITCODE -ne 0) { throw '묶기 실패' }
 Write-Host ("   {0:N0} MB" -f ((Get-Item $tgz).Length / 1MB))
 
 Write-Host '== 서버로 보내기'
-scp $tgz "${Server}:kra-data.tgz"
+& $scp @sa $tgz "${Server}:kra-data.tgz"
 if ($LASTEXITCODE -ne 0) { throw '보내기 실패' }
 
 Write-Host '== 서버에서 풀고 켜기'
-ssh $Server 'bash ~/kra-horse-racing/automation/linux/import-data.sh ~/kra-data.tgz'
+& $ssh @sa $Server 'bash ~/kra-horse-racing/automation/linux/import-data.sh ~/kra-data.tgz'
 if ($LASTEXITCODE -ne 0) { throw '서버에서 풀기 실패 (위 메시지 확인)' }
 Remove-Item $tgz
 

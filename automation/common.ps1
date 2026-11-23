@@ -41,3 +41,22 @@ function Find-Python([string]$want) {
     throw "python 을 찾지 못했습니다. kra-auto.config.ps1 에 `$Python = 'C:\...\python.exe' 를 적어 주세요."
 }
 
+
+# ssh·scp·tar: PATH 에 없으면 윈도우 기본 위치에서 (32비트 PowerShell 이면 Sysnative)
+function Find-Exe([string]$name) {
+    $c = Get-Command $name -ErrorAction SilentlyContinue
+    if ($c) { return $c.Source }
+    foreach ($d in "$env:WINDIR\Sysnative\OpenSSH", "$env:WINDIR\System32\OpenSSH", "$env:WINDIR\Sysnative", "$env:WINDIR\System32") {
+        $p = Join-Path $d "$name.exe"
+        if (Test-Path $p) { return $p }
+    }
+    throw "$name 을(를) 찾지 못했습니다 (설정 → 앱 → 선택적 기능 → OpenSSH 클라이언트)"
+}
+
+# 서버 접속 설정. 사용자 폴더 이름이 한글이면 윈도우 ssh 가 %USERPROFILE%\.ssh\config 를 못 읽으므로
+# C:\kra-data\sshkey\config 가 있으면 그것을 쓴다 (-F)
+function Ssh-Args([string]$dataDir = 'C:\kra-data') {
+    $cfg = Join-Path $dataDir 'sshkey\config'
+    if (Test-Path $cfg) { return @('-F', $cfg) }
+    return @()
+}

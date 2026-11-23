@@ -7,23 +7,26 @@
 param([string]$Server = 'gachima', [string]$DataDir = 'C:\kra-data', [switch]$Db)
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+. (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'common.ps1')
+$ssh = Find-Exe 'ssh'; $scp = Find-Exe 'scp'; $tar = Find-Exe 'tar'
+$sa = Ssh-Args $DataDir
 New-Item -ItemType Directory -Force -Path "$DataDir\logs", "$DataDir\web" | Out-Null
 
 Write-Host '== 로그 (최근 3일)'
-ssh $Server 'cd /srv/kra-data/logs && find . -name \*.log\* -mtime -3 -print0 | tar -czf /tmp/gachima-logs.tgz --null -T -'
-scp "${Server}:/tmp/gachima-logs.tgz" "$env:TEMP\gachima-logs.tgz"
-tar.exe -xzf "$env:TEMP\gachima-logs.tgz" -C "$DataDir\logs"
-Remove-Item "$env:TEMP\gachima-logs.tgz"
+& $ssh @sa $Server 'cd /srv/kra-data/logs && find . -name \*.log\* -mtime -3 -print0 | tar -czf /tmp/gachima-logs.tgz --null -T -'
+& $scp @sa "${Server}:/tmp/gachima-logs.tgz" "$DataDir\gachima-logs.tgz"
+& $tar -xzf "$DataDir\gachima-logs.tgz" -C "$DataDir\logs"
+Remove-Item "$DataDir\gachima-logs.tgz"
 
 Write-Host '== 웹 파일'
-scp "${Server}:/srv/kra-data/web/*.json" "$DataDir\web\"
+& $scp @sa "${Server}:/srv/kra-data/web/*.json" "$DataDir\web\"
 
 if ($Db) {
     Write-Host '== DB 백업 (웹이 켜진 채로 H2 SCRIPT 로 받음)'
     New-Item -ItemType Directory -Force -Path "$DataDir\backup" | Out-Null
-    ssh $Server 'bash ~/kra-horse-racing/automation/linux/backup-db.sh /tmp/gachima-db.zip'
+    & $ssh @sa $Server 'bash ~/kra-horse-racing/automation/linux/backup-db.sh /tmp/gachima-db.zip'
     $name = 'gachima-db-{0}.zip' -f (Get-Date).ToString('yyyyMMdd-HHmm')
-    scp "${Server}:/tmp/gachima-db.zip" "$DataDir\backup\$name"
+    & $scp @sa "${Server}:/tmp/gachima-db.zip" "$DataDir\backup\$name"
     Write-Host "   $DataDir\backup\$name"
 }
 Write-Host '끝.'
