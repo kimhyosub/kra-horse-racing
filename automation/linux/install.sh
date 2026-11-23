@@ -47,6 +47,7 @@ if [ ! -f /etc/gachima.env ]; then
 else
   echo "   이미 있음 (그대로 둠)"
 fi
+sudo sed -i 's/\r$//' /etc/gachima.env   # 윈도우 줄바꿈(\r\n)이면 고침
 
 echo "== 5/6 빌드 (처음엔 라이브러리를 받느라 5분쯤)"
 bash "$HERE/deploy.sh" --all --no-restart

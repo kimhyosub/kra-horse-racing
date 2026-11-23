@@ -16,7 +16,9 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
-if [ -z "${KRA_SERVICE_KEY:-}" ] && [ -r /etc/gachima.env ]; then set -a; . /etc/gachima.env; set +a; fi
+# 윈도우에서 만든 파일이면 줄 끝 \r 을 떼고 읽는다
+if [ -z "${KRA_SERVICE_KEY:-}" ] && [ -r /etc/gachima.env ]; then set -a; . <(tr -d '\r' < /etc/gachima.env); set +a; fi
+for v in GACHIMA_DATA GACHIMA_IMPORT_DIR KRA_SERVICE_KEY; do [ -n "${!v:-}" ] && printf -v "$v" '%s' "${!v//$'\r'/}"; done
 
 DATA="${GACHIMA_DATA:-/srv/kra-data}"
 WEB="${GACHIMA_IMPORT_DIR:-$DATA/web}"
