@@ -16,7 +16,8 @@ if (Test-Path $LocalConfig) { . $LocalConfig }
 . (Join-Path $ScriptDir 'common.ps1')
 
 foreach ($n in 'GACHIMA_LOGIN_USER', 'GACHIMA_LOGIN_PASSWORD', 'ANTHROPIC_API_KEY', 'GACHIMA_PUBLIC_READ',
-            'TELEGRAM_BOT_TOKEN', 'GACHIMA_TELEGRAM_CHATS', 'GACHIMA_PUBLIC_URL') {
+            'TELEGRAM_BOT_TOKEN', 'GACHIMA_TELEGRAM_CHATS', 'GACHIMA_PUBLIC_URL',
+            'GACHIMA_ADSENSE_CLIENT', 'GACHIMA_GSC_VERIFY', 'GACHIMA_NAVER_VERIFY', 'GACHIMA_DAUM_VERIFY', 'GACHIMA_CONTACT') {
     if (-not [Environment]::GetEnvironmentVariable($n, 'Process')) {
         $v = [Environment]::GetEnvironmentVariable($n, 'User')
         if ($v) { [Environment]::SetEnvironmentVariable($n, $v, 'Process') }

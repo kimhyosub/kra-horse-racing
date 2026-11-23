@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
-/** 검색엔진·광고용 파일: robots.txt, sitemap.xml, ads.txt */
+/** 검색엔진·광고용 파일: robots.txt, sitemap.xml, rss.xml, ads.txt */
 @RestController
 public class SeoController {
 
@@ -32,7 +32,9 @@ public class SeoController {
 
     @GetMapping(value = "/robots.txt", produces = MediaType.TEXT_PLAIN_VALUE)
     public String robots(HttpServletRequest req) {
-        return "User-agent: *\nDisallow: /admin\nDisallow: /login\nAllow: /\n\nSitemap: " + base(req) + "/sitemap.xml\n";
+        String daum = site.get().daumVerify;
+        return "User-agent: *\nDisallow: /admin\nDisallow: /login\nAllow: /\n\nSitemap: " + base(req) + "/sitemap.xml\n"
+                + (daum.isEmpty() ? "" : "\n" + daum + "\n");
     }
 
     /** 애드센스 게시자 ID 가 있을 때만. 없으면 404 */
@@ -59,6 +61,37 @@ public class SeoController {
                 url(x, b + "/r/" + d + "/" + md.getMeet() + "/" + r.getRcNo(), day, null);
         }
         return x.append("</urlset>\n").toString();
+    }
+
+    /** 가이드 글 RSS 2.0 (네이버 서치어드바이저 'RSS 제출'용). 최신 글 30개 */
+    @GetMapping(value = "/rss.xml", produces = "application/rss+xml;charset=UTF-8")
+    public String rss(HttpServletRequest req) {
+        String b = base(req);
+        java.time.format.DateTimeFormatter rfc = java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+        java.time.ZoneId kst = java.time.ZoneId.of("Asia/Seoul");
+        java.util.List<com.sub.gachima.domain.Post> list = posts.published(null);
+        StringBuilder x = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n<channel>\n");
+        x.append("  <title>가치마 가이드</title>\n  <link>").append(b).append("/guide</link>\n");
+        x.append("  <atom:link href=\"").append(b).append("/rss.xml\" rel=\"self\" type=\"application/rss+xml\"/>\n");
+        x.append("  <description>공공데이터로 만든 경마 분석 가치마의 기초 가이드·데이터 분석·주간 총평</description>\n  <language>ko</language>\n");
+        if (!list.isEmpty() && list.get(0).getCreatedAt() != null)
+            x.append("  <lastBuildDate>").append(rfc.format(list.get(0).getCreatedAt().atZone(kst))).append("</lastBuildDate>\n");
+        int n = 0;
+        for (com.sub.gachima.domain.Post p : list) {
+            if (n++ >= 30) break;
+            String link = b + "/guide/" + p.getSlug();
+            x.append("  <item>\n    <title>").append(xml(p.getTitle())).append("</title>\n    <link>").append(link).append("</link>\n");
+            x.append("    <guid isPermaLink=\"true\">").append(link).append("</guid>\n");
+            x.append("    <category>").append(xml(p.getCategoryLabel())).append("</category>\n");
+            if (p.getSummary() != null) x.append("    <description>").append(xml(p.getSummary())).append("</description>\n");
+            if (p.getCreatedAt() != null) x.append("    <pubDate>").append(rfc.format(p.getCreatedAt().atZone(kst))).append("</pubDate>\n");
+            x.append("  </item>\n");
+        }
+        return x.append("</channel>\n</rss>\n").toString();
+    }
+
+    static String xml(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
     private static void url(StringBuilder x, String loc, String lastmod, String freq) {

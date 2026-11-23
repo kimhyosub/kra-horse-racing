@@ -109,6 +109,8 @@
   <meta property="og:image" th:content="${ogImage} ?: |${site.url}/og.png|">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="google-site-verification" th:if="${!#strings.isEmpty(site.gscVerify)}" th:content="${site.gscVerify}">
+  <meta name="naver-site-verification" th:if="${!#strings.isEmpty(site.naverVerify)}" th:content="${site.naverVerify}">
+  <link rel="alternate" type="application/rss+xml" title="가치마 가이드" th:href="|${site.url}/rss.xml|">
   <th:block th:if="${site.ads}">
     <meta name="google-adsense-account" th:content="${site.adsClient}">
     <script async th:src="|https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${site.adsClient}|" crossorigin="anonymous"></script>

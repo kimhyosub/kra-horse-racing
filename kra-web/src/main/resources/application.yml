@@ -55,6 +55,10 @@ gachima:
     client: ${GACHIMA_ADSENSE_CLIENT:}
     # 구글 서치 콘솔 'HTML 태그' 확인 코드 (content="…" 안의 값만)
     gsc-verify: ${GACHIMA_GSC_VERIFY:}
+    # 네이버 서치어드바이저 'HTML 태그' 확인 코드 (<meta name="naver-site-verification" content="…"> 의 content 값만)
+    naver-verify: ${GACHIMA_NAVER_VERIFY:}
+    # 다음 웹마스터도구가 robots.txt 에 넣으라고 주는 한 줄 전체 (#DaumWebMasterTool:…)
+    daum-verify: ${GACHIMA_DAUM_VERIFY:}
     # 이용안내에 보일 연락처 (이메일 등)
     contact: ${GACHIMA_CONTACT:}
   ui:

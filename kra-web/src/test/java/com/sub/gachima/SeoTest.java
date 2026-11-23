@@ -22,6 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gachima.public-url=https://gachima.example.com/",
         "gachima.ads.client=ca-pub-1234567890123456",
         "gachima.ads.gsc-verify=abcVERIFY",
+        "gachima.ads.naver-verify=naverABC",
+        "gachima.ads.daum-verify=#DaumWebMasterTool:abc123:xyz",
         "gachima.ads.contact=help@example.com"})
 @AutoConfigureMockMvc
 class SeoTest {
@@ -44,7 +46,9 @@ class SeoTest {
                 .andExpect(content().string(containsString("https://gachima.example.com/og.png")))
                 .andExpect(content().string(containsString("<meta name=\"google-adsense-account\" content=\"ca-pub-1234567890123456\"")))
                 .andExpect(content().string(containsString("adsbygoogle.js?client=ca-pub-1234567890123456")))
-                .andExpect(content().string(containsString("<meta name=\"google-site-verification\" content=\"abcVERIFY\"")));
+                .andExpect(content().string(containsString("<meta name=\"google-site-verification\" content=\"abcVERIFY\"")))
+                .andExpect(content().string(containsString("<meta name=\"naver-site-verification\" content=\"naverABC\"")))
+                .andExpect(content().string(containsString("href=\"https://gachima.example.com/rss.xml\"")));
         mvc.perform(get("/r/20261115/1/7/score")).andExpect(status().isOk()).andExpect(content().string(containsString("요인별 점수표")));
         mvc.perform(get("/stats")).andExpect(status().isOk()).andExpect(content().string(containsString("공개 성적 | 가치마")));
         mvc.perform(get("/about")).andExpect(status().isOk())
@@ -55,7 +59,13 @@ class SeoTest {
         mvc.perform(get("/ads.txt")).andExpect(status().isOk())
                 .andExpect(content().string("google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n"));
         mvc.perform(get("/robots.txt")).andExpect(status().isOk())
-                .andExpect(content().string(containsString("Sitemap: https://gachima.example.com/sitemap.xml")));
+                .andExpect(content().string(containsString("Sitemap: https://gachima.example.com/sitemap.xml")))
+                .andExpect(content().string(containsString("#DaumWebMasterTool:abc123:xyz")));
+        mvc.perform(get("/rss.xml")).andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/rss+xml"))
+                .andExpect(content().string(containsString("<link>https://gachima.example.com/guide/how-to-read</link>")))
+                .andExpect(content().string(containsString("<category>주간 총평</category>")))
+                .andExpect(content().string(containsString("+0900</pubDate>")));
         mvc.perform(get("/sitemap.xml")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("<loc>https://gachima.example.com/r/20261115/1/7</loc><lastmod>2026-11-15</lastmod>")))
                 .andExpect(content().string(not(containsString("/admin"))));
