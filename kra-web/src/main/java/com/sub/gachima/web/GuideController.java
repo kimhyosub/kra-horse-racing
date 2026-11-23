@@ -90,7 +90,7 @@ public class GuideController {
     }
 
     /** 글쓰기 화면의 이미지 올리기 → {"url": "/uploads/…"} 또는 {"error": "…"} */
-    @PostMapping("/admin/posts/upload")
+    @PostMapping(value = "/admin/posts/upload", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public ResponseEntity<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
         try {

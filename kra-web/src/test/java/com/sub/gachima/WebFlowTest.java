@@ -114,7 +114,7 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("5두 안 3착")))
                 .andExpect(content().string(containsString("같은 경주 인기 1위 우승")))
                 .andExpect(content().string(containsString("확정 배당 기준")))
-                .andExpect(content().string(containsString("이날 당일 5두를 박스로 샀다면")))
+                .andExpect(content().string(containsString("이날 당일 상위 5두를 박스로 샀다면")))
                 .andExpect(content().string(containsString("복승 박스 · 5두 10조합")))
                 .andExpect(content().string(containsString("복연 박스 · 5두 10조합")))
                 .andExpect(content().string(containsString("href=\"/stats?date=20261115&amp;box=3\"")))
