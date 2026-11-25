@@ -136,7 +136,7 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("공식 합계")));
         mvc.perform(get("/stats").param("date", "20261115").param("box", "3")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("이날 당일 상위 3두를 박스로 샀다면")))
-                .andExpect(content().string(containsString("쌍승 박스 · 3두 6조합")))
+                .andExpect(content().string(containsString("쌍승 6조합")))
                 .andExpect(content().string(containsString("복승 81%")));
         mvc.perform(get("/stats").param("date", "20990101")).andExpect(status().isOk())        // 없는 날은 최근 날로
                 .andExpect(content().string(containsString("11월 15일 (일)")));
