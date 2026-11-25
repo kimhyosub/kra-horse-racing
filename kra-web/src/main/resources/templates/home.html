@@ -6,7 +6,8 @@
   <th:block th:replace="~{fragments :: seo(${t}, ${d})}"></th:block>
   </th:block>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
   <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
   <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
   <link rel="manifest" th:href="@{/manifest.json}">
@@ -28,7 +29,7 @@
     <p class="hm-meets" th:text="${h.meetNames}">제주 7경주 · 부경 10경주</p>
     <div class="hm-kpis">
       <div><b th:text="${h.races}">17</b><span>경주</span></div>
-      <div><b th:text="${h.clear}">8</b><span>1위 30% 넘는 경주</span></div>
+      <div><b th:text="${h.clear}">8</b><span>뚜렷한 경주</span></div>
       <div><b th:text="${h.dayRaces > 0} ? ${h.stars} : '-'">-</b><span>★ 가치마</span></div>
     </div>
   </section>
@@ -38,6 +39,7 @@
     <p th:each="l : ${h.summary}" th:text="${l}"></p>
   </section>
 
+  <div class="hm-grid">
   <section class="hm-meet" th:each="m : ${h.meets}">
     <header><h2 th:text="${m.name}">부경</h2><i class="bd ref" th:if="${m.reference}">참고</i>
       <a th:href="@{|/r/${h.date}/${m.meet}/1|}">경주 화면 ›</a></header>
@@ -56,6 +58,8 @@
       </span>
     </a>
   </section>
+
+  </div>
 
   <section class="hm-past" th:if="${h.past != null}" th:with="p=${h.past}">
     <header><b>지난 경주일엔 얼마나 맞았나</b><span th:text="|${p.label} · ${p.races}경주|"></span></header>

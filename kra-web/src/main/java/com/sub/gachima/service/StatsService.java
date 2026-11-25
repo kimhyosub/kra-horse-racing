@@ -465,8 +465,14 @@ public class StatsService {
     public static final int ROLLING_DAYS = 20;
 
     /** +12,300원 / −30,000원 */
-    static String won(long v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + String.format("%,d원", Math.abs(v)); }
-    static String won0(long v) { return String.format("%,d원", v); }
+    static String won(long v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + compact(Math.abs(v)); }
+    /** 10만 원 이상은 "30.3만원"처럼 줄여 휴대폰 칸에서 줄이 깨지지 않게 */
+    static String compact(long a) {
+        if (a < 100_000) return String.format("%,d원", a);
+        double m = a / 10_000.0;
+        return (m >= 100 ? String.format("%,.0f", m) : String.format("%.1f", m).replace(".0", "")) + "만원";
+    }
+    static String won0(long v) { return compact(v); }
 
     /** date 가 없거나 결과가 없는 날이면 결과가 있는 가장 최근 날 */
     public Report report(Stats s, String date) { return report(s, date, 5); }

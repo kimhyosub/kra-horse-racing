@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <th:block th:replace="~{fragments :: seo('경마 예상 적중률·회수율 공개 성적 | 가치마', '가치마 전날 예상·당일 분석 1위 적중률과 인기 1위와 비교 · 승식별 회수율 · 출발 전에 기록한 모의 장부를 결과 그대로 공개합니다.')}"></th:block>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
   <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
   <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
   <link rel="manifest" th:href="@{/manifest.json}">
@@ -43,8 +44,8 @@
     <div class="rp-kpis">
       <div class="rp-kpi"><small>1위 적중</small><b th:text="${rp.day.day1Rate}">-</b><span th:text="|${rp.day.day1}/${rp.day.dayN}경주|"></span></div>
       <div class="rp-kpi"><small>1·2위 동시 적중</small><b th:text="${rp.day.dayPairRate}">-</b><span th:text="|${rp.day.dq}/${rp.day.dqN}경주 · 순서 무관|"></span></div>
-      <div class="rp-kpi"><small>예상 5두 안에 실제 1·2착</small><b th:text="${rp.day.dayIn12Rate}">-</b><span th:text="|${rp.day.din12}/${rp.day.din12N}경주|"></span></div>
-      <div class="rp-kpi"><small>예상 5두 안에 실제 1·2·3착</small><b th:text="${rp.day.dayIn123Rate}">-</b><span th:text="|${rp.day.din123}/${rp.day.din123N}경주|"></span></div>
+      <div class="rp-kpi"><small>5두 안 1·2착</small><b th:text="${rp.day.dayIn12Rate}">-</b><span th:text="|${rp.day.din12}/${rp.day.din12N}경주|"></span></div>
+      <div class="rp-kpi"><small>5두 안 1·2·3착</small><b th:text="${rp.day.dayIn123Rate}">-</b><span th:text="|${rp.day.din123}/${rp.day.din123N}경주|"></span></div>
     </div>
     <div class="rp-sub">
       <span>같은 경주 인기 1위 우승 <b th:text="${rp.day.dayFav1Rate}"></b> <small th:text="|(${rp.day.dFav1}/${rp.day.dFavN})|"></small></span>
@@ -61,9 +62,9 @@
         </nav>
         <span>복승·쌍승·복연 모든 조합 1,000원씩 · 확정 배당</span></header>
       <div class="rp-kpis four">
-        <div class="rp-kpi"><small th:text="|복승 박스 · ${rp.boxK}두 ${rp.day.pairs}조합|">복승 박스</small><b th:classappend="${rp.day.QUp} ? 'pos' : 'neg'" th:text="${rp.day.QProfit}">-</b><span th:text="|회수율 ${rp.day.QRoi} · 산 돈 ${rp.day.QCostText}|"></span></div>
-        <div class="rp-kpi"><small th:text="|쌍승 박스 · ${rp.boxK}두 ${rp.day.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.day.EUp} ? 'pos' : 'neg'" th:text="${rp.day.EProfit}">-</b><span th:text="|회수율 ${rp.day.ERoi} · 산 돈 ${rp.day.ECostText}|"></span></div>
-        <div class="rp-kpi"><small th:text="|복연 박스 · ${rp.boxK}두 ${rp.day.pairs}조합|">복연 박스</small><b th:classappend="${rp.day.BUp} ? 'pos' : 'neg'" th:text="${rp.day.BProfit}">-</b><span th:text="|회수율 ${rp.day.BRoi} · ${rp.day.bN}경주 중 ${rp.day.bHit}경주 적중|"></span></div>
+        <div class="rp-kpi"><small th:text="|복승 ${rp.day.pairs}조합|">복승 박스</small><b th:classappend="${rp.day.QUp} ? 'pos' : 'neg'" th:text="${rp.day.QProfit}">-</b><span th:text="|회수율 ${rp.day.QRoi} · 산 돈 ${rp.day.QCostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|쌍승 ${rp.day.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.day.EUp} ? 'pos' : 'neg'" th:text="${rp.day.EProfit}">-</b><span th:text="|회수율 ${rp.day.ERoi} · 산 돈 ${rp.day.ECostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|복연 ${rp.day.pairs}조합|">복연 박스</small><b th:classappend="${rp.day.BUp} ? 'pos' : 'neg'" th:text="${rp.day.BProfit}">-</b><span th:text="|회수율 ${rp.day.BRoi} · ${rp.day.bN}경주 중 ${rp.day.bHit}경주 적중|"></span></div>
         <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.day.boxUp} ? 'pos' : 'neg'" th:text="${rp.day.boxProfit}">-</b><span th:text="|회수율 ${rp.day.boxRoi} · 산 돈 ${rp.day.boxCostText} · 복승·쌍승 ${rp.day.boxHit}/${rp.day.boxN}경주 적중|"></span></div>
       </div>
     </div>
@@ -91,9 +92,9 @@
     <div class="rp-box">
       <header><b th:text="|최근 누적 · ${rp.boxK}두 박스 손익|">최근 누적</b><span th:text="|같은 방식 과거 2년 검증 회수율: ${rp.boxBack}|"></span></header>
       <div class="rp-kpis four">
-        <div class="rp-kpi"><small th:text="|복승 박스 · ${rp.boxK}두 ${rp.rolling.pairs}조합|">복승 박스</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
-        <div class="rp-kpi"><small th:text="|쌍승 박스 · ${rp.boxK}두 ${rp.rolling.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
-        <div class="rp-kpi"><small th:text="|복연 박스 · ${rp.boxK}두 ${rp.rolling.pairs}조합|">복연 박스</small><b th:classappend="${rp.rolling.BUp} ? 'pos' : 'neg'" th:text="${rp.rolling.BProfit}">-</b><span th:text="|회수율 ${rp.rolling.BRoi} · ${rp.rolling.bN}경주 중 ${rp.rolling.bHit}경주 적중|"></span></div>
+        <div class="rp-kpi"><small th:text="|복승 ${rp.rolling.pairs}조합|">복승 박스</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|쌍승 ${rp.rolling.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
+        <div class="rp-kpi"><small th:text="|복연 ${rp.rolling.pairs}조합|">복연 박스</small><b th:classappend="${rp.rolling.BUp} ? 'pos' : 'neg'" th:text="${rp.rolling.BProfit}">-</b><span th:text="|회수율 ${rp.rolling.BRoi} · ${rp.rolling.bN}경주 중 ${rp.rolling.bHit}경주 적중|"></span></div>
         <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.rolling.boxUp} ? 'pos' : 'neg'" th:text="${rp.rolling.boxProfit}">-</b><span th:text="|회수율 ${rp.rolling.boxRoi} · 산 돈 ${rp.rolling.boxCostText} · 복승·쌍승 ${rp.rolling.boxHit}/${rp.rolling.boxN}경주 적중|"></span></div>
       </div>
     </div>

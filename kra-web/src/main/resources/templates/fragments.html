@@ -140,12 +140,11 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6M3 20h18" /></svg><span>성적</span></a>
   <a th:href="@{/guide}" th:classappend="${active == 'guide'} ? 'on'" th:attr="aria-current=${active == 'guide'}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5z M12 6v13.5" /></svg><span>가이드</span></a>
-  <a th:href="@{/model}" th:classappend="${active == 'model'} ? 'on'" th:attr="aria-current=${active == 'model'}">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="8" cy="17" r="2" /></svg><span>가중치</span></a>
-  <details class="more" th:classappend="${active == 'admin'} ? 'on'">
+  <details class="more" th:classappend="${active == 'admin' or active == 'model' or active == 'about'} ? 'on'">
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg><span>더보기</span></summary>
     <div class="sheet">
       <a th:href="@{/about}">소개 · 이용안내</a>
+      <a th:href="@{/model}" th:classappend="${active == 'model'} ? 'on'">모델 가중치</a>
       <th:block sec:authorize="isAuthenticated()">
         <b sec:authentication="name">아이디</b>
         <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">관리 · 불러오기 · 자동 수집</a>
