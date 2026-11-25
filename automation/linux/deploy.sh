@@ -33,6 +33,7 @@ if git diff --quiet "$OLD" "$NEW" -- automation/linux/install.sh; then :; else
 fi
 if [ $RESTART = 1 ] && [ $WEB_BUILT = 1 ]; then
   echo "== 웹 재시작"
+  sudo systemctl daemon-reload 2>/dev/null || true   # 서비스 설정 파일이 바뀌었으면 다시 읽음
   sudo systemctl restart gachima-web
   for i in $(seq 1 60); do
     if curl -fs -o /dev/null http://localhost:8090/about; then echo "웹 정상 (${i}초)"; break; fi
