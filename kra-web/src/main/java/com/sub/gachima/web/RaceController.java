@@ -47,10 +47,16 @@ public class RaceController {
     public String about() { return "about"; }
 
     /** 가장 최근 경주일의 첫 경주로 */
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sub.gachima.service.HomeService homeService;
+
+    /** 첫 화면: 가장 가까운 경주일 요약 · 경주별 가치마 1·2위 · 지난 경주일 성적 */
     @GetMapping("/")
-    public String home() {
-        Optional<MeetDay> md = raceService.latest();
-        return md.map(m -> "redirect:/r/" + m.getRaceDate() + "/" + m.getMeet() + "/1").orElse("redirect:/about");
+    public String home(Model model) {
+        com.sub.gachima.service.HomeService.Home h = homeService.home();
+        if (h.isEmpty()) return "redirect:/about";
+        model.addAttribute("h", h);
+        return "home";
     }
 
     @GetMapping("/r/{date}/{meet}/{rc}")

@@ -33,7 +33,13 @@ class WebFlowTest {
     void preThenDay() throws Exception {
         importService.importFile(new ClassPathResource("day-20261115.json").getFile());
 
-        mvc.perform(get("/")).andExpect(redirectedUrl("/r/20261115/1/1"));
+        // 첫 화면: 가장 가까운 경주일(여기선 지난 15일) 요약과 경주별 가치마 1위
+        mvc.perform(get("/")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("2026년 11월 15일 (일)")))
+                .andExpect(content().string(containsString("오늘 경주를 이렇게 봅니다")))
+                .andExpect(content().string(containsString("가치마 1위 확률이 30%를 넘는 경주는")))
+                .andExpect(content().string(containsString("href=\"/r/20261115/1/7")))
+                .andExpect(content().string(containsString("class=\"hm-row")));
 
         mvc.perform(get("/r/20261115/1/7"))
                 .andExpect(status().isOk())

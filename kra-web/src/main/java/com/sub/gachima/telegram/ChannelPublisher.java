@@ -42,6 +42,7 @@ public class ChannelPublisher {
     private final TelegramClient tg;
     private final RaceService races;
     private final PaperService paper;
+    private final com.sub.gachima.service.HomeService home;
     private final String channel, publicUrl;
     private final Clock clock;
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
@@ -54,11 +55,11 @@ public class ChannelPublisher {
     /** "date" → 결산 올림 */
     final Set<String> summarized = ConcurrentHashMap.newKeySet();
 
-    public ChannelPublisher(TelegramClient tg, RaceService races, PaperService paper,
+    public ChannelPublisher(TelegramClient tg, RaceService races, PaperService paper, com.sub.gachima.service.HomeService home,
                             @Value("${gachima.telegram.channel:}") String channel,
                             @Value("${gachima.public-url:}") String publicUrl,
                             Optional<Clock> clock) {
-        this.tg = tg; this.races = races; this.paper = paper;
+        this.tg = tg; this.races = races; this.paper = paper; this.home = home;
         this.channel = channel == null ? "" : channel.trim();
         this.publicUrl = publicUrl == null ? "" : publicUrl.trim().replaceAll("/+$", "");
         this.clock = clock.orElse(Clock.system(KST));
@@ -112,6 +113,35 @@ public class ChannelPublisher {
         if (all.isEmpty() || !summarized.add(date)) return;
         List<RaceView> mine = all.stream().filter(v -> posted.containsKey(date + "-" + v.meet + "-" + v.rcNo)).collect(Collectors.toList());
         tg.sendMessage(channel, summary(date, mine, paper.ledger().getTotal()));
+    }
+
+    /** 경주일 아침 09:20 (아침 출전표 수집 08:40 뒤): 오늘 경주 요약과 경주별 가치마 1위 */
+    @org.springframework.scheduling.annotation.Scheduled(cron = "${gachima.telegram.morning-cron:0 20 9 * * *}", zone = "Asia/Seoul")
+    public void morning() {
+        if (!isEnabled()) return;
+        try {
+            com.sub.gachima.service.HomeService.Home h = home.home();
+            if (h.isEmpty() || !h.date.equals(today()) || !summarized.add("morning-" + h.date)) return;
+            tg.sendMessage(channel, morningText(h));
+        } catch (Exception x) {
+            log.warn("텔레그램 채널 아침 요약 실패: {}", x.getMessage());
+        }
+    }
+
+    String morningText(com.sub.gachima.service.HomeService.Home h) {
+        StringBuilder b = new StringBuilder();
+        b.append("📋 <b>").append(esc(h.label)).append(" 가치마</b>\n").append(esc(h.getMeetNames())).append("\n\n");
+        for (String l : h.getSummary()) b.append(esc(l)).append('\n');
+        for (com.sub.gachima.service.HomeService.MeetBlock m : h.meets) {
+            if (m.reference) continue;
+            b.append("\n<b>").append(esc(m.name)).append("</b>\n");
+            for (com.sub.gachima.service.HomeService.Row r : m.rows)
+                b.append(r.rcNo).append("R ").append(r.stTime == null ? "" : esc(r.stTime) + " ").append(r.first.no).append("번 ")
+                 .append(esc(r.first.name)).append(' ').append(r.getP1Text()).append(r.isClear() ? " ●" : "").append('\n');
+        }
+        b.append("\n<i>● 1위 확률 30% 이상 · ★ 가치마는 경주 직전 배당으로 경주마다 따로 올립니다.</i>");
+        link(b, "/", "오늘 경주 전체 보기");
+        return b.toString();
     }
 
     static boolean hasResult(RaceView v) {

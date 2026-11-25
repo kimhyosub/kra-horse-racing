@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8">
+  <th:block th:with="t=${'가치마 · ' + h.label + ' 경마 분석'}, d=${h.label + ' ' + h.meetNames + ' — 경주마다 가치마가 꼽은 말과 우승 확률 · ★ 가치마 · 지난 경주일 적중을 무료로 봅니다.'}">
+  <th:block th:replace="~{fragments :: seo(${t}, ${d})}"></th:block>
+  </th:block>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <!-- 휴대폰 홈 화면에 추가하면 앱처럼 (PWA) -->
+  <link rel="manifest" th:href="@{/manifest.json}">
+  <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="가치마">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#fbefd2">
+  <link rel="stylesheet" th:href="@{/css/gachima.css}">
+</head>
+<body>
+<div class="wrap home">
+  <header th:replace="~{fragments :: topbar('전날 예상하고 당일 배당으로 다시 읽는 경마 분석')}"></header>
+
+  <section class="hm-hero">
+    <small th:text="${h.upcoming} ? '다가오는 경주일' : '최근 경주일'">다가오는 경주일</small>
+    <h1 th:text="${h.label}">2026년 11월 27일 (금)</h1>
+    <p class="hm-meets" th:text="${h.meetNames}">제주 7경주 · 부경 10경주</p>
+    <div class="hm-kpis">
+      <div><b th:text="${h.races}">17</b><span>경주</span></div>
+      <div><b th:text="${h.clear}">8</b><span>1위 30% 넘는 경주</span></div>
+      <div><b th:text="${h.dayRaces > 0} ? ${h.stars} : '-'">-</b><span>★ 가치마</span></div>
+    </div>
+  </section>
+
+  <section class="hm-sum" th:unless="${#lists.isEmpty(h.summary)}">
+    <b>오늘 경주를 이렇게 봅니다</b>
+    <p th:each="l : ${h.summary}" th:text="${l}"></p>
+  </section>
+
+  <section class="hm-meet" th:each="m : ${h.meets}">
+    <header><h2 th:text="${m.name}">부경</h2><i class="bd ref" th:if="${m.reference}">참고</i>
+      <a th:href="@{|/r/${h.date}/${m.meet}/1|}">경주 화면 ›</a></header>
+    <a class="hm-row" th:each="r : ${m.rows}" th:href="${r.href}" th:classappend="${r.finished} ? (${r.hit} ? 'hit' : 'miss')">
+      <span class="hm-rc"><b th:text="|${r.rcNo}R|">1R</b><small th:text="${r.stTime}">10:35</small></span>
+      <span class="hm-pick">
+        <span class="hm-name"><b th:text="|${r.first.no}번 ${r.first.name}|">7번 철웅</b>
+          <i class="hm-src" th:text="${r.sourceLabel}">전날</i>
+          <i class="hm-star" th:each="s : ${r.stars}" th:text="|★${s.no}|">★3</i></span>
+        <span class="hm-bar"><i th:style="|width:${r.p1Bar}%|" th:classappend="${r.clear} ? 'clear'"></i></span>
+        <small th:if="${r.second != null}" th:text="|2위 ${r.second.no}번 ${r.second.name} ${r.p2Text}|"></small>
+      </span>
+      <span class="hm-p">
+        <b th:text="${r.p1Text}">31%</b>
+        <small th:if="${r.finished}" th:text="${r.hit} ? '적중' : |1착 ${r.winNo}번|">1착 5번</small>
+      </span>
+    </a>
+  </section>
+
+  <section class="hm-past" th:if="${h.past != null}" th:with="p=${h.past}">
+    <header><b>지난 경주일엔 얼마나 맞았나</b><span th:text="|${p.label} · ${p.races}경주|"></span></header>
+    <div class="hm-kpis">
+      <div><b th:text="|${p.hit}/${p.races}|">9/34</b><span th:text="|가치마 1위 우승 ${p.hitRate}|"></span></div>
+      <div><b th:text="|${p.top3}/${p.races}|">23/34</b><span th:text="|1위가 3착 안 ${p.top3Rate}|"></span></div>
+      <div th:if="${p.starN > 0}"><b th:text="|${p.starHit}/${p.starN}|">1/6</b><span th:text="|★ 모의 장부 ${p.starProfitText}|"></span></div>
+    </div>
+    <p th:text="${p.comment}"></p>
+    <a class="hm-more" th:href="@{/stats(date=${p.date})}">그날 검증 리포트 ›</a>
+  </section>
+
+  <section class="hm-links">
+    <a th:href="@{/guide/how-to-read}"><b>가치마 보는 법</b><span>전날 예상 · 당일 분석 · ★</span></a>
+    <a th:href="@{/guide/expected-value}"><b>기대값이란</b><span>왜 1위보다 ★ 인가</span></a>
+    <a th:href="@{/stats}"><b>검증 리포트</b><span>틀린 것까지 전부 공개</span></a>
+  </section>
+
+  <footer th:replace="~{fragments :: foot}"></footer>
+  <nav th:replace="~{fragments :: tabbar('race')}"></nav>
+</div>
+</body>
+</html>
