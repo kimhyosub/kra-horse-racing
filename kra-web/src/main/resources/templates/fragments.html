@@ -159,8 +159,11 @@
 <section th:fragment="review(c, title)" class="review" th:if="${c != null and !c.empty}">
   <header><span class="rv-tag" th:classappend="${c.levelClass}" th:text="${c.level}">보통</span><b th:text="${title}">총평</b></header>
   <p class="rv-head" th:text="${c.headline}"></p>
-  <ul><li th:each="pt : ${c.points}" th:text="${pt}"></li></ul>
-  <small>모델 숫자로 자동으로 쓴 참고 의견입니다. 조합 확률은 각 말의 우승 확률로 계산한 추정치입니다.</small>
+  <details class="rv-more" th:unless="${#lists.isEmpty(c.points)}">
+    <summary>자세히 보기</summary>
+    <ul><li th:each="pt : ${c.points}" th:text="${pt}"></li></ul>
+    <small>모델 숫자로 자동으로 쓴 참고 의견입니다. 조합 확률은 각 말의 우승 확률로 계산한 추정치입니다.</small>
+  </details>
 </section>
 <!-- 경주 화면 머리 (전날 예상·당일 분석·점수표 공통): 로고, 날짜·경마장, 경주 번호 + 요약판 -->
 <th:block th:fragment="racehead(v, mode, score)">
@@ -201,7 +204,7 @@
           <span th:each="h : ${v.values}" style="color:var(--value)" th:text="|★ ${h.no}번 ${h.odds}배|"></span>
         </div>
         <div class="seq" th:unless="${v.scored}"><span>당일 배당 입력 전</span></div></div>
-      <div><h2>확정 착순</h2>
+      <div th:unless="${#lists.isEmpty(v.result)}"><h2>확정 착순</h2>
         <div class="seq"><th:block th:each="n : ${v.result}"><th:block th:insert="~{fragments :: cloth(${n})}"></th:block></th:block>
           <span th:if="${#lists.isEmpty(v.result)}">경주 전</span></div></div>
     </div>
