@@ -122,6 +122,10 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("1위→2위→3위")))
                 .andExpect(content().string(containsString("10.7% / 80%")))        // 삼복승 과거 검증
                 .andExpect(content().string(containsString("1경주 · 적중")))        // 서울 7R 만 승식 배당이 있음
+                .andExpect(content().string(containsString("가치마 1위 vs 배당 1위")))
+                .andExpect(content().string(containsString("가치마 확률은 맞나")))
+                .andExpect(content().string(containsString("19세 미만은 마권을 구매할 수 없습니다")))
+                .andExpect(content().string(containsString("데이터 출처: 한국마사회 공개 자료")))
                 .andExpect(content().string(containsString("class=\"tabbar\"")))
                 .andExpect(content().string(containsString("공식 합계")));
         mvc.perform(get("/stats").param("date", "20261115").param("box", "3")).andExpect(status().isOk())

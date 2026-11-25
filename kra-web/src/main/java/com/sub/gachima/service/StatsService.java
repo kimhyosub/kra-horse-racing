@@ -120,6 +120,7 @@ public class StatsService {
             RaceRec rc = t.recs.get(t.recs.size() - 1);
             rc.dayNo = rs.get(0).no; rc.day1 = rs.get(0).no == w.getChulNo(); rc.dayAfter = afterRace;
             for (DayModel.Result x : rs) if (rc.dayTop5.size() < 5) rc.dayTop5.add(x.no);
+            for (DayModel.Result x : rs) rc.probs.add(new double[]{x.pModel, x.no == w.getChulNo() ? 1 : 0});
             if (rc.b != null && rs.size() >= 2) {
                 rc.dayPair = new HashSet<>(Arrays.asList(rc.a, rc.b)).equals(new HashSet<>(Arrays.asList(rs.get(0).no, rs.get(1).no)));
                 rc.dayIn12 = rc.dayTop5.contains(rc.a) && rc.dayTop5.contains(rc.b);
@@ -189,6 +190,8 @@ public class StatsService {
         public Integer a, b, c, favNo, dayNo;
         public Boolean preQ, in512, in5123, fav1, day1, dayPair, dayIn12, dayIn123;
         public int dayTop3In5;
+        /** 당일 분석의 말별 {모델 확률, 우승 1/0} (확률 보정표용) */
+        public final List<double[]> probs = new ArrayList<>();
         /** 실제 1·2착 조합의 복승·쌍승 확정 배당 (밤 수집 뒤) */
         public Double qDiv, eDiv;
         /** 복연승 적중 조합(1-2·1-3·2-3착) 확정 배당 {"1-6": 3.2, …} */
@@ -333,6 +336,11 @@ public class StatsService {
             return boxK == 3 ? "복승 81% · 쌍승 80% · 복연 80%" : boxK == 4 ? "복승 77% · 쌍승 78% · 복연 79%" : "복승 74% · 쌍승 76% · 복연 78%";
         }
         public int rollingDays;
+        /** 전체 기간: 가치마 당일 1위 vs 배당 1위, 확률 보정표 */
+        public final Versus versus = new Versus();
+        public final List<CalibRow> calib = new ArrayList<>();
+        public int calibHorses;
+        public boolean isHasCalib() { return calibHorses > 0; }
         public final List<RaceRec> races = new ArrayList<>();
         public final List<String> trendDates = new ArrayList<>();
         public final List<Agg> trend = new ArrayList<>();
@@ -346,6 +354,53 @@ public class StatsService {
         public String getFirstDate() { return trendDates.isEmpty() ? "" : trendDates.get(0); }
         public Chart chart(String metric) { return Chart.of(this, metric); }
     }
+
+    /** 가치마 당일 1위와 배당(시장) 1위의 우승률 비교. 같은 경주만 센다 */
+    public static class Versus {
+        public int n, ours, market, same, oursOnly, marketOnly;
+        /** 과거 2년(2025~2026, 3,969경주, 확정 배당) */
+        public String getBackOurs() { return "37.1%"; }
+        public String getBackMarket() { return "37.4%"; }
+        public String getBackOursRoi() { return "83%"; }
+        public String getBackMarketRoi() { return "81%"; }
+        void add(RaceRec r) {
+            if (r.day1 == null || r.fav1 == null) return;
+            n++;
+            if (r.day1) ours++;
+            if (r.fav1) market++;
+            if (r.dayNo != null && r.dayNo.equals(r.favNo)) same++;
+            else { if (r.day1) oursOnly++; if (r.fav1) marketOnly++; }
+        }
+        static String pct(int a, int b) { return b == 0 ? "-" : String.format("%.1f%%", 100.0 * a / b); }
+        public String getOursRate() { return pct(ours, n); }
+        public String getMarketRate() { return pct(market, n); }
+        public int getOursBar() { return n == 0 ? 0 : (int) Math.round(100.0 * ours / n); }
+        public int getMarketBar() { return n == 0 ? 0 : (int) Math.round(100.0 * market / n); }
+        public int getDiff() { return n - same; }
+        public String getSameRate() { return pct(same, n); }
+        public String getVerdict() {
+            if (n < 30) return "아직 " + n + "경주라 차이를 판단하기 이릅니다.";
+            int d = ours - market;
+            return d > 0 ? "가치마 1위가 " + d + "경주 더 이겼습니다." : d < 0 ? "배당 1위가 " + (-d) + "경주 더 이겼습니다." : "두 방식의 우승 수가 같습니다.";
+        }
+    }
+
+    /** 확률 구간별: 가치마가 매긴 우승 확률 평균 vs 실제 우승 비율 */
+    public static class CalibRow {
+        public final String label;
+        public int n, wins;
+        public double pSum;
+        CalibRow(String label) { this.label = label; }
+        public String getPred() { return n == 0 ? "-" : String.format("%.1f%%", 100 * pSum / n); }
+        public String getActual() { return n == 0 ? "-" : String.format("%.1f%%", 100.0 * wins / n); }
+        public int getPredBar() { return n == 0 ? 0 : (int) Math.round(Math.min(100, 100 * pSum / n * 2)); }
+        public int getActualBar() { return n == 0 ? 0 : (int) Math.round(Math.min(100, 100.0 * wins / n * 2)); }
+        /** 실제가 예상보다 높으면 +, 낮으면 - (%p) */
+        public String getGap() { return n == 0 ? "" : String.format("%+.1f%%p", 100.0 * wins / n - 100 * pSum / n); }
+        public boolean isThin() { return n < 30; }
+    }
+    static final double[] CALIB_EDGES = {0, .05, .10, .15, .20, .30, .40, .50, 1.01};
+    static final String[] CALIB_LABELS = {"5% 미만", "5~10%", "10~15%", "15~20%", "20~30%", "30~40%", "40~50%", "50% 이상"};
 
     /** 추이 선 그래프용 좌표 (SVG viewBox 0 0 640 250, 그림 영역 x 40~628, y 16~216 = 100%~0%) */
     public static class Chart {
@@ -425,6 +480,20 @@ public class StatsService {
         if (byDate.isEmpty()) return rp;
         rp.dates.addAll(byDate.keySet());
         rp.date = date != null && byDate.containsKey(date) ? date : byDate.firstKey();
+        // 전체 기간 (영천 제외): 시장 비교와 확률 보정표
+        for (String l : CALIB_LABELS) rp.calib.add(new CalibRow(l));
+        for (List<RaceRec> l : byDate.values())
+            for (RaceRec r : l) {
+                if (!r.official) continue;
+                rp.versus.add(r);
+                for (double[] x : r.probs) {
+                    int i = 0;
+                    while (i < CALIB_LABELS.length - 1 && x[0] >= CALIB_EDGES[i + 1]) i++;
+                    CalibRow c = rp.calib.get(i);
+                    c.n++; c.pSum += x[0]; if (x[1] > 0) c.wins++;
+                    rp.calibHorses++;
+                }
+            }
         List<RaceRec> sel = byDate.get(rp.date);
         sel.sort(Comparator.comparingInt((RaceRec r) -> r.meet == REFERENCE_MEET ? 9 : r.meet).thenComparingInt(r -> r.rcNo));
         rp.races.addAll(sel);

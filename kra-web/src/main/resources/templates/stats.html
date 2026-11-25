@@ -174,6 +174,45 @@
     <p class="rp-note">모의 장부는 출발 전 마지막 배당의 ★ 를 단승 1단위로 기록하고 확정 배당으로 정산한 공식 기록입니다. 100% 이상이면 이익이고, 300건 전에는 결론을 내리지 않습니다.</p>
   </section>
 
+  <!-- 시장과 비교 · 확률 보정 -->
+  <section class="rp-card" th:if="${rp.versus.n > 0}">
+    <header class="rp-head">
+      <div><small>VS MARKET</small><h2>가치마 1위 vs 배당 1위</h2></div>
+      <span>지금까지 전체 · 영천 제외</span>
+    </header>
+    <div class="vs-bars" th:with="v=${rp.versus}">
+      <div class="vs-row"><span class="vs-name">가치마 당일 1위</span>
+        <span class="vs-track"><i class="vs-fill ours" th:style="|width:${v.oursBar}%|"></i></span>
+        <b th:text="${v.oursRate}">-</b><small th:text="|${v.ours}/${v.n}|"></small></div>
+      <div class="vs-row"><span class="vs-name">배당 1위</span>
+        <span class="vs-track"><i class="vs-fill mkt" th:style="|width:${v.marketBar}%|"></i></span>
+        <b th:text="${v.marketRate}">-</b><small th:text="|${v.market}/${v.n}|"></small></div>
+    </div>
+    <p class="rp-note" th:with="v=${rp.versus}">
+      <b th:text="${v.verdict}"></b>
+      <span th:text="|두 1위가 같은 말인 경주가 ${v.sameRate}이고, 다른 ${v.diff}경주에서는 가치마 1위만 이긴 경주 ${v.oursOnly}번 · 배당 1위만 이긴 경주 ${v.marketOnly}번입니다.|"></span>
+      <span th:text="|과거 2년(3,969경주) 우승률은 가치마 1위 ${v.backOurs} · 배당 1위 ${v.backMarket}로 거의 같았고, 계속 샀을 때 단승 회수율은 ${v.backOursRoi} · ${v.backMarketRoi}였습니다.|"></span>
+      1위를 맞히는 것만으로는 배당 1위를 크게 넘기 어렵다는 뜻이라, 가치마는 우승 확률보다 <a th:href="@{/guide/expected-value}">기대값(★)</a>을 기준으로 삼습니다.
+    </p>
+
+    <th:block th:if="${rp.hasCalib}">
+    <h3 class="rp-h3">가치마 확률은 맞나 · 확률 구간별 실제 우승</h3>
+    <table class="calib">
+      <thead><tr><th>확률 구간</th><th>말 수</th><th>예상</th><th>실제</th><th class="bars"></th></tr></thead>
+      <tbody>
+        <tr th:each="c : ${rp.calib}" th:if="${c.n > 0}" th:classappend="${c.thin} ? 'thin'">
+          <td th:text="${c.label}">20~30%</td>
+          <td th:text="${c.n}">0</td>
+          <td th:text="${c.pred}">-</td>
+          <td><b th:text="${c.actual}">-</b> <small th:text="${c.gap}"></small></td>
+          <td class="bars"><div class="cbw"><span class="cb pred" th:style="|width:${c.predBar}%|"></span><span class="cb act" th:style="|width:${c.actualBar}%|"></span></div></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="rp-note" th:text="|말 ${rp.calibHorses}두 기준. 예상(회색)과 실제(파랑)가 비슷할수록 확률이 믿을 만하다는 뜻입니다. 확정 배당으로 계산한 당일 분석이 섞여 있고, 말 수가 30두보다 적은 구간(흐리게)은 아직 우연의 영향이 큽니다.|"></p>
+    </th:block>
+  </section>
+
   <!-- 승식별 회수율 -->
   <section class="rp-card" th:unless="${s.empty}">
     <header class="rp-head">
