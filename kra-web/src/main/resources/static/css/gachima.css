@@ -652,3 +652,4 @@ a.btn{text-decoration:none;display:inline-block}
 .hm-grid{display:grid;gap:14px}
 .hm-grid .hm-meet{margin:0}
 @media (min-width:900px){.hm-grid{grid-template-columns:1fr 1fr;align-items:start}}
+@media (max-width:560px){.rp-box .rp-kpi b,.rp-kpis.four .rp-kpi b{font-size:23px}}
