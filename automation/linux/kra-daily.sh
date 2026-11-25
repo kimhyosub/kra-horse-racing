@@ -2,7 +2,7 @@
 # 가치마 자동 수집 (리눅스 서버판, automation/kra-daily.ps1 과 같은 일)
 #   수집기(출전표·경주성적·심판·확정배당) → CSV → export_web.py → $DATA/web → 웹이 1분 안에 불러옴
 #
-#   기본 범위: 어제 ~ 내일
+#   기본 범위: 어제 ~ 4일 뒤 (주말 출전표가 보통 수요일에 나오므로 수요일 밤에 금~일을 미리 받음)
 #   ./kra-daily.sh --from 2026-11-20 --to 2026-11-22
 #   ./kra-daily.sh --skip-odds            확정배당(큰 파일) 빼고
 #   ./kra-daily.sh --odds-only            확정배당만 (지난 날짜 승식 배당 채우기)
@@ -29,7 +29,7 @@ JAR="$REPO/kra-collector/target/kra-collector-1.0.0.jar"
 RACEDAY="$REPO/kra-raceday"
 KEEP_LOG_DAYS=30
 
-FROM=""; TO=""; BACK=1; AHEAD=1; MEETS="1,2,3,4"
+FROM=""; TO=""; BACK=1; AHEAD=4; MEETS="1,2,3,4"
 SKIP_ODDS=0; ODDS_ONLY=0; REFRESH=0; SKIP_COLLECT=0; SKIP_EXPORT=0; QUIET=0
 while [ $# -gt 0 ]; do
   case "$1" in
