@@ -26,6 +26,19 @@ public class Race {
     @Column(length = 400)
     private String divJson;
 
+    /** 전날 예상 지문: 경주일 0시 무렵(결과 전)에 고정한 예상 원문과 SHA-256 — 나중에 예상을 고치지 않았다는 증거 */
+    @Lob
+    private String preHashText;
+    @Column(length = 64)
+    private String preHash;
+    private java.time.LocalDateTime preHashAt;
+    public String getPreHashText() { return preHashText; }
+    public void setPreHashText(String v) { this.preHashText = v; }
+    public String getPreHash() { return preHash; }
+    public void setPreHash(String v) { this.preHash = v; }
+    public java.time.LocalDateTime getPreHashAt() { return preHashAt; }
+    public void setPreHashAt(java.time.LocalDateTime v) { this.preHashAt = v; }
+
     @OneToMany(mappedBy = "race", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("chulNo")
     private List<Entry> entries = new ArrayList<>();

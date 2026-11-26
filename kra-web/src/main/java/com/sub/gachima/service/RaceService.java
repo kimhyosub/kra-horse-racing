@@ -198,6 +198,50 @@ public class RaceService {
         List<EntryView> byG1 = v.entries.stream().filter(a -> a.g1 != null).sorted(Comparator.comparingDouble(a -> a.g1)).collect(Collectors.toList());
         for (int i = 0; i < byG1.size(); i++) byG1.get(i).g1Rank = i + 1;
         v.recap = RaceRecap.of(v);
+
+        // 3착 안 확률 (우승 확률로 계산한 참고값)
+        top3(v.entries, true);
+        if (v.isScored()) top3(v.entries, false);
+
+        // 기록 지문
+        String date = race.getMeetDay().getRaceDate(); int meet = race.getMeetDay().getMeet();
+        if (race.getPreHash() != null) {
+            v.preHash = race.getPreHash(); v.preHashText = race.getPreHashText(); v.preHashAt = race.getPreHashAt();
+            String now = Fingerprint.preText(date, meet, race);
+            v.preHashSame = race.getPreHashText().equals(now);
+        }
+        v.starHashText = Fingerprint.starText(date, meet, race.getRcNo(), v.paperBets);
+        if (v.starHashText != null) v.starHash = Fingerprint.sha256(v.starHashText);
+    }
+
+    /**
+     * Harville 식: 1착 확률 p로 2·3착 확률까지 펼쳐 '3착 안' 확률을 구한다.
+     * pre=true면 전날 예상(preP), 아니면 당일 분석(p).
+     */
+    static void top3(List<EntryView> es, boolean pre) {
+        int n = es.size();
+        double[] p = new double[n];
+        double sum = 0;
+        for (int i = 0; i < n; i++) { p[i] = Math.max(0, pre ? es.get(i).preP : es.get(i).p); sum += p[i]; }
+        if (sum <= 0) return;
+        for (int i = 0; i < n; i++) p[i] /= sum;
+        double[] t = new double[n];
+        for (int a = 0; a < n; a++) {
+            t[a] += p[a];
+            if (p[a] >= 1) continue;
+            for (int b = 0; b < n; b++) {
+                if (b == a) continue;
+                double pb = p[a] * p[b] / (1 - p[a]);
+                t[b] += pb;
+                double rest = 1 - p[a] - p[b];
+                if (rest <= 1e-12) continue;
+                for (int c = 0; c < n; c++) {
+                    if (c == a || c == b) continue;
+                    t[c] += pb * p[c] / rest;
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) { if (pre) es.get(i).preTop3 = Math.min(1, t[i]); else es.get(i).top3 = Math.min(1, t[i]); }
     }
 
     private static Integer intOf(Object o) { return o instanceof Number ? ((Number) o).intValue() : null; }
@@ -340,6 +384,13 @@ public class RaceService {
         public RaceRecap recap;
         /** 실제 1·2·3착 조합의 확정 배당 (복승·쌍승·삼쌍승 …), 없으면 빈 맵 */
         public Map<String, Double> divs = Collections.emptyMap();
+        /** 기록 지문: 전날 예상(경주일 0시 무렵 고정), ★ 기록(출발 전) */
+        public String preHash, preHashText, starHash, starHashText;
+        public LocalDateTime preHashAt;
+        public boolean preHashSame = true;
+        public String getPreHashShort() { return Fingerprint.shortHash(preHash); }
+        public String getStarHashShort() { return Fingerprint.shortHash(starHash); }
+        public String getPreHashAtLabel() { return preHashAt == null ? "" : preHashAt.format(java.time.format.DateTimeFormatter.ofPattern("M/d HH:mm")); }
         public BetPicks picks;
         public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
@@ -422,6 +473,10 @@ public class RaceService {
         /** 경주 복기: 초반(S1F) 순위, 4코너 순위, 마지막 200m 초와 그 빠르기 순위, 1착과 기록 차 */
         public Integer s1, c4, g1Rank;
         public Double g1, gap;
+        /** 3착 안 확률: 전날 예상 / 당일 분석 (우승 확률로 계산한 참고값) */
+        public double preTop3, top3;
+        public String getPreTop3Text() { return Math.round(preTop3 * 100) + "%"; }
+        public String getTop3Text() { return Math.round(top3 * 100) + "%"; }
         public List<GroupBar> groups = new ArrayList<>();
         public String getOrdLabel() { return ord == null ? "" : ord >= Entry.ORD_OUT ? "착외" : ord + "착"; }
         public double getGapLeft() { return Math.min(xm, xp); }

@@ -728,3 +728,19 @@ details.howto[open]{display:grid;gap:4px}
   .post-table th,.post-table td{padding:6px 5px;white-space:normal;word-break:keep-all}
   .post-table th{font-size:11.5px}
 }
+
+/* 3착 안 확률 */
+.pc-p small.t3{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+/* 기록 지문 */
+.fp{margin:8px 0 12px;font-size:12.5px;color:var(--muted)}
+.fp summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:4px;align-items:baseline}
+.fp summary::-webkit-details-marker{display:none}
+.fp summary b{color:var(--ink);font-size:12.5px;margin-right:4px}
+.fp summary b::before{content:"🔒 ";font-size:11px}
+.fp code{font:600 12px ui-monospace,Menlo,Consolas,monospace;color:var(--ink)}
+.fp-body{margin-top:8px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;line-height:1.6}
+.fp-body p{margin:0 0 8px}
+.fp-k{font-weight:700;color:var(--ink);margin-top:10px!important}
+.fp-t,.fp-h{display:block;word-break:break-all;background:var(--bg);border-radius:8px;padding:6px 8px;margin-bottom:6px;font-weight:500!important}
+.fp-h{color:var(--model)!important}
+.fp-warn{color:#b3261e}
