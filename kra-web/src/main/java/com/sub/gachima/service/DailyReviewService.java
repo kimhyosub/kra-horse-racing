@@ -78,8 +78,9 @@ public class DailyReviewService {
 
     static class Meet {
         String name;
-        int n, hit, top3, bets, betWins, post, postWins;
-        double exp, betRet, postRet;
+        int n, hit, bets, betWins;
+        double exp, betRet;
+        final List<String> rows = new ArrayList<>();
     }
 
     /** 결과가 다 나온 날만 (오늘이면 모든 경주, 지난 날이면 결과가 있는 경주로) */
@@ -91,64 +92,56 @@ public class DailyReviewService {
             Optional<RaceView> ov = races.view(date, ref.meet, ref.rcNo);
             if (!ov.isPresent()) continue;
             if (!hasResult(ov.get())) { if (isToday) return Optional.empty(); continue; }
-            if (pick(ov.get()) == null) continue;
             vs.add(ov.get());
         }
         if (vs.isEmpty()) return Optional.empty();
 
         Map<String, Meet> meets = new LinkedHashMap<>();
         Meet all = new Meet();
-        List<String> starLines = new ArrayList<>(), missLines = new ArrayList<>(), bigLines = new ArrayList<>(), watchLines = new ArrayList<>();
-        List<RaceView> misses = new ArrayList<>();
+        int favWins = 0, frontWins = 0, frontKnown = 0;
+        RaceView bigRace = null; EntryView big = null;
+        Map<String, List<String>> jk = new LinkedHashMap<>(), tr = new LinkedHashMap<>();
+        List<String> upsets = new ArrayList<>(), watch = new ArrayList<>();
         boolean anyOfficial = false;
         for (RaceView v : vs) {
             Meet m = meets.computeIfAbsent(v.meetName, k -> { Meet x = new Meet(); x.name = k; return x; });
+            EntryView w = winner(v);
+            String where = v.meetName + " " + v.rcNo + "R";
+            // 결과 표 한 줄
+            m.rows.add("| " + v.rcNo + " | " + (w == null ? "-" : w.no + "번 " + w.name) + " | " + (w == null || w.jk == null ? "-" : w.jk)
+                    + " | " + (w == null || w.finalOdds == null ? "-" : odds(w.finalOdds)) + " | " + div(v, "복승") + " | " + div(v, "삼쌍승") + " |");
+            if (w != null) {
+                int pop = popRank(v, w);
+                if (pop == 1) favWins++;
+                if (w.s1 != null) { frontKnown++; if (w.s1 <= 3) frontWins++; }
+                if (w.jk != null && !w.jk.isEmpty()) jk.computeIfAbsent(w.jk, k -> new ArrayList<>()).add(where);
+                if (w.tr != null && !w.tr.isEmpty()) tr.computeIfAbsent(w.tr, k -> new ArrayList<>()).add(where);
+                if (w.finalOdds != null) {
+                    if (big == null || w.finalOdds > big.finalOdds) { big = w; bigRace = v; }
+                    if (w.finalOdds >= 15) {
+                        String run = w.s1 == null ? "" : ", " + RaceRecap.path(w);
+                        upsets.add("- **" + where + " " + w.no + "번 " + w.name + "** 단승 " + odds(w.finalOdds) + "배 — 인기 " + (pop > 0 ? pop + "위" : "-") + run + " " + raceLink(v));
+                    }
+                }
+            }
+            // 다음에 볼 말: 막판이 가장 빨랐는데 자리가 뒤라 3착 밖
+            for (EntryView e : v.entries)
+                if (e.g1Rank != null && e.g1Rank == 1 && e.ord != null && e.ord > 3 && e.ord <= v.entries.size() && e.s1 != null && e.s1 > v.entries.size() / 2.0)
+                    watch.add("- **" + where + " " + e.no + "번 " + e.name + "** — " + e.ord + "착, 막판 200m 가장 빠름 (초반 " + e.s1 + "위)");
+            // 가치마 (짧게)
             EntryView p = pick(v);
-            double p1 = v.isScored() ? p.p : p.preP;
-            boolean hit = p.ord != null && p.ord == 1, top3 = p.ord != null && p.ord <= 3;
-            for (Meet x : new Meet[]{m, all}) { x.n++; x.exp += p1; if (hit) x.hit++; if (top3) x.top3++; }
-            if (!hit) misses.add(v);
-
-            // ★ 공식 (출발 전 모의 기록)
+            if (p != null) {
+                double p1 = v.isScored() ? p.p : p.preP;
+                for (Meet x : new Meet[]{m, all}) { x.n++; x.exp += p1; if (p.ord != null && p.ord == 1) x.hit++; }
+            }
             for (PaperBet b : v.paperBets) {
                 if (!b.isCounted()) continue;
                 anyOfficial = true;
                 for (Meet x : new Meet[]{m, all}) { x.bets++; if (b.isWin()) { x.betWins++; x.betRet += b.getPayout(); } }
-                EntryView e = byNo(v, b.getChulNo());
-                String why = e == null ? "" : RaceRecap.reason(v, e);
-                starLines.add("- **" + v.meetName + " " + v.rcNo + "R " + b.getChulNo() + "번 " + b.getHrName() + "** — 단승 " + odds(b.getBetOdds()) + "배 기록, "
-                        + (b.isWin() ? "**적중 " + odds(b.getPayout()) + "배**" : b.getFinishOrd() >= Entry.ORD_OUT ? "착외" : b.getFinishOrd() + "착")
-                        + (why.isEmpty() ? "" : ". " + why) + " " + raceLink(v));
             }
-            // ★ 사후 (출발 전 입력이 없던 경주: 확정 배당으로 다시 계산)
-            if (v.paperBets.isEmpty() && v.isScored() && v.values != null)
-                for (EntryView s : v.values) {
-                    for (Meet x : new Meet[]{m, all}) { x.post++; if (s.ord != null && s.ord == 1) { x.postWins++; x.postRet += s.finalOdds == null ? s.odds : s.finalOdds; } }
-                }
-
-            // 큰 배당
-            EntryView w = winner(v);
-            if (w != null && w.finalOdds != null && w.finalOdds >= 15) {
-                String why = RaceRecap.reason(v, w);
-                bigLines.add("- **" + v.meetName + " " + v.rcNo + "R " + w.no + "번 " + w.name + "** 단승 " + odds(w.finalOdds) + "배 — 가치마 순위 "
-                        + rankOf(v, w) + (why.isEmpty() ? "" : ", " + why) + " " + raceLink(v));
-            }
-            // 다음에 볼 말
-            if (v.recap != null)
-                for (String l : v.recap.lines)
-                    if (l.startsWith("다음에 볼 말: ")) watchLines.add("- **" + v.meetName + " " + v.rcNo + "R** " + l.substring("다음에 볼 말: ".length()));
         }
-        // 가장 자신 있었는데 진 경주 3개
-        misses.sort((a, b) -> Double.compare(p1(b), p1(a)));
-        for (RaceView v : misses.subList(0, Math.min(3, misses.size()))) {
-            EntryView p = pick(v);
-            String why = RaceRecap.reason(v, p);
-            EntryView w = winner(v);
-            missLines.add("- **" + v.meetName + " " + v.rcNo + "R** 가치마 1위 " + p.no + "번 " + p.name + " (" + pct(p1(v)) + ") "
-                    + (p.ord == null || p.ord >= Entry.ORD_OUT || p.ord > v.entries.size() ? "착순 없음" : p.ord + "착")
-                    + (w == null ? "" : ", 우승은 " + w.no + "번 " + w.name + (w.finalOdds == null ? "" : " (" + odds(w.finalOdds) + "배)"))
-                    + (why.isEmpty() ? "." : ". " + why) + " " + raceLink(v));
-        }
+        int nRaces = vs.size();
+        List<Map.Entry<String, List<String>>> topJk = top(jk), topTr = top(tr);
 
         LocalDate d = LocalDate.parse(date, DateTimeFormatter.BASIC_ISO_DATE);
         String label = d.getMonthValue() + "월 " + d.getDayOfMonth() + "일(" + DOW[d.getDayOfWeek().getValue() - 1] + ")";
@@ -157,85 +150,84 @@ public class DailyReviewService {
         Review r = new Review();
         r.date = date;
         r.slug = "daily-" + date;
-        String head = headline(all);
-        String starShort = anyOfficial ? "★ " + all.bets + "건 중 " + all.betWins + "건" : "공식 ★ 없음";
-        r.title = "일간 총평 · " + label + " " + meetNames + " — 가치마 1위 " + all.hit + "/" + all.n + "승, " + starShort;
-        r.summary = label + " " + meetNames + " " + all.n + "경주. " + head + " "
-                + (anyOfficial ? "★ 가치마는 " + all.bets + "건 중 " + all.betWins + "건 적중, " + signedWon((all.betRet - all.bets) * 1000) + "."
-                               : "출발 전 당일 배당 입력이 없어 공식 ★ 기록은 없습니다.");
+        r.title = label + " 경마 결과 총평 · " + meetNames + " " + nRaces + "경주";
+        StringBuilder sm = new StringBuilder();
+        sm.append("인기 1위 말 ").append(favWins).append("승");
+        if (big != null) sm.append(", 최고 배당 ").append(bigRace.meetName).append(' ').append(bigRace.rcNo).append("R 단승 ").append(odds(big.finalOdds)).append("배");
+        if (!topJk.isEmpty()) sm.append(", 최다승 기수 ").append(topJk.get(0).getKey()).append(' ').append(topJk.get(0).getValue().size()).append("승");
+        sm.append(". 경주별 1착과 배당, 기수, 다음에 볼 말을 정리했습니다.");
+        r.summary = sm.toString();
 
         StringBuilder b = new StringBuilder();
-        b.append(label).append(' ').append(meetNames).append(' ').append(all.n).append("경주를 돌아봅니다. 영천은 참고 경마장이라 뺐습니다. 경주가 끝난 뒤 공식 기록으로 자동으로 쓴 글입니다.\n\n");
-        b.append("# 한 줄 요약\n\n**").append(head).append("**\n\n");
+        b.append(label).append(' ').append(meetNames).append("에서 열린 ").append(nRaces).append("경주를 정리했습니다.\n\n");
 
-        // 표
-        List<Meet> ms = new ArrayList<>(meets.values());
-        boolean multi = ms.size() > 1;
-        b.append("| |");
-        for (Meet m : ms) b.append(' ').append(m.name).append(" |");
-        if (multi) b.append(" 합계 |");
-        b.append("\n|---|");
-        for (int i = 0; i < ms.size() + (multi ? 1 : 0); i++) b.append("---|");
+        b.append("# 오늘 경마 한눈에\n\n");
+        double favRate = 1.0 * favWins / nRaces;
+        b.append("- **인기 1위 말 ").append(favWins).append("승 / ").append(nRaces).append("경주** — ")
+         .append(favRate >= 0.45 ? "인기마가 강했던 날" : favRate <= 0.22 ? "이변이 많았던 날" : "보통 세 경주에 한 번꼴이라 평범한 날").append('\n');
+        if (big != null) b.append("- **가장 큰 배당**: ").append(bigRace.meetName).append(' ').append(bigRace.rcNo).append("R ").append(big.no).append("번 ").append(big.name)
+                          .append(" 단승 ").append(odds(big.finalOdds)).append("배\n");
+        if (!topJk.isEmpty()) b.append("- **최다승 기수**: ").append(topJk.get(0).getKey()).append(' ').append(topJk.get(0).getValue().size()).append("승\n");
+        if (frontKnown > 0) b.append("- **앞에서 간 말이 이긴 경주**: ").append(frontWins).append(" / ").append(frontKnown).append("경주")
+                             .append(frontWins * 2 > frontKnown ? " (선행이 유리했던 날)" : " (뒤에서 따라온 말도 많이 이긴 날)").append('\n');
         b.append('\n');
-        if (multi) ms.add(all);
-        row(b, "경주", ms, m -> String.valueOf(m.n));
-        row(b, "가치마 1위 우승", ms, m -> (m == all ? "**" + m.hit + "**" : String.valueOf(m.hit)));
-        row(b, "모델이 예상한 우승 수", ms, m -> String.format("%.1f", m.exp));
-        row(b, "가치마 1위 3착 안", ms, m -> m.top3 + " (" + pct(m.n == 0 ? 0 : 1.0 * m.top3 / m.n) + ")");
-        if (anyOfficial) {
-            row(b, "★ 건수 · 적중", ms, m -> m.bets + " · " + m.betWins);
-            row(b, "★ 손익 (1,000원씩)", ms, m -> m.bets == 0 ? "-" : (m == all ? "**" + signedWon((m.betRet - m.bets) * 1000) + "**" : signedWon((m.betRet - m.bets) * 1000)));
+
+        for (Meet m : meets.values()) {
+            b.append("# ").append(m.name).append(" 결과\n\n| R | 1착 | 기수 | 단승 | 복승 | 삼쌍승 |\n|---|---|---|---|---|---|\n");
+            for (String row : m.rows) b.append(row).append('\n');
+            b.append('\n');
         }
+        b.append("배당은 건 돈의 몇 배를 돌려받는지 보여 주는 확정 배당입니다.\n\n");
+
+        b.append("# 기수 · 조교사\n\n");
+        b.append(topJk.isEmpty() || topJk.get(0).getValue().size() < 2 ? "- 2승 이상 거둔 기수는 없었습니다.\n" : "- 기수: " + names(topJk) + "\n");
+        b.append(topTr.isEmpty() || topTr.get(0).getValue().size() < 2 ? "- 2승 이상 거둔 조교사는 없었습니다.\n" : "- 조교사: " + names(topTr) + "\n");
         b.append('\n');
-        b.append("모델이 매긴 가치마 1위 확률을 모두 더한 값이 '예상한 우승 수'입니다. 실제 우승 수가 이 숫자 근처면 확률대로 맞은 날입니다.\n\n");
 
-        b.append("# ★ 가치마\n\n");
-        if (anyOfficial) {
-            for (String l : starLines) b.append(l).append('\n');
-            b.append("\n★ 는 출발 전 마지막 배당으로 기록하고 확정 배당으로 정산한 공식 모의 장부 기준입니다.\n\n");
-        } else {
-            b.append("이날은 출발 전 당일 배당 입력이 없어 공식 ★ 기록이 없습니다.");
-            if (all.post > 0)
-                b.append(" 경주 후 확정 배당으로 다시 계산하면 ★ ").append(all.post).append("건 중 ").append(all.postWins).append("건이 맞았고, 1,000원씩이면 ")
-                 .append(signedWon((all.postRet - all.post) * 1000)).append("입니다(참고용).");
-            b.append("\n\n");
+        b.append("# 이변 경주\n\n");
+        if (upsets.isEmpty()) b.append("단승 15배 이상 나온 경주는 없었습니다.\n\n");
+        else { for (String l : upsets) b.append(l).append('\n'); b.append('\n'); }
+
+        if (!watch.isEmpty()) {
+            b.append("# 다음에 볼 말\n\n마지막 200m는 가장 빨랐는데 초반 자리가 뒤라 늦은 말입니다. 다음 출전 때 눈여겨볼 만합니다.\n\n");
+            for (String l : watch.subList(0, Math.min(5, watch.size()))) b.append(l).append('\n');
+            b.append('\n');
         }
 
-        if (!missLines.isEmpty()) {
-            b.append("# 가치마 1위가 진 경주\n\n확률이 가장 높았는데 이기지 못한 경주입니다.\n\n");
-            for (String l : missLines) b.append(l).append('\n');
-            b.append('\n');
-        }
-        if (!bigLines.isEmpty()) {
-            b.append("# 큰 배당이 나온 경주\n\n");
-            for (String l : bigLines) b.append(l).append('\n');
-            b.append('\n');
-        }
-        if (!watchLines.isEmpty()) {
-            b.append("# 다음에 볼 말\n\n마지막 200m가 그 경주에서 가장 빨랐지만 초반 자리가 뒤라 3착 안에 못 든 말입니다.\n\n");
-            for (String l : watchLines.subList(0, Math.min(6, watchLines.size()))) b.append(l).append('\n');
-            b.append('\n');
-        }
-        b.append("이날 숫자 전체는 [검증 리포트](/stats?date=").append(date).append(")에서, 하루 결과를 어떻게 봐야 하는지는 [모의 장부 읽는 법](/guide/paper-ledger)에서 볼 수 있습니다.\n\n");
-        b.append("> 하루 결과는 대부분 운입니다. 가치마의 분석은 참고용이며, 마권 구매는 본인의 판단과 책임으로 감당할 수 있는 범위에서만 하세요.\n");
+        b.append("# 가치마는\n\n");
+        b.append("가치마 1위 말 ").append(all.hit).append("승 (모델 예상 ").append(String.format("%.1f", all.exp)).append("승)");
+        if (anyOfficial) b.append(" · ★ ").append(all.bets).append("건 중 ").append(all.betWins).append("건 적중, ").append(signedWon((all.betRet - all.bets) * 1000));
+        else b.append(" · 출발 전 입력이 없어 공식 ★ 기록 없음");
+        b.append(". 자세한 숫자는 [검증 리포트](/stats?date=").append(date).append(")에서 볼 수 있습니다.\n\n");
+        b.append("> 경주가 끝난 뒤 한국마사회 공식 기록으로 자동으로 쓴 글입니다. 마권 구매는 본인 판단으로, 감당할 수 있는 범위에서만 하세요.\n");
         r.body = b.toString();
         return Optional.of(r);
     }
 
-    interface Cell { String of(Meet m); }
-    private static void row(StringBuilder b, String label, List<Meet> ms, Cell c) {
-        b.append("| ").append(label).append(" |");
-        for (Meet m : ms) b.append(' ').append(c.of(m)).append(" |");
-        b.append('\n');
+    /** 승수 많은 순 (같으면 먼저 나온 순) */
+    static List<Map.Entry<String, List<String>>> top(Map<String, List<String>> m) {
+        List<Map.Entry<String, List<String>>> l = new ArrayList<>(m.entrySet());
+        l.sort((a, b) -> Integer.compare(b.getValue().size(), a.getValue().size()));
+        return l;
     }
-
-    static String headline(Meet a) {
-        String s;
-        if (a.hit >= a.exp + 1.5) s = "가치마 1위가 평소보다 잘 맞은 날입니다";
-        else if (a.hit <= a.exp - 1.5) s = "이변이 많아 가치마 1위가 평소보다 덜 맞은 날입니다";
-        else s = "가치마 1위는 확률대로 맞은 날입니다";
-        return s + String.format(" (%d경주 %d승, 예상 %.1f승).", a.n, a.hit, a.exp);
+    /** 2승 이상만: 문세영 3승 (서울 2R·5R·9R), … */
+    static String names(List<Map.Entry<String, List<String>>> l) {
+        StringBuilder b = new StringBuilder();
+        for (Map.Entry<String, List<String>> e : l) {
+            if (e.getValue().size() < 2) break;
+            if (b.length() > 0) b.append(", ");
+            b.append("**").append(e.getKey()).append(' ').append(e.getValue().size()).append("승** (").append(String.join("·", e.getValue())).append(')');
+        }
+        return b.toString();
     }
+    /** 확정 배당이 낮은 순 인기 순위 (배당 없으면 0) */
+    static int popRank(RaceView v, EntryView e) {
+        if (e.finalOdds == null) return 0;
+        int r = 1;
+        for (EntryView x : v.entries) if (x.finalOdds != null && x.finalOdds < e.finalOdds) r++;
+        return r;
+    }
+    static String div(RaceView v, String k) { Double x = v.divs.get(k); return x == null ? "-" : odds(x); }
 
     static EntryView pick(RaceView v) {
         if (v.isScored()) return v.dayOrder.get(0);

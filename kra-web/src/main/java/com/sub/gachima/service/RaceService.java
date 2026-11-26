@@ -186,6 +186,10 @@ public class RaceService {
                 .map(a -> a.no).collect(Collectors.toList());
         v.values = v.dayOrder.stream().filter(a -> a.value).collect(Collectors.toList());
         v.paperBets = paper.forRace(race);
+        Map<String, Double> dv = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> x : readObj(race.getDivJson()).entrySet())
+            if (x.getValue() instanceof Number) dv.put(x.getKey(), ((Number) x.getValue()).doubleValue());   // 복연은 조합별이라 뺀다
+        v.divs = dv;
         v.paperLock = paper.lockState(race);
         v.review = Commentary.of(v.entries, v.track, true);
         v.picks = BetPicks.of(v.dayOrder);
@@ -334,6 +338,8 @@ public class RaceService {
         public Commentary review, preReview;
         /** 경주 복기: 결과 뒤 구간 기록으로 '어떻게 달렸나' */
         public RaceRecap recap;
+        /** 실제 1·2·3착 조합의 확정 배당 (복승·쌍승·삼쌍승 …), 없으면 빈 맵 */
+        public Map<String, Double> divs = Collections.emptyMap();
         public BetPicks picks;
         public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }

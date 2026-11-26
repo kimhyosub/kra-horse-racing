@@ -40,13 +40,15 @@ class DailyReviewTest {
         Optional<DailyReviewService.Review> r = daily.build("20261115");
         assertTrue(r.isPresent());
         String body = r.get().body;
-        assertTrue(r.get().title.startsWith("일간 총평 · 11월 15일(일) 서울 — 가치마 1위 "), r.get().title);
-        assertTrue(body.contains("# 한 줄 요약"), body);
-        assertTrue(body.contains("| 가치마 1위 우승 |"), body);
-        assertTrue(body.contains("모델이 예상한 우승 수"), body);
-        assertTrue(body.contains("# ★ 가치마"), body);
+        assertTrue(r.get().title.startsWith("11월 15일(일) 경마 결과 총평 · 서울 "), r.get().title);
+        assertTrue(r.get().summary.startsWith("인기 1위 말 "), r.get().summary);
+        assertTrue(body.contains("# 오늘 경마 한눈에"), body);
+        assertTrue(body.contains("# 서울 결과"), body);
+        assertTrue(body.contains("| R | 1착 | 기수 | 단승 | 복승 | 삼쌍승 |"), body);
+        assertTrue(body.contains("# 기수 · 조교사"), body);
+        assertTrue(body.contains("# 가치마는"), body);
         assertTrue(body.contains("[검증 리포트](/stats?date=20261115)"), body);
-        assertFalse(body.contains("영천 "), "영천 경주는 빼야 함");
+        assertFalse(body.contains("영천"), "영천은 빼야 함");
 
         daily.nightly();
         Post p = posts.bySlug("daily-20261115").orElseThrow(AssertionError::new);
