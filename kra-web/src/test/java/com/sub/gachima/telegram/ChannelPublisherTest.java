@@ -76,7 +76,6 @@ class ChannelPublisherTest {
         assertTrue(a.contains("1위 "), a);
         assertTrue(a.contains("★ <b>8번 마스터플랜</b>  단승 15.4배"), a);
         assertTrue(a.contains("13:00 배당 기준"), a);
-        assertTrue(a.contains("🔒 ★ 기록 지문 <code>"), a);
         assertTrue(a.contains("https://gachima.example.com/r/20261115/1/7?mode=day"), a);
 
         // 2) 다시 입력 → 새 글이 아니라 같은 글(77) 고침

@@ -744,3 +744,4 @@ details.howto[open]{display:grid;gap:4px}
 .fp-t,.fp-h{display:block;word-break:break-all;background:var(--bg);border-radius:8px;padding:6px 8px;margin-bottom:6px;font-weight:500!important}
 .fp-h{color:var(--model)!important}
 .fp-warn{color:#b3261e}
+.fp-more{text-decoration:underline;text-underline-offset:2px}

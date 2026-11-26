@@ -168,7 +168,6 @@ public class ChannelPublisher {
         else for (EntryView x : v.values)
             b.append("★ <b>").append(x.no).append("번 ").append(esc(x.name)).append("</b>  단승 ").append(odds(x.odds))
              .append("배 · 기대값 ").append(String.format("%.2f", x.ev)).append('\n');
-        if (v.starHash != null) b.append("🔒 ★ 기록 지문 <code>").append(v.getStarHashShort()).append("</code>\n");
         b.append("<i>").append(at.format(DateTimeFormatter.ofPattern("HH:mm"))).append(" 배당 기준</i>");
         link(b, "/r/" + v.date + "/" + v.meet + "/" + v.rcNo + "?mode=day", "경주 분석 보기");
         return b.toString();
