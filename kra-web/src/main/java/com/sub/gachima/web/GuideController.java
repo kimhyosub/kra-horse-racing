@@ -23,8 +23,11 @@ public class GuideController {
     private final PostService posts;
     private final UploadService uploads;
     private final SiteInfo site;
+    private final com.sub.gachima.service.DailyReviewService daily;
 
-    public GuideController(PostService posts, UploadService uploads, SiteInfo site) { this.posts = posts; this.uploads = uploads; this.site = site; }
+    public GuideController(PostService posts, UploadService uploads, SiteInfo site, com.sub.gachima.service.DailyReviewService daily) {
+        this.posts = posts; this.uploads = uploads; this.site = site; this.daily = daily;
+    }
 
     @GetMapping("/guide")
     public String list(@RequestParam(required = false) String cat, Model model) {
@@ -106,6 +109,14 @@ public class GuideController {
     public String delete(@PathVariable long id, RedirectAttributes ra) {
         posts.delete(id);
         ra.addFlashAttribute("msg", "글을 지웠습니다");
+        return "redirect:/admin/posts";
+    }
+
+    /** 일간 총평을 지금 만들기 (최근 7일, 밤 23:10 자동과 같은 일) */
+    @PostMapping("/admin/posts/daily")
+    public String dailyNow(RedirectAttributes ra) {
+        daily.nightly();
+        ra.addFlashAttribute("msg", "최근 7일 일간 총평을 만들었습니다 (운영자가 고친 글은 그대로 둠)");
         return "redirect:/admin/posts";
     }
 }

@@ -22,7 +22,8 @@
 <div class="wrap">
   <header th:replace="~{fragments :: topbar('가이드 글 관리')}"></header>
   <div class="flash" th:if="${msg}" th:text="${msg}"></div>
-  <div class="btns"><a class="btn" th:href="@{/admin/posts/new}">새 글 쓰기</a><a class="btn ghost" th:href="@{/guide}">가이드 보기</a></div>
+  <div class="btns"><a class="btn" th:href="@{/admin/posts/new}">새 글 쓰기</a><a class="btn ghost" th:href="@{/guide}">가이드 보기</a>
+    <form method="post" th:action="@{/admin/posts/daily}" style="display:inline"><button class="btn ghost" type="submit">일간 총평 지금 만들기</button></form></div>
   <div class="sc-wrap">
     <table class="sc st">
       <thead><tr><th class="sticky">제목</th><th>분류</th><th>주소</th><th>순서</th><th>상태</th><th>글 날짜</th><th></th></tr></thead>

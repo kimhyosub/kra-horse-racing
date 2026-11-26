@@ -89,6 +89,22 @@ public class PostService {
         return posts.save(p);
     }
 
+    /**
+     * 자동 글(일간 총평): 없으면 만들고, 있으면 새 내용으로 바꾼다. 운영자가 고친 글(edited)은 건드리지 않는다.
+     * @return 새로 만들었으면 true, 바꿨으면 false, 고친 글이라 건너뛰었으면 null
+     */
+    @Transactional
+    public Boolean upsertAuto(String slug, String title, String summary, String body, String category, LocalDateTime createdAt) {
+        Optional<Post> old = posts.findBySlug(slug);
+        Post p = old.orElseGet(Post::new);
+        if (old.isPresent() && p.isEdited()) return null;
+        if (!old.isPresent()) { p.setSlug(slug); p.setPublished(true); p.setSortOrder(100); p.setCreatedAt(createdAt); }
+        p.setTitle(title); p.setSummary(summary); p.setBody(body); p.setCategory(category);
+        p.setUpdatedAt(LocalDateTime.now()); p.setEdited(false);
+        posts.save(p);
+        return !old.isPresent();
+    }
+
     @Transactional
     public void delete(long id) { posts.deleteById(id); }
 

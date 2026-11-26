@@ -31,6 +31,7 @@
       <label class="pf-cat">분류<select name="category">
         <option value="basic" th:selected="${p.category == 'basic'}">기초 가이드</option>
         <option value="analysis" th:selected="${p.category == 'analysis'}">데이터 분석</option>
+        <option value="daily" th:selected="${p.category == 'daily'}">일간 총평</option>
         <option value="weekly" th:selected="${p.category == 'weekly'}">주간 총평</option>
       </select></label>
       <label class="pf-num">순서<input name="sortOrder" type="number" th:value="${p.id == null} ? 100 : ${p.sortOrder}"></label>

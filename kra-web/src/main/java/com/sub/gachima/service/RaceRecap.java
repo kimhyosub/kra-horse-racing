@@ -112,6 +112,16 @@ public final class RaceRecap {
         return r;
     }
 
+    /** 일간 총평용: 그 말이 어떻게 달렸나 한 문장 (구간 기록이 없으면 빈 문자열) */
+    public static String reason(RaceView v, EntryView e) {
+        if (e.ord == null || e.ord >= Entry.ORD_OUT || e.ord > v.entries.size()) return "";
+        if (e.s1 == null && e.g1 == null) return "";
+        int n = 0;
+        for (EntryView x : v.entries) if (x.ord != null && x.ord < Entry.ORD_OUT && x.ord <= v.entries.size()) n++;
+        int front = Math.max(2, (int) Math.round(n * 0.25));
+        return e.ord == 1 ? path(e) + kick(e) + "." : why(e, n, front);
+    }
+
     /** 받침 있으면 '이', 없으면 '가' */
     static String ga(String w) {
         if (w == null || w.isEmpty()) return "이(가)";

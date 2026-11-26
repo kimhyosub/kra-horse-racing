@@ -226,6 +226,21 @@ public class ChannelPublisher {
         return b.toString();
     }
 
+    /** 일간 총평을 올렸다고 채널에 알림 */
+    public void announceDaily(String date, String title, String summary, String path) {
+        if (!isEnabled()) return;
+        try {
+            LocalDate d = LocalDate.parse(date, DateTimeFormatter.BASIC_ISO_DATE);
+            StringBuilder b = new StringBuilder();
+            b.append("📝 <b>").append(d.getMonthValue()).append('/').append(d.getDayOfMonth()).append('(').append(DOW[d.getDayOfWeek().getValue() - 1])
+             .append(") 일간 총평</b>\n\n").append(esc(summary));
+            link(b, path, "총평 읽기");
+            tg.sendMessage(channel, b.toString());
+        } catch (Exception x) {
+            log.warn("텔레그램 채널 일간 총평 알림 실패: {}", x.getMessage());
+        }
+    }
+
     private void link(StringBuilder b, String path, String label) {
         if (!publicUrl.isEmpty()) b.append("\n<a href=\"").append(esc(publicUrl + path)).append("\">").append(label).append(" ›</a>");
     }

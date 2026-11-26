@@ -39,14 +39,14 @@ public class Post {
     /** 관리자가 웹에서 고친 적이 있나 (있으면 자동 교체 안 함) */
     private Boolean edited;
 
-    /** 분류: basic(기초 가이드) · analysis(데이터 분석) · weekly(주간 총평). 없으면 기초 가이드로 본다 */
+    /** 분류: basic(기초 가이드) · analysis(데이터 분석) · daily(일간 총평, 자동) · weekly(주간 총평). 없으면 기초 가이드로 본다 */
     @Column(length = 20)
     private String category;
 
     public static final java.util.Map<String, String> CATS;
     static {
         java.util.Map<String, String> m = new java.util.LinkedHashMap<>();
-        m.put("basic", "기초 가이드"); m.put("analysis", "데이터 분석"); m.put("weekly", "주간 총평");
+        m.put("basic", "기초 가이드"); m.put("analysis", "데이터 분석"); m.put("daily", "일간 총평"); m.put("weekly", "주간 총평");
         CATS = java.util.Collections.unmodifiableMap(m);
     }
 
