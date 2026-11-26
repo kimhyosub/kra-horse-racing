@@ -111,7 +111,7 @@ class WebFlowTest {
         mvc.perform(get("/stats"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("36.4% (4)")))
-                .andExpect(content().string(containsString("당일 분석 1위")))
+                .andExpect(content().string(containsString("당일 1위 적중")))
                 .andExpect(content().string(containsString("승식별 회수율")))
                 .andExpect(content().string(containsString("이날 당일 분석은 얼마나 맞았나")))
                 .andExpect(content().string(containsString("11월 15일 (일)")))
