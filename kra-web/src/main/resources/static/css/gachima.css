@@ -702,3 +702,8 @@ details.howto[open]{display:grid;gap:4px}
   .rp-mv .rp-boxp{font-size:12px}
   .rp-mnone{font-size:11.5px;color:var(--muted)}
 }
+/* 휴대폰: 경주 번호를 옆으로 밀지 않고 한눈에 (6칸씩 줄바꿈) */
+@media (max-width:720px){
+  .tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;overflow:visible;padding-bottom:0}
+  .tab{text-align:center;padding:8px 0;font-size:14px;text-decoration:none;background:rgba(255,255,255,.06)}
+}
