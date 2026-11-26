@@ -714,11 +714,11 @@ details.howto[open]{display:grid;gap:4px}
 .rc-tbl th{font:700 11px var(--body);color:var(--muted);padding:4px 3px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
 .rc-tbl td{padding:5px 3px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
 .rc-tbl .l{text-align:left}
-.rc-tbl td.l{display:flex;align-items:center;gap:5px;max-width:150px}
+.rc-tbl td.l{max-width:150px}
+.rc-horse{display:flex;align-items:center;gap:5px;min-width:0}
 .rc-tbl .cloth{width:20px;height:20px;font-size:11px;flex:0 0 auto}
 .rc-tbl .nm{overflow:hidden;text-overflow:ellipsis;min-width:0}
-.rc-tbl tr.pick td{background:var(--value-soft)}
-.rc-tbl tr.star td{background:var(--value-soft)}
+.rc-tbl tr.rc-pick td,.rc-tbl tr.rc-star td{background:var(--value-soft)}
 .rc-tbl td.fast{font-weight:800;box-shadow:inset 0 -2px 0 var(--model)}
 .rc-tag{font-style:normal;font:700 10px var(--body);color:var(--ink);opacity:.75;flex:0 0 auto}
-@media (max-width:720px){.rc-tbl td.l{max-width:110px}}
+@media (max-width:720px){.rc-tbl td.l{max-width:118px}.rc-tbl th,.rc-tbl td{padding-left:2px;padding-right:2px}}

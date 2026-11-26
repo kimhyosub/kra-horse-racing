@@ -44,9 +44,9 @@
       <table class="rc-tbl">
         <thead><tr><th>착</th><th class="l">말</th><th>초반</th><th th:if="${rc.hasC4}">4코너</th><th>막판 200m</th><th>1착과</th></tr></thead>
         <tbody>
-          <tr th:each="x : ${rc.rows}" th:classappend="${x.pick} ? 'pick' : (${x.star} ? 'star' : '')">
+          <tr th:each="x : ${rc.rows}" th:classappend="${x.pick} ? 'rc-pick' : (${x.star} ? 'rc-star' : '')">
             <td th:text="${x.ord}">1</td>
-            <td class="l"><th:block th:insert="~{fragments :: cloth(${x.no})}"></th:block><span class="nm" th:text="${x.name}">말</span><i class="rc-tag" th:if="${!#strings.isEmpty(x.tag)}" th:text="${x.tag}"></i></td>
+            <td class="l"><span class="rc-horse"><th:block th:insert="~{fragments :: cloth(${x.no})}"></th:block><span class="nm" th:text="${x.name}">말</span><i class="rc-tag" th:if="${!#strings.isEmpty(x.tag)}" th:text="${x.tag}"></i></span></td>
             <td th:text="${x.s1Text}">4</td>
             <td th:if="${rc.hasC4}" th:text="${x.c4Text}">2</td>
             <td th:classappend="${x.fast} ? 'fast'" th:text="${x.g1Text}">12.9</td>

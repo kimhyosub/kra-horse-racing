@@ -55,7 +55,7 @@ public final class RaceRecap {
             x.pick = pick != null && pick.no == e.no;
             x.star = stars.contains(e.no);
             x.fast = e.g1Rank != null && e.g1Rank == 1;
-            x.tag = x.pick ? pickLabel : x.star ? "★" : "";
+            x.tag = x.pick ? (x.star ? "가치마★" : "가치마") : x.star ? "★" : "";
             if (e.c4 != null) r.hasC4 = true;
             r.rows.add(x);
             if (x.fast) fastest = e;
