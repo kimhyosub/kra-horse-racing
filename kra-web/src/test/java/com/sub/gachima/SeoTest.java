@@ -40,7 +40,7 @@ class SeoTest {
     void metaTagsAndFiles() throws Exception {
         mvc.perform(get("/r/20261115/1/7")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("<title>11월 15일(일) 서울 7경주 예상·분석 | 가치마</title>")))
-                .andExpect(content().string(containsString("<meta name=\"description\" content=\"11월 15일(일) 서울 7경주")))
+                .andExpect(content().string(containsString("<meta name=\"description\" content=\"11월 15일(일) 서울(과천) 경마 7경주 예상")))
                 .andExpect(content().string(containsString("전날 예상 1위")))
                 .andExpect(content().string(containsString("<link rel=\"canonical\" href=\"https://gachima.example.com/r/20261115/1/7\"")))
                 .andExpect(content().string(containsString("https://gachima.example.com/og.png")))

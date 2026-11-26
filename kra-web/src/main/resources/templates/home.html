@@ -2,9 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
-  <th:block th:with="t=${'가치마 · ' + h.label + ' 경마 분석'}, d=${h.label + ' ' + h.meetNames + ' — 경주마다 가치마가 꼽은 말과 우승 확률 · ★ 가치마 · 지난 경주일 적중을 무료로 봅니다.'}">
-  <th:block th:replace="~{fragments :: seo(${t}, ${d})}"></th:block>
-  </th:block>
+  <th:block th:replace="~{fragments :: seo(${h.seoTitle}, ${h.seoDesc})}"></th:block>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">

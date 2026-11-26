@@ -87,6 +87,29 @@ public class HomeService {
             for (MeetBlock m : meets) { if (b.length() > 0) b.append(" · "); b.append(m.name).append(' ').append(m.rows.size()).append("경주"); }
             return b.toString();
         }
+        /** 검색용: 사람들이 부르는 경마장 이름 (서울=과천, 부경=부산경남) */
+        static String seoMeet(String n) {
+            return "서울".equals(n) ? "서울(과천)" : "부경".equals(n) ? "부산경남" : n;
+        }
+        private String seoMeets() {
+            StringBuilder b = new StringBuilder();
+            for (MeetBlock m : meets) { if (m.reference) continue; if (b.length() > 0) b.append('·'); b.append(seoMeet(m.name)); }
+            return b.length() == 0 ? "서울·부산경남·제주" : b.toString();
+        }
+        private String shortLabel() {
+            LocalDate x = LocalDate.parse(date, DateTimeFormatter.BASIC_ISO_DATE);
+            return x.getMonthValue() + "월 " + x.getDayOfMonth() + "일(" + "월화수목금토일".charAt(x.getDayOfWeek().getValue() - 1) + ")";
+        }
+        public String getSeoTitle() {
+            if (date == null) return "오늘의 경마 예상 · 서울(과천)·부산경남·제주 경마 분석 | 가치마";
+            return (upcoming ? "오늘의 경마 예상 · " : "경마 예상 · ") + shortLabel() + " " + seoMeets() + " | 가치마";
+        }
+        public String getSeoDesc() {
+            String base = "서울(과천)·부산경남·제주 경마 경주마다 가치마가 꼽은 말과 우승 확률, 당일 배당으로 다시 계산한 ★ 가치마, 지난 경주 적중과 복기를 무료로 봅니다.";
+            if (date == null) return base;
+            return shortLabel() + " " + seoMeets() + " 경마 예상·분석 (" + getMeetNames() + "). " + base;
+        }
+
         /** 세 줄 요약 */
         public List<String> getSummary() {
             List<String> out = new ArrayList<>();

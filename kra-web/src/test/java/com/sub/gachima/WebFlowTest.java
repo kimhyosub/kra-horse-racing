@@ -39,7 +39,9 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("오늘 경주를 이렇게 봅니다")))
                 .andExpect(content().string(containsString("가치마 1위 확률이 30%를 넘는 경주는")))
                 .andExpect(content().string(containsString("href=\"/r/20261115/1/7")))
-                .andExpect(content().string(containsString("class=\"hm-row")));
+                .andExpect(content().string(containsString("class=\"hm-row")))
+                .andExpect(content().string(containsString("경마 예상 · 11월 15일(일) 서울(과천)")))
+                .andExpect(content().string(containsString("부산경남·제주 경마 경주마다")));
 
         mvc.perform(get("/r/20261115/1/7"))
                 .andExpect(status().isOk())
@@ -133,7 +135,7 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("가치마 1위 vs 배당 1위")))
                 .andExpect(content().string(containsString("가치마 확률은 맞나")))
                 .andExpect(content().string(containsString("19세 미만은 마권을 구매할 수 없습니다")))
-                .andExpect(content().string(containsString("데이터 출처: 한국마사회 공개 자료")))
+                .andExpect(content().string(containsString("다루는 경마장: 서울(과천) · 부산경남 · 제주 경마 · 데이터 출처: 한국마사회 공개 자료")))
                 .andExpect(content().string(containsString("class=\"tabbar\"")))
                 .andExpect(content().string(containsString("공식 합계")));
         mvc.perform(get("/stats").param("date", "20261115").param("box", "3")).andExpect(status().isOk())

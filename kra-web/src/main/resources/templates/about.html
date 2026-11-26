@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8">
-  <th:block th:replace="~{fragments :: seo('가치마 소개 · 이용안내 | 무료 경마 분석 베타', '가치마는 한국 경마(서울·부경·제주) 전날 예상 순위와 당일 배당으로 다시 계산한 가치마(★) · 요인별 점수표, 공개 모의 장부와 성적을 무료로 보여주는 경마 분석 베타 서비스입니다.')}"></th:block>
+  <th:block th:replace="~{fragments :: seo('가치마 소개 · 무료 경마 예상·분석 베타 | 가치마', '가치마는 서울(과천)·부산경남·제주 경마의 전날 예상 순위와 당일 배당으로 다시 계산한 가치마(★) · 요인별 점수표, 공개 모의 장부와 성적을 무료로 보여주는 경마 분석 베타 서비스입니다.')}"></th:block>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
@@ -25,6 +25,7 @@
     <h1>가치마는 이런 서비스입니다</h1>
     <p><b>가치마(價値馬)</b>는 한국마사회 공공데이터로 경주마의 최근 성적·거리 적성·기수·조교사 같은 요인을 계산해
       <b>전날 예상 순위</b>를 내고, 경주 당일 배당·마체중·주로 상태가 들어오면 <b>당일 분석</b>으로 다시 계산하는 무료 베타 서비스입니다.</p>
+    <p>다루는 경마장은 <b>서울경마공원</b>(과천 렛츠런파크 서울), <b>부산경남경마공원</b>(렛츠런파크 부산경남), <b>제주경마공원</b>(렛츠런파크 제주)입니다. 영천경마공원은 참고용으로만 보여 줍니다. 경주가 끝나면 공식 구간 기록으로 경주마다 복기도 자동으로 씁니다.</p>
     <ul>
       <li><b>★ 가치마</b>: 모델이 본 우승 확률 × 배당(기대값)이 1.1 이상이고 배당 20배 이하인 말. 배당에 비해 저평가된 말이라는 뜻이지, 우승할 가능성이 가장 높은 말이라는 뜻은 아닙니다.</li>
       <li><b>모의 장부</b>: 출발 전 마지막 배당 기준 ★ 를 단승 1단위로 기록하고 확정 배당으로 정산한 공개 기록입니다. 좋은 결과만 골라 보여주지 않고 전부 남깁니다.</li>

@@ -343,13 +343,13 @@ public class RaceService {
         }
         public String getSeoDesc() {
             StringBuilder b = new StringBuilder();
-            b.append(getDayLabelShort()).append(' ').append(meetName).append(' ').append(rcNo).append("경주 ")
+            b.append(getDayLabelShort()).append(' ').append(HomeService.Home.seoMeet(meetName)).append(" 경마 ").append(rcNo).append("경주 예상, ")
              .append(dist).append("m");
             if (stTime != null && !stTime.isEmpty()) b.append(", ").append(stTime).append(" 출발");
             b.append(". 전날 예상 ");
             List<EntryView> t = preOrder.subList(0, Math.min(3, preOrder.size()));
             for (int i = 0; i < t.size(); i++) { if (i > 0) b.append(", "); b.append(i + 1).append("위 ").append(t.get(i).no).append("번 ").append(t.get(i).name); }
-            b.append(". 당일 배당으로 다시 계산한 가치마(★)와 요인별 점수표, 공개 성적을 함께 봅니다.");
+            b.append(". 당일 배당으로 다시 계산한 가치마(★), 요인별 점수표, 경주 후 복기와 공개 성적을 함께 봅니다.");
             return b.toString();
         }
         private String getDayLabelShort() {
