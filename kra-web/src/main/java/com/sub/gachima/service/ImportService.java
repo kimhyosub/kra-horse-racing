@@ -84,6 +84,7 @@ public class ImportService {
                         e.setFinishOrd(h.path("ord").isNumber() ? h.path("ord").asInt() : null);
                         e.setFinalOdds(h.path("finalOdds").isNumber() ? h.path("finalOdds").asDouble() : null);
                     }
+                    if (h.path("run").isObject()) e.setRunJson(h.path("run").toString());
                     nHorse++;
                 }
                 race = races.save(race);

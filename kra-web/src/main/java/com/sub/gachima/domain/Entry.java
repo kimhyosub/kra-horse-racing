@@ -65,6 +65,12 @@ public class Entry {
     /** 확정 단승 배당 */
     private Double finalOdds;
 
+    /** 경주 복기: {"s1":초반 순위,"c4":4코너 순위,"g1":마지막 200m 초,"gap":1착과 기록 차 초} (결과 뒤 공식 기록) */
+    @Lob
+    private String runJson;
+    public String getRunJson() { return runJson; }
+    public void setRunJson(String runJson) { this.runJson = runJson; }
+
     public Long getId() { return id; }
     public Race getRace() { return race; }
     public void setRace(Race race) { this.race = race; }

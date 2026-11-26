@@ -160,6 +160,9 @@ public class RaceService {
             x.ord = e.getFinishOrd(); x.finalOdds = e.getFinalOdds();
             x.inputOdds = odds.get(e.getChulNo()); x.inputBwd = bwd.get(e.getChulNo());
             x.firstStart = e.isFirstStart();
+            Map<String, Object> run = readObj(e.getRunJson());
+            x.s1 = intOf(run.get("s1")); x.c4 = intOf(run.get("c4"));
+            x.g1 = dblOf(run.get("g1")); x.gap = dblOf(run.get("gap"));
             Map<String, Object> facts = readObj(e.getFactsJson());
             x.facts = facts;
             x.preWhy = readDoubles(e.getPreWhyJson());
@@ -187,7 +190,14 @@ public class RaceService {
         v.review = Commentary.of(v.entries, v.track, true);
         v.picks = BetPicks.of(v.dayOrder);
         v.preReview = Commentary.of(v.entries, null, false);
+        // 마지막 200m 빠르기 순위 (같은 경주 안)
+        List<EntryView> byG1 = v.entries.stream().filter(a -> a.g1 != null).sorted(Comparator.comparingDouble(a -> a.g1)).collect(Collectors.toList());
+        for (int i = 0; i < byG1.size(); i++) byG1.get(i).g1Rank = i + 1;
+        v.recap = RaceRecap.of(v);
     }
+
+    private static Integer intOf(Object o) { return o instanceof Number ? ((Number) o).intValue() : null; }
+    private static Double dblOf(Object o) { return o instanceof Number ? ((Number) o).doubleValue() : null; }
 
     private static String why(EntryView x, DayModel.Result r) {
         List<Map.Entry<String, Double>> g = new ArrayList<>(r.groups.entrySet());
@@ -322,6 +332,8 @@ public class RaceService {
         public PaperService.Outcome paperLock;
         /** 총평: 당일 분석 기준 / 전날 예상 기준 */
         public Commentary review, preReview;
+        /** 경주 복기: 결과 뒤 구간 기록으로 '어떻게 달렸나' */
+        public RaceRecap recap;
         public BetPicks picks;
         public boolean isPaperLocked() { return paperLock != null && paperLock != PaperService.Outcome.RECORDED; }
         public String getDateLabel() { return date.substring(0, 4) + "." + date.substring(4, 6) + "." + date.substring(6); }
@@ -401,6 +413,9 @@ public class RaceService {
         public double preP, preBar, odds, pm, p, ev, xm, xp;
         public Double finalOdds, inputOdds, inputBwd;
         public boolean scored, value, firstStart;
+        /** 경주 복기: 초반(S1F) 순위, 4코너 순위, 마지막 200m 초와 그 빠르기 순위, 1착과 기록 차 */
+        public Integer s1, c4, g1Rank;
+        public Double g1, gap;
         public List<GroupBar> groups = new ArrayList<>();
         public String getOrdLabel() { return ord == null ? "" : ord >= Entry.ORD_OUT ? "착외" : ord + "착"; }
         public double getGapLeft() { return Math.min(xm, xp); }

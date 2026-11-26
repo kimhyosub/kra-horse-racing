@@ -144,6 +144,43 @@ def results_for(R, date, meet):
     return out, jk, final
 
 
+def _col(H, pats):
+    import re
+    for pat in pats:
+        for c in H.columns:
+            if re.fullmatch(pat, c, flags=re.I):
+                return c
+    return None
+
+
+def runs_for(H, date, meet):
+    """경주 복기용: 말마다 초반(S1F) 순위, 4코너 순위, 마지막 200m 기록, 1착과 기록 차 (결과가 나온 경주만)"""
+    day = pd.to_datetime(date)
+    r = H[(H['date'] == day) & (H['meetc'] == int(meet)) & (H['ord'] > 0)]
+    if r.empty:
+        return {}
+    bu = int(meet) in (3, 4)
+    s1c = _col(H, [r'buS1fOrd'] if bu else [r'sjS1fOrd'])
+    c4c = _col(H, [r'bu_?G3f_?Ord'] if bu else [r'sj_?4c_?Ord'])
+    out = {}
+    for rc, g in r.groupby('rcNo'):
+        wt = g.loc[g['ord'] == 1, 'rcTime']
+        wt = float(wt.iloc[0]) if len(wt) and wt.iloc[0] > 0 else None
+        for x in g.itertuples():
+            def ordv(c):
+                if c is None: return None
+                v = pd.to_numeric(getattr(x, c, None), errors='coerce')
+                return None if pd.isna(v) or v <= 0 else int(v)
+            g1 = None if pd.isna(x.g1f) else round(float(x.g1f), 1)
+            gap = None
+            if wt is not None and x.rcTime > 0 and not x.dnf:
+                gap = round(max(0.0, float(x.rcTime) - wt), 1)
+            run = {'s1': ordv(s1c), 'c4': ordv(c4c), 'g1': g1, 'gap': gap}
+            if any(v is not None for v in run.values()):
+                out[(int(rc), int(x.chulNo))] = run
+    return out
+
+
 POOL_KEYS = {'단승식': '단승', '복승식': '복승', '쌍승식': '쌍승', '삼복승식': '삼복승', '삼쌍승식': '삼쌍승', '복연승식': '복연'}
 
 
@@ -245,6 +282,7 @@ def export_day(a, date, pre, H, ref, raw_all, R):
         st = sub.groupby(K.num(sub['rcNo']))['stTime'].first()
         res, jk_today, final = results_for(R, date, m)
         divs = dividends_for(a.raw, date, m, res)
+        runs = runs_for(H, date, m)
         races = []
         for rn, d in F.groupby('rcNo'):
             d = d.sort_values('chulNo').reset_index(drop=True)
@@ -267,6 +305,7 @@ def export_day(a, date, pre, H, ref, raw_all, R):
                     'f': [None if f in DAY_ONLY else clean(h[f]) for f in K.FEATS],
                     'preP': round(float(p[i]), 5), 'preRank': int(rank[i]),
                     'ord': None if fin is None else fin[0], 'finalOdds': None if fin is None else fin[1],
+                    'run': runs.get(key),   # 경주 복기: 초반·4코너 순위, 마지막 200m, 1착과 차이
                     # 전날 예상에서 요인마다 이 말을 얼마나 올렸나(+)/내렸나(-) — 같은 경주 평균 대비, 로짓 단위
                     'preWhy': {f: round(float(C[i, j]), 4) for f, j in col.items() if abs(C[i, j]) >= 0.005},
                     'facts': facts_for(h, byhorse.get(h['hrNo']), Hb, day, m)})
@@ -278,7 +317,7 @@ def export_day(a, date, pre, H, ref, raw_all, R):
                 race['div'] = divs[int(rn)]   # 실제 착순 조합의 확정 배당 (승식별)
             races.append(race)
         doc['meets'].append({'meet': m, 'name': NAME[m], 'dayWeights': load_w(DAY_W[m]), 'races': races})
-        print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두, 승식 배당 {len(divs)}경주')
+        print(f'{NAME[m]}: {len(races)}경주 {sum(len(r["horses"]) for r in races)}두, 확정 착순 {len(res)}두, 승식 배당 {len(divs)}경주, 구간 기록 {len(runs)}두')
     if not doc['meets']:
         print(f'{date}: 출전표 없음, 파일을 만들지 않음')
         return
