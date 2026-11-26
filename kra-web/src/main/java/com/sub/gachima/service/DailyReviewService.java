@@ -227,7 +227,7 @@ public class DailyReviewService {
         for (EntryView x : v.entries) if (x.finalOdds != null && x.finalOdds < e.finalOdds) r++;
         return r;
     }
-    static String div(RaceView v, String k) { Double x = v.divs.get(k); return x == null ? "-" : odds(x); }
+    static String div(RaceView v, String k) { Double x = v.divs.get(k); return x == null ? "-" : x >= 100 ? String.format("%,.0f", x) : odds(x); }
 
     static EntryView pick(RaceView v) {
         if (v.isScored()) return v.dayOrder.get(0);

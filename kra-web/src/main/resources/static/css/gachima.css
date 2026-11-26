@@ -722,3 +722,9 @@ details.howto[open]{display:grid;gap:4px}
 .rc-tbl td.fast{font-weight:800;box-shadow:inset 0 -2px 0 var(--model)}
 .rc-tag{font-style:normal;font:700 10px var(--body);color:var(--ink);opacity:.75;flex:0 0 auto}
 @media (max-width:720px){.rc-tbl td.l{max-width:118px}.rc-tbl th,.rc-tbl td{padding-left:2px;padding-right:2px}}
+/* 휴대폰: 글 속 표는 옆으로 밀지 않게 촘촘히, 글자 칸은 줄바꿈 허용 */
+@media (max-width:720px){
+  .post-table table{font-size:13px}
+  .post-table th,.post-table td{padding:6px 5px;white-space:normal;word-break:keep-all}
+  .post-table th{font-size:11.5px}
+}
