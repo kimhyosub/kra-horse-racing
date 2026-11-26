@@ -26,12 +26,19 @@ public final class RaceRecap {
         public String getS1Text() { return s1 == null ? "-" : String.valueOf(s1); }
         public String getC4Text() { return c4 == null ? "-" : String.valueOf(c4); }
         public String getG1Text() { return g1 == null ? "-" : String.format("%.1f", g1); }
+        public boolean out;
+        public String getOrdText() { return out ? "-" : String.valueOf(ord); }
         public String getGapText() { return gap == null ? "-" : gap == 0 ? "–" : String.format("+%.1f", gap); }
     }
 
     public static RaceRecap of(RaceView v) {
         List<EntryView> fin = new ArrayList<>();
-        for (EntryView e : v.entries) if (e.ord != null && e.ord < Entry.ORD_OUT) fin.add(e);
+        // 착순이 출전 두수보다 큰 값(주행중지·실격 등 코드)은 순위 계산에서 빼고 표 맨 아래에 '-'로
+        List<EntryView> other = new ArrayList<>();
+        for (EntryView e : v.entries) {
+            if (e.ord == null || e.ord >= Entry.ORD_OUT) continue;
+            if (e.ord > v.entries.size()) other.add(e); else fin.add(e);
+        }
         if (fin.size() < 3) return null;
         int withRun = 0;
         for (EntryView e : fin) if (e.s1 != null || e.g1 != null) withRun++;
@@ -60,6 +67,12 @@ public final class RaceRecap {
             r.rows.add(x);
             if (x.fast) fastest = e;
         }
+        for (EntryView e : other) {
+            Row x = new Row();
+            x.ord = e.ord; x.no = e.no; x.name = e.name; x.out = true;
+            x.tag = pick != null && pick.no == e.no ? "가치마" : stars.contains(e.no) ? "★" : "";
+            r.rows.add(x);
+        }
 
         // 1) 경주 성격: 우승마가 어디서 왔나
         EntryView w = fin.get(0);
@@ -80,13 +93,14 @@ public final class RaceRecap {
         // 3) 가치마가 꼽은 말
         if (pick != null && pick.ord != null) {
             String who = pickLabel + " " + pick.no + "번 " + pick.name;
-            if (pick.ord == 1) r.lines.add(who + ga(pick.name) + " 그대로 우승했습니다.");
+            if (other.contains(pick)) r.lines.add(who + ": 착순 없이 끝났습니다 (주행중지·실격 등, 공식 기록 참고).");
+            else if (pick.ord == 1) r.lines.add(who + ga(pick.name) + " 그대로 우승했습니다.");
             else r.lines.add(who + " (" + ordText(pick) + "): " + why(pick, n, front));
         }
         // 4) ★ (가치마 1위와 다른 말만)
         if (v.values != null) for (EntryView s : v.values) {
             if (pick != null && s.no == pick.no) continue;
-            if (s.ord == null) continue;
+            if (s.ord == null || other.contains(s)) continue;
             String who = "★ " + s.no + "번 " + s.name;
             if (s.ord == 1) r.lines.add(who + ga(s.name) + " 우승했습니다 (" + path(s) + ").");
             else r.lines.add(who + " (" + ordText(s) + "): " + why(s, n, front));
@@ -106,7 +120,7 @@ public final class RaceRecap {
         return (c - 0xAC00) % 28 > 0 ? "이" : "가";
     }
 
-    static String ordText(EntryView e) { return e.ord >= Entry.ORD_OUT ? "착외" : e.ord + "착"; }
+    static String ordText(EntryView e) { return e.ord >= Entry.ORD_OUT ? "착외" : e.ord > 20 ? "순위 없음" : e.ord + "착"; }
 
     /** 초반 4위 → 4코너 2위 → 1착 */
     static String path(EntryView e) {
