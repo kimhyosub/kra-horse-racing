@@ -116,6 +116,8 @@ class WebFlowTest {
                 .andExpect(content().string(containsString("최근 1경주일 누적")))
                 .andExpect(content().string(containsString("<polyline")))
                 .andExpect(content().string(containsString("경주별 예상 · 결과 비교")))
+                .andExpect(content().string(containsString("class=\"rp-mlist\"")))
+                .andExpect(content().string(containsString("몇 위로 봤는지")))
                 .andExpect(content().string(containsString("href=\"/r/20261115/1/7?mode=day\"")))
                 .andExpect(content().string(containsString("5두 안 3착")))
                 .andExpect(content().string(containsString("같은 경주 인기 1위 우승")))

@@ -212,6 +212,30 @@
         </span>
       </a>
     </div>
+    <!-- 휴대폰: 경마장별로 묶고 한 경주 한 덩어리 (결과 1·2·3착 + 그 말의 가치마 순위) -->
+    <div class="rp-mlist">
+      <p class="rp-mhint">결과 번호 아래 숫자는 <b>가치마가 그 말을 몇 위로 봤는지</b>입니다. 누르면 경주 화면으로 갑니다.</p>
+      <th:block th:each="g : ${rp.raceGroups}">
+        <div class="rp-mgrp" th:classappend="${!g.official} ? 'ref'">
+          <b th:text="${g.name}">서울</b>
+          <span><th:block th:text="|${g.n}경주 · 1위 적중 ${g.hit}|"></th:block><th:block th:if="${g.boxN > 0}"> · <em th:classappend="${g.box >= 0} ? 'pos' : 'neg'" th:text="|${rp.boxK}두 박스 ${g.boxText}|"></em></th:block></span>
+        </div>
+        <a class="rp-mrow" th:each="r : ${g.races}" th:href="@{|/r/${r.date}/${r.meet}/${r.rcNo}|(mode='day')}" th:classappend="${!r.official} ? 'ref'">
+          <b class="rp-mno" th:text="|${r.rcNo}R|">1R</b>
+          <span class="rp-mres">
+            <span class="rp-mh" th:each="n : ${r.result}">
+              <th:block th:insert="~{fragments :: cloth(${n})}"></th:block>
+              <small th:classappend="${r.rankOf(n) == 1} ? 'top' : (${r.rankOf(n) == 0} ? 'out' : '')" th:text="${r.rankText(n)}">1위</small>
+            </span>
+          </span>
+          <span class="rp-mv">
+            <i class="bd" th:if="${!#strings.isEmpty(r.verdict)}" th:classappend="${r.verdictClass}" th:text="${r.verdict}">1위 적중</i>
+            <small class="rp-mnone" th:if="${#strings.isEmpty(r.verdict)}" th:text="${r.day} ? '빗나감' : '전날 예상'">빗나감</small>
+            <small class="rp-boxp" th:if="${r.anyBox}" th:classappend="${r.boxProfit(rp.boxK) >= 0} ? 'pos' : 'neg'" th:text="|박스 ${r.boxProfitText(rp.boxK)}|"></small>
+          </span>
+        </a>
+      </th:block>
+    </div>
   </section>
   </th:block>
 

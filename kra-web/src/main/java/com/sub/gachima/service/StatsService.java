@@ -243,6 +243,34 @@ public class StatsService {
         }
         public boolean isIn5(int no) { return preTop5.contains(no); }
         public boolean isStarAny() { return !stars.isEmpty(); }
+        /** 그 말이 예상 5두에서 몇 위였나 (밖이면 0) — 휴대폰 경주별 비교 */
+        public int rankOf(int no) { return getShownTop5().indexOf(no) + 1; }
+        public String rankText(int no) { int r = rankOf(no); return r == 0 ? "5위 밖" : r + "위"; }
+        /** 휴대폰 한 줄 평가: 가장 좋은 것 하나만 */
+        public String getVerdict() {
+            if (starHit) return "★ 적중";
+            if (isDay()) {
+                if (Boolean.TRUE.equals(day1)) return "1위 적중";
+                if (Boolean.TRUE.equals(dayIn123)) return "5두 안 1·2·3착";
+                if (Boolean.TRUE.equals(dayIn12)) return "5두 안 1·2착";
+            } else if (pre1) return "전날 1위 적중";
+            return "";
+        }
+        public String getVerdictClass() {
+            if (starHit) return "star";
+            if (isDay() ? Boolean.TRUE.equals(day1) : pre1) return "win";
+            return "in";
+        }
+    }
+
+    /** 휴대폰 경주별 비교: 경마장별 묶음 */
+    public static class RaceGroup {
+        public String name;
+        public boolean official;
+        public int n, hit, boxN;
+        public long box;
+        public final List<RaceRec> races = new ArrayList<>();
+        public String getBoxText() { return won(box); }
     }
 
     /** 정확도 묶음: 경주 수와 각 지표 적중 수 */
@@ -342,6 +370,16 @@ public class StatsService {
         public int calibHorses;
         public boolean isHasCalib() { return calibHorses > 0; }
         public final List<RaceRec> races = new ArrayList<>();
+        public List<RaceGroup> getRaceGroups() {
+            Map<String, RaceGroup> m = new LinkedHashMap<>();
+            for (RaceRec r : races) {
+                RaceGroup g = m.computeIfAbsent(r.meetName, k -> { RaceGroup x = new RaceGroup(); x.name = k; x.official = r.official; return x; });
+                g.races.add(r); g.n++;
+                if (r.isDay() ? Boolean.TRUE.equals(r.day1) : r.pre1) g.hit++;
+                if (r.isAnyBox()) { g.boxN++; g.box += r.boxProfit(boxK); }
+            }
+            return new ArrayList<>(m.values());
+        }
         public final List<String> trendDates = new ArrayList<>();
         public final List<Agg> trend = new ArrayList<>();
         public boolean isEmpty() { return dates.isEmpty(); }

@@ -676,3 +676,29 @@ details.howto[open]{display:grid;gap:4px}
   .tote>div{grid-template-columns:96px 1fr;align-items:center;padding:8px 12px}
 }
 .rp-sec{font-size:15px;font-weight:800;color:var(--muted);margin:10px 2px -4px;letter-spacing:-.01em}
+
+/* 휴대폰 경주별 비교: 경마장 묶음 + 한 줄 경주 */
+.rp-mlist{display:none}
+@media (max-width:720px){
+  .rp-races{display:none}
+  .rp-mlist{display:block;margin:0 -4px}
+  .rp-mhint{margin:0 4px 6px;font-size:12px;color:var(--muted)}
+  .rp-mgrp{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 4px 6px;margin-top:6px;background:var(--paper);border-bottom:2px solid var(--ink)}
+  .rp-mgrp b{font-size:16px}
+  .rp-mgrp span{font-size:12px;color:var(--muted);text-align:right}
+  .rp-mgrp em{font-style:normal;font-weight:700}
+  .rp-mgrp.ref{opacity:.7}
+  .rp-mrow{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+  .rp-mrow.ref{opacity:.7}
+  .rp-mrow:active{background:var(--bg)}
+  .rp-mno{font:800 15px var(--num)}
+  .rp-mres{display:flex;gap:6px}
+  .rp-mh{display:grid;justify-items:center;gap:2px;width:40px}
+  .rp-mh .cloth{width:28px;height:28px;font-size:14px}
+  .rp-mh small{font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .rp-mh small.top{color:var(--ink);font-weight:800;box-shadow:inset 0 -2px 0 var(--value)}
+  .rp-mh small.out{opacity:.6}
+  .rp-mv{display:grid;justify-items:end;gap:3px}
+  .rp-mv .rp-boxp{font-size:12px}
+  .rp-mnone{font-size:11.5px;color:var(--muted)}
+}
