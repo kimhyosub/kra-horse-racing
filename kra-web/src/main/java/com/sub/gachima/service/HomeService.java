@@ -76,7 +76,7 @@ public class HomeService {
 
     public static class Home {
         public String date, label;
-        public boolean upcoming;
+        public boolean upcoming, today;
         public final List<MeetBlock> meets = new ArrayList<>();
         public int races, clear, stars, dayRaces;
         public Row best;
@@ -102,7 +102,7 @@ public class HomeService {
         }
         public String getSeoTitle() {
             if (date == null) return "오늘의 경마 예상 · 서울(과천)·부산경남·제주 경마 분석 | 가치마";
-            return (upcoming ? "오늘의 경마 예상 · " : "경마 예상 · ") + shortLabel() + " " + seoMeets() + " | 가치마";
+            return (today ? "오늘의 경마 예상 · " : "경마 예상 · ") + shortLabel() + " " + seoMeets() + " | 가치마";
         }
         public String getSeoDesc() {
             String base = "서울(과천)·부산경남·제주 경마 경주마다 가치마가 꼽은 말과 우승 확률, 당일 배당으로 다시 계산한 ★ 가치마, 지난 경주 적중과 복기를 무료로 봅니다.";
@@ -136,7 +136,13 @@ public class HomeService {
         String pick = null;
         for (String d : dates) if (d.compareTo(today) >= 0) pick = d;
         if (pick == null) pick = dates.first();
-        h.date = pick; h.label = label(pick); h.upcoming = pick.compareTo(today) >= 0;
+        // 오늘 경주가 다 끝났으면(영천 제외, 결과가 다 들어옴) 다음 경주일을 보여 준다
+        if (pick.equals(today) && dayFinished(today)) {
+            String next = null;
+            for (String d : dates) if (d.compareTo(today) > 0) next = d;
+            if (next != null) pick = next;
+        }
+        h.date = pick; h.label = label(pick); h.upcoming = pick.compareTo(today) >= 0; h.today = pick.equals(today);
 
         Map<Integer, MeetBlock> blocks = new LinkedHashMap<>();
         for (RaceRef ref : races.racesOn(pick)) {
@@ -164,6 +170,20 @@ public class HomeService {
             if (p.races > 0) { h.past = p; break; }
         }
         return h;
+    }
+
+    /** 그날 경주(영천 제외)가 모두 결과가 났나 */
+    private boolean dayFinished(String date) {
+        int n = 0;
+        for (RaceRef ref : races.racesOn(date)) {
+            if (ref.meet == REFERENCE_MEET) continue;
+            Optional<RaceView> ov = races.view(date, ref.meet, ref.rcNo);
+            if (!ov.isPresent()) continue;
+            n++;
+            Row r = row(ov.get());
+            if (r == null || !r.finished) return false;
+        }
+        return n > 0;
     }
 
     private static boolean manual(RaceView v) { return RaceService.SRC_MANUAL.equals(v.inputSource); }
