@@ -39,8 +39,11 @@
     <p class="rnote" th:if="${v.mixed(isDay)}">
       <b>팽팽한 경주</b><span th:text="|${v.mixedText(isDay)} — 누가 이겨도 이상하지 않은 판|"></span>
     </p>
-    <p class="rnote" th:if="${v.debutCount >= 2}">
-      <b th:text="${v.debutCount == #lists.size(v.entries)} ? '모두 첫 출전' : |첫 출전 ${v.debutCount}두|">첫 출전</b><span th:text="${v.debutCount == #lists.size(v.entries)} ? '달린 기록이 없어 나이·기수·조교사로만 본 경주 — 예상 폭이 넓음' : '기록 없이 나이·기수·조교사로만 본 말 — 예상 폭이 넓음'"></span>
+    <p class="rnote" th:if="${v.debutCount >= 2 and v.debutCount == #lists.size(v.entries)}">
+      <b>모두 첫 출전</b><span>달린 기록이 없어 나이·기수·조교사로만 본 경주 — 예상 폭이 넓음</span>
+    </p>
+    <p class="rnote" th:if="${v.debutCount >= 2 and v.debutCount != #lists.size(v.entries)}">
+      <b th:text="|첫 출전 ${v.debutCount}두|">첫 출전</b><span>기록 없이 나이·기수·조교사로만 본 말 — 예상 폭이 넓음</span>
     </p>
   </div>
 
