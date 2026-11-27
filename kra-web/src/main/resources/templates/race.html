@@ -35,7 +35,8 @@
   </div>
 
   <!-- 경주 안내: 확률이 고르게 갈린 경주, 첫 출전 말 -->
-  <div class="rnotes" th:with="isDay=${mode == 'day'}" th:if="${v.mixed(isDay) or v.debutCount >= 2}">
+  <th:block th:with="isDay=${mode == 'day'}">
+  <div class="rnotes" th:if="${v.mixed(isDay) or v.debutCount >= 2}">
     <p class="rnote" th:if="${v.mixed(isDay)}">
       <b>팽팽한 경주</b><span th:text="|${v.mixedText(isDay)} — 누가 이겨도 이상하지 않은 판|"></span>
     </p>
@@ -46,6 +47,7 @@
       <b th:text="|첫 출전 ${v.debutCount}두|">첫 출전</b><span>기록 없이 나이·기수·조교사로만 본 말 — 예상 폭이 넓음</span>
     </p>
   </div>
+  </th:block>
 
   <!-- 기록 지문: 예상을 나중에 고치지 않았다는 증거 -->
   <details class="fp" th:if="${v.preHash != null or v.starHash != null}">
