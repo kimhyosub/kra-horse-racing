@@ -54,6 +54,7 @@ public final class PreReasons {
             case "dist_change": return new Reason(up, up ? "거리 변화 유리" : "거리 변화 불리", distChange(f), c);
             case "log_days": return new Reason(up, up ? "간격 알맞음" : "간격 김", days(f), c);
             case "first": return new Reason(up, up ? "데뷔전" : "데뷔전", "기록 없이 첫 출전", c);
+            case "log_starts": return new Reason(up, up ? "출전 적은 상승세" : "출전 많은 노장", up ? "출전 경험이 적은 말이 생각보다 잘 이김" : "출전이 많을수록 기록보다 덜 이김", c);
             case "jk_rate": return new Reason(up, up ? "기수 승률 높음" : "기수 승률 낮음", rate(f, "jkWin", "jkStarts"), c);
             case "tr_rate": return new Reason(up, up ? "조교사 승률 높음" : "조교사 승률 낮음", rate(f, "trWin", "trStarts"), c);
             case "jk_change": return new Reason(up, "기수 교체", "지난 경주와 다른 기수", c);

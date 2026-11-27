@@ -13,7 +13,9 @@ import numpy as np, pandas as pd
 
 WORK = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser('~/pre-test')
 HERE = os.path.dirname(os.path.abspath(__file__))
-W = json.load(open(os.path.join(HERE, '..', 'kra-raceday', 'model_weights_pre.json'), encoding='utf-8'))
+WPATH = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, '..', 'kra-raceday', 'model_weights_pre.json')
+W = json.load(open(WPATH, encoding='utf-8'))
+print('가중치:', WPATH)
 FEATS, BIN, w = W['feats'], set(W['bin']), np.array(W['w'])
 CUT = 20250701
 NAME = {1: '서울', 2: '제주', 3: '부경'}
@@ -26,6 +28,7 @@ r['log_days'] = np.log1p(r['days'].fillna(35))
 r['first'] = (r['n_prev'] == 0).astype(float)
 r['ref_last_f'] = r['ref_last'].fillna(0)
 r['tool_change_f'] = r['tool_change'].fillna(0)
+r['log_starts'] = np.log1p(pd.to_numeric(r['n_prev'], errors='coerce').fillna(0))
 # 그 말의 이전 우승 수 (데이터 안에서)
 r = r.sort_values(['hrNo', 'date', 'rcNo']).reset_index(drop=True)
 r['prev_wins'] = r.groupby('hrNo')['win'].cumsum() - r['win']

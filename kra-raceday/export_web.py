@@ -26,7 +26,7 @@ GROUPS = {
     '속도 기록': ['g1f4'],
     '최근 폼': ['form3', 'place_rate'],
     '거리 적합': ['dist_place', 'dist_change'],
-    '컨디션': ['log_days', 'first'],
+    '컨디션': ['log_days', 'first', 'log_starts'],
     '기수·조교사': ['jk_rate', 'tr_rate', 'jk_change'],
     '조건 변화': ['cls_change', 'tool_change_f', 'budam_change', 'wgBudam', 'age', 'rating'],
     '심판 기록': ['ref_last_f', 'ref_180'],

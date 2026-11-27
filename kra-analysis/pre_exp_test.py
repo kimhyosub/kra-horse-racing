@@ -8,7 +8,7 @@
    - 로그우도(경주당, 높을수록 좋음), 1위 적중, 상위 5두 안 우승마
 배당은 쓰지 않는다 (전날 예상이므로). 경주 당일 마체중도 전날에는 모르니 직전 경주 값만 쓴다.
 """
-import os, sys, subprocess
+import os, sys, subprocess, json
 import numpy as np, pandas as pd
 
 RACE, REF = sys.argv[1], sys.argv[2]
@@ -150,3 +150,13 @@ for k in ('서울', '제주', '부경'):
 w = res['+셋 다'][0]
 print('\n+셋 다 가중치:', ', '.join(f'{f} {x:+.3f}' for f, x in zip(BASE + ['log_starts', 'few_won', 'veteran'], w) if f in ('log_starts', 'few_won', 'veteran', 'age', 'place_rate', 'rating', 'form3')))
 print('(로그우도 합계 차이가 +10 이상이고 1위 적중이 오르면 바꿀 만함)')
+
+# 새 전날 예상 가중치(+출전 수)를 파일로 남긴다 → 내용을 그대로 저장소 kra-raceday/model_weights_pre.json 으로
+wn = res['+출전 수'][0]
+outp = os.path.join(WORK, 'model_weights_pre_new.json')
+json.dump({'feats': BASE + ['log_starts'], 'bin': sorted(BIN & set(BASE + ['log_starts'])),
+           'w': [round(float(x), 6) for x in wn],
+           'note': '전날 예상 모델 v2: 배당 없이 요인만 + 출전 수(log). 학습 ~2025-06, 검증 2025-07~'},
+          open(outp, 'w', encoding='utf-8'), ensure_ascii=False)
+print('\n새 가중치 저장:', outp)
+print(open(outp, encoding='utf-8').read())

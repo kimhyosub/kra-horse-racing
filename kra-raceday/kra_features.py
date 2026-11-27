@@ -128,6 +128,7 @@ def features_for(entries, hist, ref_by, day, wet_today=None, meet=1):
     F['stable'] = F['bwd'].between(-4, 4) & (F['days'] <= 35)
     F['log_days'] = np.log1p(F['days'].fillna(35))
     F['first'] = (F['n_prev'] == 0).astype(float)
+    F['log_starts'] = np.log1p(F['n_prev'].astype(float))   # 전날 예상 v2: 경험(출전 수)
     F['risky_f'] = F['risky'].astype(float); F['stable_f'] = F['stable'].astype(float)
     F['risky_long_f'] = (F['risky'] & (F['rcDist'] >= 1300)).astype(float)
     F['risky_short_f'] = (F['risky'] & (F['rcDist'] < 1300)).astype(float)
