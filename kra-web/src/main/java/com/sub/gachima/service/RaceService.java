@@ -388,7 +388,7 @@ public class RaceService {
         public String preHash, preHashText, starHash, starHashText;
         public LocalDateTime preHashAt;
         public boolean preHashSame = true;
-        /** 경주 화면 안내: 혼전(1위 확률 30% 미만), 데뷔마 수 — day=true면 당일 분석 기준 */
+        /** 경주 화면 안내: 팽팽한 경주, 첫 출전 말 수 — day=true면 당일 분석 기준 */
         public double topP(boolean day) {
             List<EntryView> o = day && isScored() ? dayOrder : preOrder;
             return o == null || o.isEmpty() ? 0 : (day && isScored() ? o.get(0).p : o.get(0).preP);
@@ -398,7 +398,8 @@ public class RaceService {
             if (o == null || o.size() < 2) return 0;
             return day && isScored() ? o.get(0).p - o.get(1).p : o.get(0).preP - o.get(1).preP;
         }
-        public boolean mixed(boolean day) { double t = topP(day); return t > 0 && t < 0.30; }
+        /** 팽팽한 경주: 1위가 20% 미만이거나 1·2위 차이가 3%p 미만 (자주 붙으면 의미가 없어서 좁게) */
+        public boolean mixed(boolean day) { double t = topP(day); return t > 0 && (t < 0.20 || gap12(day) < 0.03); }
         public String mixedText(boolean day) {
             return String.format("1위 %.1f%% · 2위와 %.1f%%p 차이", topP(day) * 100, gap12(day) * 100);
         }
