@@ -154,4 +154,11 @@ public class RaceController {
         ra.addFlashAttribute("msg", scanner.scan(force).message());
         return "redirect:/admin";
     }
+
+    /** 텔레그램 채널 아침 글 지금 보내기 */
+    @PostMapping("/admin/telegram/morning")
+    public String morningNow(RedirectAttributes ra) {
+        ra.addFlashAttribute("msg", channelPublisher.morningNow());
+        return "redirect:/admin";
+    }
 }

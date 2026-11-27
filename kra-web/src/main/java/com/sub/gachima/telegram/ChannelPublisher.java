@@ -121,10 +121,26 @@ public class ChannelPublisher {
         if (!isEnabled()) return;
         try {
             com.sub.gachima.service.HomeService.Home h = home.home();
-            if (h.isEmpty() || !h.date.equals(today()) || !summarized.add("morning-" + h.date)) return;
+            if (h.isEmpty() || !h.date.equals(today()) || summarized.contains("morning-" + h.date)) return;
             tg.sendMessage(channel, morningText(h));
+            summarized.add("morning-" + h.date);   // 보낸 뒤에만 표시 (실패하면 관리 화면에서 다시 보낼 수 있게)
         } catch (Exception x) {
             log.warn("텔레그램 채널 아침 요약 실패: {}", x.getMessage());
+        }
+    }
+
+    /** 관리 화면 '아침 글 지금 보내기': 9:20 글을 놓쳤을 때 (이미 보낸 날도 한 번 더 보냄) */
+    public String morningNow() {
+        if (!isEnabled()) return "공개 채널이 꺼져 있습니다 (GACHIMA_TELEGRAM_CHANNEL)";
+        try {
+            com.sub.gachima.service.HomeService.Home h = home.home();
+            if (h.isEmpty() || !h.date.equals(today())) return "오늘은 경주가 없어 아침 글을 보내지 않았습니다";
+            tg.sendMessage(channel, morningText(h));
+            summarized.add("morning-" + h.date);
+            return "채널 " + channel + "에 오늘 아침 글을 보냈습니다";
+        } catch (Exception x) {
+            log.warn("텔레그램 채널 아침 요약 실패: {}", x.getMessage());
+            return "보내기 실패: " + x.getMessage();
         }
     }
 
