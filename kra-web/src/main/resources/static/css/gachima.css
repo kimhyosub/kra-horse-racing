@@ -745,3 +745,10 @@ details.howto[open]{display:grid;gap:4px}
 .fp-h{color:var(--model)!important}
 .fp-warn{color:#b3261e}
 .fp-more{text-decoration:underline;text-underline-offset:2px}
+
+/* 경주 안내: 혼전·데뷔마 */
+.race-note{margin:8px 0;padding:10px 14px;border-radius:12px;background:var(--value-soft);font-size:13px;line-height:1.55;color:var(--ink)}
+.race-note b{display:block;font-size:13.5px;margin-bottom:2px;color:#8a5a00}
+.race-note span{color:var(--muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .race-note b{color:#f0b54a}}
+:root[data-theme="dark"] .race-note b{color:#f0b54a}

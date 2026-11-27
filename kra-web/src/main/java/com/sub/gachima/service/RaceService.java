@@ -388,6 +388,22 @@ public class RaceService {
         public String preHash, preHashText, starHash, starHashText;
         public LocalDateTime preHashAt;
         public boolean preHashSame = true;
+        /** 경주 화면 안내: 혼전(1위 확률 30% 미만), 데뷔마 수 — day=true면 당일 분석 기준 */
+        public double topP(boolean day) {
+            List<EntryView> o = day && isScored() ? dayOrder : preOrder;
+            return o == null || o.isEmpty() ? 0 : (day && isScored() ? o.get(0).p : o.get(0).preP);
+        }
+        public double gap12(boolean day) {
+            List<EntryView> o = day && isScored() ? dayOrder : preOrder;
+            if (o == null || o.size() < 2) return 0;
+            return day && isScored() ? o.get(0).p - o.get(1).p : o.get(0).preP - o.get(1).preP;
+        }
+        public boolean mixed(boolean day) { double t = topP(day); return t > 0 && t < 0.30; }
+        public String mixedText(boolean day) {
+            return String.format("1위 %.1f%% · 2위와 %.1f%%p 차이", topP(day) * 100, gap12(day) * 100);
+        }
+        public int getDebutCount() { int n = 0; for (EntryView e : entries) if (e.firstStart) n++; return n; }
+
         public String getPreHashShort() { return Fingerprint.shortHash(preHash); }
         public String getStarHashShort() { return Fingerprint.shortHash(starHash); }
         public String getPreHashAtLabel() { return preHashAt == null ? "" : preHashAt.format(java.time.format.DateTimeFormatter.ofPattern("M/d HH:mm")); }
