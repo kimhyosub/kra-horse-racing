@@ -87,10 +87,17 @@ public class ChannelPublisher {
         RaceView v = ov.get();
         if (e.kind == RaceEvent.Kind.INPUT) {
             if (!v.isScored() || hasResult(v)) return;
-            String msg = analysis(v, LocalTime.now(clock.withZone(KST)));
+            LocalTime at = LocalTime.now(clock.withZone(KST));
+            String msg = analysis(v, at);
             Long id = posted.get(key);
-            if (id == null) posted.put(key, tg.sendMessage(channel, msg));
-            else tg.editMessage(channel, id, msg);
+            if (id == null) {
+                posted.put(key, tg.sendMessage(channel, msg));
+                log.info("텔레그램 채널 분석 글 올림: {}", key);
+            } else {
+                tg.editMessage(channel, id, msg);
+                tg.sendReply(channel, updateNote(v, at), id);   // 고친 걸 구독자도 알 수 있게 짧은 답글
+                log.info("텔레그램 채널 분석 글 갱신: {}", key);
+            }
         } else {
             if (!posted.containsKey(key) || !hasResult(v) || !resulted.add(key)) return;
             tg.sendMessage(channel, result(v));
@@ -165,6 +172,19 @@ public class ChannelPublisher {
     }
 
     // ---------------- 글 ----------------
+
+    /** 다시 입력했을 때 원글에 다는 한 줄: 🔄 12:01 배당으로 갱신 · 1위 7번 OO 32% · ★ 없음 */
+    String updateNote(RaceView v, LocalTime at) {
+        StringBuilder b = new StringBuilder("🔄 ").append(at.format(DateTimeFormatter.ofPattern("HH:mm"))).append(" 배당으로 갱신");
+        List<EntryView> top = v.getDayTop3();
+        if (!top.isEmpty()) b.append(" · 1위 ").append(top.get(0).no).append("번 ").append(esc(top.get(0).name)).append(' ').append(pct(top.get(0).p));
+        if (v.values.isEmpty()) b.append(" · ★ 없음");
+        else {
+            b.append(" · ★");
+            for (EntryView x : v.values) b.append(' ').append(x.no).append("번(").append(odds(x.odds)).append("배)");
+        }
+        return b.toString();
+    }
 
     String analysis(RaceView v, LocalTime at) {
         StringBuilder b = new StringBuilder();

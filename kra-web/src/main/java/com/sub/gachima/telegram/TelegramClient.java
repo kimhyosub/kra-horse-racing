@@ -48,6 +48,15 @@ public class TelegramClient {
         return call("sendMessage", b, 20_000).path("result").path("message_id").asLong();
     }
 
+    /** 채널 글에 답글 (알림 없이), 메시지 번호를 돌려준다 */
+    public long sendReply(String chatId, String html, long replyTo) throws IOException {
+        ObjectNode b = message(html);
+        b.put("chat_id", chatId);
+        b.put("disable_notification", true);
+        b.putObject("reply_parameters").put("message_id", replyTo).put("allow_sending_without_reply", true);
+        return call("sendMessage", b, 20_000).path("result").path("message_id").asLong();
+    }
+
     /** 보낸 메시지 고치기. 내용이 같으면 텔레그램이 오류를 주는데 무시한다 */
     public void editMessage(String chatId, long messageId, String html) throws IOException {
         ObjectNode b = message(html);

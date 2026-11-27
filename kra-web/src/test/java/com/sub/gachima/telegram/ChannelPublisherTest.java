@@ -81,6 +81,7 @@ class ChannelPublisherTest {
         // 2) 다시 입력 → 새 글이 아니라 같은 글(77) 고침
         races.saveInput("20261115", 1, 7, "다습", o, w, "sub");
         verify(tg, timeout(3000)).editMessage(eq("@gachima_test"), eq(77L), anyString());
+        verify(tg, timeout(3000)).sendReply(eq("@gachima_test"), contains("배당으로 갱신"), eq(77L));
 
         // 3) 결과 → 결과 글 + (서울 다른 경주는 이미 결과가 있으므로) 하루 결산
         Map<Integer, Integer> ords = new LinkedHashMap<>();
