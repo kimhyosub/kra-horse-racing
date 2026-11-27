@@ -59,6 +59,14 @@ public class Entry {
     /** 직접 넣은 결과에서 착순을 적지 않은 말 (4착 이하 등). 화면에는 '착외' */
     public static final int ORD_OUT = 99;
 
+    /**
+     * 실제로 달린 결과인가: 1착~출전 두수 안의 착순, 또는 우리가 넣은 착외(ORD_OUT).
+     * 경주 전 출전취소·제외 말에 붙어 오는 94 같은 코드는 결과가 아니다 (이걸 결과로 보면 경주가 출발 전에 잠긴다)
+     */
+    public static boolean isResult(Integer ord, int field) {
+        return ord != null && ord >= 1 && (ord <= field || ord == ORD_OUT);
+    }
+
     /** 확정 착순 (경주 전 null) */
     private Integer finishOrd;
 

@@ -234,7 +234,7 @@ public class DailyReviewService {
         return v.preOrder == null || v.preOrder.isEmpty() ? null : v.preOrder.get(0);
     }
     static double p1(RaceView v) { EntryView p = pick(v); return v.isScored() ? p.p : p.preP; }
-    static boolean hasResult(RaceView v) { return v.entries.stream().anyMatch(x -> x.ord != null && x.ord < Entry.ORD_OUT); }
+    static boolean hasResult(RaceView v) { return v.entries.stream().anyMatch(x -> Entry.isResult(x.ord, v.entries.size()) && x.ord < Entry.ORD_OUT); }
     static EntryView winner(RaceView v) { for (EntryView e : v.entries) if (e.ord != null && e.ord == 1) return e; return null; }
     static EntryView byNo(RaceView v, int no) { for (EntryView e : v.entries) if (e.no == no) return e; return null; }
     static String rankOf(RaceView v, EntryView e) {

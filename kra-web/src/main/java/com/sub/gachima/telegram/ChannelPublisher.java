@@ -168,7 +168,7 @@ public class ChannelPublisher {
     }
 
     static boolean hasResult(RaceView v) {
-        return v.entries.stream().anyMatch(x -> x.ord != null && x.ord < Entry.ORD_OUT);
+        return v.entries.stream().anyMatch(x -> Entry.isResult(x.ord, v.entries.size()) && x.ord < Entry.ORD_OUT);
     }
 
     // ---------------- 글 ----------------

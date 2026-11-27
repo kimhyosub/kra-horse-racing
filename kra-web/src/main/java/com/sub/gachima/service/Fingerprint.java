@@ -105,7 +105,8 @@ public class Fingerprint {
         for (MeetDay md : meetDays.findByRaceDateOrderByMeet(date)) {
             for (Race r : races.findByMeetDayOrderByRcNo(md)) {
                 if (r.getPreHash() != null) continue;
-                boolean finished = r.getEntries().stream().anyMatch(e -> e.getFinishOrd() != null);
+                int n = r.getEntries().size();
+                boolean finished = r.getEntries().stream().anyMatch(e -> Entry.isResult(e.getFinishOrd(), n) && e.getFinishOrd() < Entry.ORD_OUT);
                 if (finished) continue;
                 String t = preText(date, md.getMeet(), r);
                 if (t == null) continue;

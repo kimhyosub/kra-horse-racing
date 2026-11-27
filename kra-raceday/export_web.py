@@ -131,7 +131,7 @@ def results_for(R, date, meet):
         rc, no = int(x.rcNo), int(x.chulNo)
         jk[(rc, no)] = x.jkName   # 당일 기수 변경이 반영된 이름
         o = pd.to_numeric(x.ord, errors='coerce')
-        if pd.isna(o) or o <= 0:
+        if pd.isna(o) or o <= 0 or str(getattr(x, 'ordBigo', '')) in ('출전취소', '경주제외'):
             continue
         out[(rc, no)] = (int(o), clean(x.winOdds))
         f = final.setdefault(rc, {'track': track_state(x.track), 'odds': {}, 'bwd': {}})
@@ -141,6 +141,10 @@ def results_for(R, date, meet):
         m = pd.Series([str(x.wgHr)]).str.extract(r'\(([+-]?\d+)\)')[0].iloc[0]
         if not pd.isna(m):
             f['bwd'][str(no)] = float(m)
+    # 아직 안 달린 경주(1착이 없음)에 붙어 온 코드(출전취소 94 등)는 결과가 아니다 → 그 경주 결과·확정 배당은 버린다
+    run = {rc for (rc, no), (o, _) in out.items() if o == 1}
+    out = {k: v for k, v in out.items() if k[0] in run}
+    final = {rc: f for rc, f in final.items() if rc in run}
     return out, jk, final
 
 

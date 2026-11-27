@@ -40,7 +40,9 @@ public class PaperService {
 
     /** 출발 시각이 지났거나 결과가 있으면 잠김 */
     public Outcome lockState(Race race) {
-        for (Entry e : race.getEntries()) if (e.getFinishOrd() != null) return Outcome.LOCKED_RESULT;
+        int n = race.getEntries().size();
+        for (Entry e : race.getEntries())
+            if (Entry.isResult(e.getFinishOrd(), n) && e.getFinishOrd() < Entry.ORD_OUT) return Outcome.LOCKED_RESULT;
         LocalDateTime start = startTime(race);
         if (start != null && !LocalDateTime.now(clock.withZone(KST)).isBefore(start)) return Outcome.LOCKED_TIME;
         return Outcome.RECORDED;
@@ -87,7 +89,8 @@ public class PaperService {
     public void settle(Race race) {
         Map<Integer, Entry> byNo = new HashMap<>();
         boolean hasResult = false;
-        for (Entry e : race.getEntries()) { byNo.put(e.getChulNo(), e); if (e.getFinishOrd() != null) hasResult = true; }
+        int n = race.getEntries().size();
+        for (Entry e : race.getEntries()) { byNo.put(e.getChulNo(), e); if (Entry.isResult(e.getFinishOrd(), n) && e.getFinishOrd() < Entry.ORD_OUT) hasResult = true; }
         if (!hasResult) return;
         for (PaperBet b : bets.findByRaceDateAndMeetAndRcNoOrderByChulNo(race.getMeetDay().getRaceDate(), race.getMeetDay().getMeet(), race.getRcNo())) {
             Entry e = byNo.get(b.getChulNo());
