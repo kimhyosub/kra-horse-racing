@@ -34,17 +34,15 @@
     </div>
   </div>
 
-  <!-- 경주 안내: 혼전, 데뷔마 -->
-  <th:block th:with="isDay=${mode == 'day'}">
-    <div class="race-note warn" th:if="${v.mixed(isDay)}">
-      <b>혼전 · 이변 가능성 높음</b>
-      <span th:text="|${v.mixedText(isDay)}. 가치마 1위도 30%를 넘지 못한 경주라 누가 이겨도 이상하지 않습니다.|"></span>
-    </div>
-    <div class="race-note" th:if="${v.debutCount >= 2}">
-      <b th:text="|데뷔하는 말이 ${v.debutCount}두 있습니다|">데뷔하는 말</b>
-      <span>처음 달리는 말은 경주 기록이 없어 나이·기수·조교사만으로 확률을 잡습니다. 이런 말이 많은 경주는 예상보다 결과가 흔들리기 쉽습니다.</span>
-    </div>
-  </th:block>
+  <!-- 경주 안내: 확률이 고르게 갈린 경주, 첫 출전 말 -->
+  <div class="rnotes" th:with="isDay=${mode == 'day'}" th:if="${v.mixed(isDay) or v.debutCount >= 2}">
+    <p class="rnote" th:if="${v.mixed(isDay)}">
+      <b>팽팽한 경주</b><span th:text="|${v.mixedText(isDay)} — 누가 이겨도 이상하지 않은 판|"></span>
+    </p>
+    <p class="rnote" th:if="${v.debutCount >= 2}">
+      <b th:text="${v.debutCount == #lists.size(v.entries)} ? '모두 첫 출전' : |첫 출전 ${v.debutCount}두|">첫 출전</b><span th:text="${v.debutCount == #lists.size(v.entries)} ? '달린 기록이 없어 나이·기수·조교사로만 본 경주 — 예상 폭이 넓음' : '기록 없이 나이·기수·조교사로만 본 말 — 예상 폭이 넓음'"></span>
+    </p>
+  </div>
 
   <!-- 기록 지문: 예상을 나중에 고치지 않았다는 증거 -->
   <details class="fp" th:if="${v.preHash != null or v.starHash != null}">
