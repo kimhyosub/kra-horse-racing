@@ -146,17 +146,6 @@
       <span>전날 예상 1위 적중 <b th:text="${rp.rolling.pre1Rate}"></b> <small th:text="|(${rp.rolling.pre1}/${rp.rolling.n}경주 전체)|"></small></span>
     </div>
 
-    <th:block th:if="${rp.rolling.anyBox}">
-    <div class="rp-box">
-      <header><b th:text="|최근 누적 · ${rp.boxK}두 박스 손익|">최근 누적</b><span th:text="|같은 방식 과거 2년 검증 회수율: ${rp.boxBack}|"></span></header>
-      <div class="rp-kpis four">
-        <div class="rp-kpi"><small th:text="|복승 ${rp.rolling.pairs}조합|">복승 박스</small><b th:classappend="${rp.rolling.QUp} ? 'pos' : 'neg'" th:text="${rp.rolling.QProfit}">-</b><span th:text="|회수율 ${rp.rolling.QRoi} · 산 돈 ${rp.rolling.QCostText}|"></span></div>
-        <div class="rp-kpi"><small th:text="|쌍승 ${rp.rolling.pairs * 2}조합|">쌍승 박스</small><b th:classappend="${rp.rolling.EUp} ? 'pos' : 'neg'" th:text="${rp.rolling.EProfit}">-</b><span th:text="|회수율 ${rp.rolling.ERoi} · 산 돈 ${rp.rolling.ECostText}|"></span></div>
-        <div class="rp-kpi"><small th:text="|복연 ${rp.rolling.pairs}조합|">복연 박스</small><b th:classappend="${rp.rolling.BUp} ? 'pos' : 'neg'" th:text="${rp.rolling.BProfit}">-</b><span th:text="|회수율 ${rp.rolling.BRoi} · ${rp.rolling.bN}경주 중 ${rp.rolling.bHit}경주 적중|"></span></div>
-        <div class="rp-kpi tot"><small>합계</small><b th:classappend="${rp.rolling.boxUp} ? 'pos' : 'neg'" th:text="${rp.rolling.boxProfit}">-</b><span th:text="|회수율 ${rp.rolling.boxRoi} · 산 돈 ${rp.rolling.boxCostText} · 복승·쌍승 ${rp.rolling.boxHit}/${rp.rolling.boxN}경주 적중|"></span></div>
-      </div>
-    </div>
-    </th:block>
 
     <!-- 추이 -->
     <div class="rp-charts">
